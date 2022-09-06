@@ -52,7 +52,7 @@ def train_worker(args):
     start_epoch = 0
     step_count = 0
     best_metric = 0
-    loss_meter = LossMeter(writer=writer)
+    loss_meter = LossMeter(args, writer=writer)
 
     for epoch in range(start_epoch, num_epochs):
         print(f"-----------epoch: {epoch}----------")
