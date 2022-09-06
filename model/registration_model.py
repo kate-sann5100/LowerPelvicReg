@@ -173,8 +173,9 @@ def separate_seg(seg):
     divide a multi-class segmentation into 8 single-class segmentation of the same shape
     :param seg: (B, 1, ...)
     """
-    seg = [seg.clone()] * 8
-    for i in range(8):
-        print([torch.unique(s) for s in seg])
-        seg[i][seg[i] != i + 1] = 0
-    return seg  # 8 x (B, 1, H, W, D)
+    return [((seg == i) * i).to(seg) for i in range(1, 9)]
+    # seg = [seg.clone()] * 8
+    # for i in range(8):
+    #     print([torch.unique(s) for s in seg])
+    #     seg[i][seg[i] != i + 1] = 0
+    # return seg  # 8 x (B, 1, H, W, D)
