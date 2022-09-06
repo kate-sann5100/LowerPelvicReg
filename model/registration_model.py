@@ -134,7 +134,7 @@ class Registration(nn.Module):
         """
         label_loss = {
             f"{organ}_label": self.label_loss(
-                one_hot(ws, num_classes=9), fs  # (B, 9, ...), (B, 1, ...)
+                ws, fs  # (B, 9, ...), (B, 1, ...)
             )
             for organ, ws, fs in zip(loss_organ_list, warped_seg_list, fixed_seg_list)
         }
