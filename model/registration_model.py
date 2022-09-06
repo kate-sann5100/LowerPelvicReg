@@ -79,7 +79,6 @@ class Registration(nn.Module):
         :return:
         """
         if not binary:
-            print(moving.shape)
             moving = one_hot(moving, num_classes=9)  # (B, 9, ...)
         pred = Warp(mode="nearest" if binary else "bilinear")(moving, ddf)
         return pred  # (B, 9, ...) or (B, 1, ...)

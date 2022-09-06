@@ -134,4 +134,6 @@ def get_img(img, transform, image_path, seg_path, size):
             size=size,
             mode="trilinear" if k == "t2w" else "nearest"
         ).squeeze(0)
+        print(f"{k}: {x[k].shape}")
+    exit()
     return x
