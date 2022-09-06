@@ -111,10 +111,9 @@ class Registration(nn.Module):
         else:
             moving_seg_list, fixed_seg_list = [moving_seg], [fixed_seg]  # 1 x (B, 1, ...)
             loss_organ_list = ["all"]
-        print([ms.shape for ms in moving_seg_list])
         warped_seg_list = [
             self.warp(ms, ddf, binary=not self.training)
-            for ms, ddf in zip(moving_seg, ddf_list)
+            for ms, ddf in zip(moving_seg_list, ddf_list)
         ]  # num_class x (B, 9, ...) or num_class x (B, 1, ...)
         if self.training:
             return self.get_loss(warped_seg_list, fixed_seg_list, ddf_list, loss_organ_list)

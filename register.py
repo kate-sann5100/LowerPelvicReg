@@ -74,6 +74,7 @@ def train_worker(args):
             loss_dict["total"] = loss
             loss_meter.update(loss_dict)
             step_count += 1
+            break
 
         loss_meter.get_average(step_count)
         ckpt = {
@@ -156,6 +157,7 @@ def validation(args, model, loader, writer=None, step=None, vis=None, test=False
                     fixed=fixed,
                     pred=binary,
                 )
+            break
 
         dice_metric, dice_result_dict = dice_meter.get_average(step)
         if test:
