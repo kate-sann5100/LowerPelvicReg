@@ -11,6 +11,8 @@ def get_parser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--overfit', action='store_true')
+    parser.add_argument('--multi_head', action='store_true')
+    parser.add_argument('--reg', action='store_true')
 
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--vis', action='store_true')
@@ -21,6 +23,8 @@ def get_parser():
     assert args.config is not None
     cfg = config.load_cfg_from_cfg_file(args.config)
     cfg.overfit = args.overfit
+    cfg.multi_head = args.multi_head
+    cfg.reg = args.reg
     cfg.test = args.test
     cfg.vis = args.vis
     cfg.manual_seed = args.manual_seed
