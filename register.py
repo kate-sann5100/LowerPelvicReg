@@ -131,7 +131,7 @@ def validation(args, model, loader, writer=None, step=None, vis=None, test=False
             binary = model(moving, fixed)  # (1, 1, ...)
             print(moving["name"][0], fixed["ins"][0])
             dice_meter.update(
-                binary["seg"], moving["seg"],
+                binary["seg"], fixed["seg"],
                 name=moving["name"], fixed_ins=fixed["ins"]
             )
             if test:
