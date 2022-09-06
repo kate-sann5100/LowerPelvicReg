@@ -3,7 +3,7 @@ from monai.transforms import RandSpatialCropd
 
 from torch.utils.data import Dataset
 
-from data.dataset_utils import get_institution_patient_dict, get_transform, sample_pair, get_img, mask_trim
+from data.dataset_utils import get_institution_patient_dict, get_transform, sample_pair, get_img
 
 
 class RegDataset(Dataset):
