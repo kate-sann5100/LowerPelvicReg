@@ -30,6 +30,7 @@ class Registration(nn.Module):
             self.output_block_list = nn.ModuleList(
                 [self.model.bottom_block] + [self.model.build_output_block() for _ in range(7)]
             )
+            print(self.output_block_list)
 
         # self.img_loss = GlobalMutualInformationLoss()
         self.img_loss = nn.MSELoss()
