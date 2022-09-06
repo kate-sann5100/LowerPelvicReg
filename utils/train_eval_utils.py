@@ -16,7 +16,7 @@ def get_parser():
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--test_base_ins', action='store_true')
     parser.add_argument('--vis', action='store_true')
-    parser.add_argument('--config', type=str, default='config/fewshot.yaml')
+    parser.add_argument('--config', type=str, default='config/basic.yaml')
     parser.add_argument('--manual_seed', default=321, dest='manual_seed')
     args = parser.parse_args()
 
