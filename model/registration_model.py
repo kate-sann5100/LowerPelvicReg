@@ -160,7 +160,7 @@ class Registration(nn.Module):
             reg_loss = {"reg": torch.zeros_like(label_loss["label"])}
         loss_dict.update(reg_loss)
         for k, v in loss_dict.items():
-            print(f"{k}: {v.device()}")
+            print(f"{k}: {v.device}")
         return loss_dict
 
 
