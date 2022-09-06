@@ -10,11 +10,9 @@ from utils import config
 def get_parser():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--fold', default=-1, dest='fold')
-    parser.add_argument('--ins', default=3, dest='novel_ins')
-    parser.add_argument('--shot', default=1, dest='shot')
+    parser.add_argument('--overfit', action='store_true')
+
     parser.add_argument('--test', action='store_true')
-    parser.add_argument('--test_base_ins', action='store_true')
     parser.add_argument('--vis', action='store_true')
     parser.add_argument('--config', type=str, default='config/basic.yaml')
     parser.add_argument('--manual_seed', default=321, dest='manual_seed')
@@ -22,9 +20,7 @@ def get_parser():
 
     assert args.config is not None
     cfg = config.load_cfg_from_cfg_file(args.config)
-    cfg.fold = int(args.fold)
-    cfg.novel_ins = int(args.novel_ins)
-    cfg.shot = int(args.shot)
+    cfg.overfit = args.overfit
     cfg.test = args.test
     cfg.test_base_ins = args.test_base_ins
     cfg.vis = args.vis
@@ -46,7 +42,9 @@ def get_save_dir(args):
     if args.multi_head:
         save_dir += "_multihead"
     if args.reg:
-        save_dir += "reg"
+        save_dir += "_reg"
+    if args.overfit:
+        save_dir += "_overfit"
     return save_dir
 
 

@@ -42,6 +42,12 @@ def train_worker(args):
 
     val_dataset = RegDataset(args=args, mode="val")
     val_loader = DataLoader(val_dataset, batch_size=1)
+    if args.overfit:
+        for moving, fixed in val_loader:
+            overfit_moving, overfit_fixed = moving, fixed
+            break
+    else:
+        overfit_moving, overfit_fixed = None, None
 
     model = Registration(args)
     model = torch.nn.DataParallel(model.cuda())
@@ -59,6 +65,8 @@ def train_worker(args):
 
         model.train()
         for step, (moving, fixed) in enumerate(train_loader):
+            if args.overfit:
+                moving, fixed = overfit_moving, overfit_fixed
 
             optimiser.zero_grad()
             cuda_batch(moving)
@@ -74,7 +82,9 @@ def train_worker(args):
             loss_dict["total"] = loss
             loss_meter.update(loss_dict)
             step_count += 1
-            break
+
+            if args.overfit:
+                break
 
         loss_meter.get_average(step_count)
         ckpt = {
@@ -85,7 +95,10 @@ def train_worker(args):
         }
         print("validating...")
 
-        val_metric, _, _ = validation(args, model, val_loader, writer, step_count)
+        val_metric, _, _ = validation(
+            args, model, val_loader, writer, step_count,
+            overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
+        )
         if val_metric > best_metric:
             best_metric = val_metric
             torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
@@ -119,13 +132,16 @@ def val_worker(args):
         save_result_dicts(save_dir, dice_result_dict, hausdorff_result_dict)
 
 
-def validation(args, model, loader, writer=None, step=None, vis=None, test=False):
+def validation(args, model, loader, writer=None, step=None, vis=None, test=False,
+               overfit_moving=None, overfit_fixed=None):
     dice_meter = DiceMeter(writer, test=test)
     hausdorff_meter = HausdorffMeter(writer, test=test)
     model.eval()
 
     with torch.no_grad():
         for val_step, (moving, fixed) in enumerate(loader):
+            if args.overfit:
+                moving, fixed = overfit_moving, overfit_fixed
             cuda_batch(moving)
             cuda_batch(fixed)
             binary = model(moving, fixed)  # (1, 1, ...)
@@ -157,7 +173,9 @@ def validation(args, model, loader, writer=None, step=None, vis=None, test=False
                     fixed=fixed,
                     pred=binary,
                 )
-            break
+
+            if args.overfit:
+                break
 
         dice_metric, dice_result_dict = dice_meter.get_average(step)
         if test:
