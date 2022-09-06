@@ -122,7 +122,8 @@ class Registration(nn.Module):
                 # num_class x (B, 1, ...) -> (B, 1, ..., num_class)
                 torch.stack(warped_seg_list, dim=-1), dim=-1
             )  # (B, 1, ...)
-            return warped_seg
+            binary = {"seg": warped_seg}
+            return binary
 
     def get_label_loss(self, warped_seg_list, fixed_seg_list, loss_organ_list):
         """
