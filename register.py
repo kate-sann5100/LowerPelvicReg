@@ -1,10 +1,10 @@
 import torch
-from monai.handlers.tensorboard_handlers import SummaryWriter
 from monai.transforms import Spacingd
 from torch.backends import cudnn
 from torch.cuda import device_count
 from torch.optim import Adam
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 from data.dataset import RegDataset
 from model.registration_model import Registration
