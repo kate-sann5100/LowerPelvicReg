@@ -78,9 +78,11 @@ class Registration(nn.Module):
         :param binary: if moving is binary
         :return:
         """
-        if not binary:
-            moving = one_hot(moving, num_classes=9)  # (B, 9, ...)
-        pred = Warp(mode="nearest" if binary else "bilinear")(moving, ddf)
+        print(binary)
+        pred = Warp(mode="nearest" if binary else "bilinear")(
+            moving if binary else one_hot(moving, num_classes=9),
+            ddf
+        )
         return pred  # (B, 9, ...) or (B, 1, ...)
 
     def forward(self, moving_batch, fixed_batch):
