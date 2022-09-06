@@ -30,7 +30,6 @@ class Registration(nn.Module):
             self.output_block_list = nn.ModuleList(
                 [self.model.output_block] + [self.model.build_output_block() for _ in range(7)]
             )
-            print(self.output_block_list)
 
         # self.img_loss = GlobalMutualInformationLoss()
         self.img_loss = nn.MSELoss()
@@ -67,6 +66,7 @@ class Registration(nn.Module):
                 outs.append(decoded)
 
             ddf_list = [self.output_block_list[i](outs, image_size=image_size) for i in range(8)]
+            print(ddf_list)
             return ddf_list  # num_class x (B, 3, H, W, D)
         else:
             return [self.model(x)]  # 1 x (B, 3, H, W, D)
