@@ -10,6 +10,7 @@ from utils import config
 def get_parser():
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--mask', action='store_true')
     parser.add_argument('--overfit', action='store_true')
     parser.add_argument('--multi_head', action='store_true')
     parser.add_argument('--reg', action='store_true')
@@ -22,6 +23,8 @@ def get_parser():
 
     assert args.config is not None
     cfg = config.load_cfg_from_cfg_file(args.config)
+    if args.mask:
+        cfg.input = "mask"
     cfg.overfit = args.overfit
     cfg.multi_head = args.multi_head
     cfg.reg = args.reg
