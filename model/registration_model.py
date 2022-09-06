@@ -112,6 +112,7 @@ class Registration(nn.Module):
         else:
             moving_seg_list, fixed_seg_list = [moving_seg], [fixed_seg]  # 1 x (B, 1, ...)
             loss_organ_list = ["all"]
+        print([torch.unique(ms) for ms in moving_seg_list])
         warped_seg_list = [
             self.warp(ms, ddf, binary=not self.training)
             for ms, ddf in zip(moving_seg_list, ddf_list)
