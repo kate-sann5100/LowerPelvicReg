@@ -15,7 +15,6 @@ class Registration(nn.Module):
         super(Registration, self).__init__()
         self.args = args
         self.multi_head = args.multi_head
-        self.organ = args.organ
 
         self.model = LocalNet(
             spatial_dims=3,
