@@ -137,9 +137,6 @@ class Registration(nn.Module):
             )
             for organ, ws, fs in zip(loss_organ_list, warped_seg_list, fixed_seg_list)
         }
-        for k, v in label_loss.items():
-            print(f"{k}: {v}")
-        print(torch.stack([v for _, v in label_loss.items()], dim=0))
         label_loss["label"] = torch.mean(
             torch.stack([v for _, v in label_loss.items()], dim=0), dim=0
         )
@@ -163,8 +160,6 @@ class Registration(nn.Module):
         if reg_loss is None:
             reg_loss = {"reg": torch.zeros_like(label_loss["label"])}
         loss_dict.update(reg_loss)
-        for k, v in loss_dict.items():
-            print(f"{k}: {v.grad_fn}")
         return loss_dict
 
 
