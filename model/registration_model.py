@@ -112,7 +112,6 @@ class Registration(nn.Module):
         else:
             moving_seg_list, fixed_seg_list = [moving_seg], [fixed_seg]  # 1 x (B, 1, ...)
             loss_organ_list = ["all"]
-        print([torch.unique(ms) for ms in moving_seg_list])
         warped_seg_list = [
             self.warp(ms, ddf, binary=not self.training)
             for ms, ddf in zip(moving_seg_list, ddf_list)
@@ -124,8 +123,6 @@ class Registration(nn.Module):
                 # num_class x (B, 1, ...) -> (B, 1, ..., num_class)
                 torch.stack(warped_seg_list, dim=-1), dim=-1
             )  # (B, 1, ...)
-            print([torch.unique(ws) for ws in warped_seg_list])
-            print(torch.unique(warped_seg))
             binary = {"seg": warped_seg}
             return binary
 
@@ -173,9 +170,4 @@ def separate_seg(seg):
     divide a multi-class segmentation into 8 single-class segmentation of the same shape
     :param seg: (B, 1, ...)
     """
-    return [((seg == i) * i).to(seg) for i in range(1, 9)]
-    # seg = [seg.clone()] * 8
-    # for i in range(8):
-    #     print([torch.unique(s) for s in seg])
-    #     seg[i][seg[i] != i + 1] = 0
-    # return seg  # 8 x (B, 1, H, W, D)
+    return [((seg == i) * i).to(seg) for i in range(1, 9)]  # 8 x (B, 1, ...)
