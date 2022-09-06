@@ -78,6 +78,7 @@ class Registration(nn.Module):
         :param binary: if moving is binary
         :return:
         """
+        print(f"moving shape in self.warp: {moving.shape}")
         if not binary:
             moving = one_hot(moving, num_classes=9)  # (B, 9, ...)
         pred = Warp(mode="nearest" if binary else "bilinear")(moving, ddf)
@@ -111,7 +112,6 @@ class Registration(nn.Module):
             moving_seg_list, fixed_seg_list = [moving_seg], [fixed_seg]  # 1 x (B, 1, ...)
             loss_organ_list = ["all"]
         print([ms.shape for ms in moving_seg_list])
-        exit()
         warped_seg_list = [
             self.warp(ms, ddf, binary=not self.training)
             for ms, ddf in zip(moving_seg, ddf_list)
