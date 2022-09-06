@@ -22,7 +22,6 @@ def get_parser():
     cfg = config.load_cfg_from_cfg_file(args.config)
     cfg.overfit = args.overfit
     cfg.test = args.test
-    cfg.test_base_ins = args.test_base_ins
     cfg.vis = args.vis
     cfg.manual_seed = args.manual_seed
     print(cfg)
