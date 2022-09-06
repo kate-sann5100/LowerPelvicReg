@@ -123,6 +123,8 @@ class Registration(nn.Module):
                 # num_class x (B, 1, ...) -> (B, 1, ..., num_class)
                 torch.stack(warped_seg_list, dim=-1), dim=-1
             )  # (B, 1, ...)
+            print(warped_seg)
+            print(torch.unique(warped_seg))
             binary = {"seg": warped_seg}
             return binary
 
