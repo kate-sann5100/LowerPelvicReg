@@ -119,11 +119,9 @@ class Registration(nn.Module):
         if self.training:
             return self.get_loss(warped_seg_list, fixed_seg_list, ddf_list, loss_organ_list)
         else:
-            warped_seg = torch.sum(
-                # num_class x (B, 1, ...) -> (B, 1, ..., num_class)
-                torch.stack(warped_seg_list, dim=-1), dim=-1
-            )  # (B, 1, ...)
-            print(warped_seg)
+            warped_seg = warped_seg_list[0]
+            for ws in warped_seg_list[1:]:
+                warped_seg += ws * (warped_seg == 0)
             print(torch.unique(warped_seg))
             binary = {"seg": warped_seg}
             return binary
