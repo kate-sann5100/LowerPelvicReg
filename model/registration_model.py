@@ -66,7 +66,7 @@ class Registration(nn.Module):
                 outs.append(decoded)
 
             ddf_list = [self.output_block_list[i](outs, image_size=image_size) for i in range(8)]
-            print(ddf_list)
+
             return ddf_list  # num_class x (B, 3, H, W, D)
         else:
             return [self.model(x)]  # 1 x (B, 3, H, W, D)
@@ -123,6 +123,8 @@ class Registration(nn.Module):
                 # num_class x (B, 1, ...) -> (B, 1, ..., num_class)
                 torch.stack(warped_seg_list, dim=-1), dim=-1
             )  # (B, 1, ...)
+            print([torch.unique(ws) for ws in warped_seg_list])
+            print(torch.unique(warped_seg))
             binary = {"seg": warped_seg}
             return binary
 
