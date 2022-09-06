@@ -23,6 +23,8 @@ class LossMeter:
                 f"{organ}_label": 0
                 for organ in organ_list
             })
+        else:
+            self.sum_dict.update({"all_label": 0})
         self.count = 0
 
     def update(self, loss_dict):
