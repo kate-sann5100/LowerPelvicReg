@@ -138,12 +138,10 @@ class Registration(nn.Module):
             for organ, ws, fs in zip(loss_organ_list, warped_seg_list, fixed_seg_list)
         }
         for k, v in label_loss.items():
-            print(f"{k}: {v.shape}")
+            print(f"{k}: {v}")
+        print(torch.stack([v for _, v in label_loss.items()], dim=0))
         label_loss["label"] = torch.mean(
             torch.stack([v for _, v in label_loss.items()], dim=0), dim=0
-        )
-        label_loss["label"] = torch.mean(
-            torch.tensor([v for _, v in label_loss.items()]).to(label_loss[f"{loss_organ_list[0]}_label"])
         )
         return label_loss
 
