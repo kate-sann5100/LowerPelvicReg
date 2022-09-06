@@ -28,7 +28,7 @@ class Registration(nn.Module):
 
         if self.multi_head:
             self.output_block_list = nn.ModuleList(
-                [self.model.bottom_block] + [self.model.build_output_block() for _ in range(7)]
+                [self.model.output_block] + [self.model.build_output_block() for _ in range(7)]
             )
             print(self.output_block_list)
 
