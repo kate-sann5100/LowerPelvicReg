@@ -69,6 +69,7 @@ def train_worker(args):
                 loss_dict[k] = torch.mean(v)
                 if k in ["label", "reg"]:
                     loss = loss + torch.mean(v)
+                    print(f"{k}: {loss.grad_fn()}")
             loss.backward()
             optimiser.step()
             loss_dict["total"] = loss
