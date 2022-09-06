@@ -78,7 +78,6 @@ class Registration(nn.Module):
         :param binary: if moving is binary
         :return:
         """
-        print(f"moving shape in self.warp: {moving.shape}")
         if not binary:
             moving = one_hot(moving, num_classes=9)  # (B, 9, ...)
         pred = Warp(mode="nearest" if binary else "bilinear")(moving, ddf)
@@ -115,7 +114,6 @@ class Registration(nn.Module):
             self.warp(ms, ddf, binary=not self.training)
             for ms, ddf in zip(moving_seg_list, ddf_list)
         ]  # num_class x (B, 9, ...) or num_class x (B, 1, ...)
-        print([ws.shape for ws in warped_seg_list])
         if self.training:
             return self.get_loss(warped_seg_list, fixed_seg_list, ddf_list, loss_organ_list)
         else:
@@ -161,6 +159,8 @@ class Registration(nn.Module):
         if reg_loss is None:
             reg_loss = {"reg": torch.zeros_like(label_loss["label"])}
         loss_dict.update(reg_loss)
+        for k, v in loss_dict.items():
+            print(f"{k}: {v}")
         return loss_dict
 
 
