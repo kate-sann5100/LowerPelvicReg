@@ -82,7 +82,6 @@ class Registration(nn.Module):
             moving if binary else one_hot(moving, num_classes=9),
             ddf
         )
-        print(pred)
         return pred  # (B, 9, ...) or (B, 1, ...)
 
     def forward(self, moving_batch, fixed_batch):
@@ -162,7 +161,7 @@ class Registration(nn.Module):
             reg_loss = {"reg": torch.zeros_like(label_loss["label"])}
         loss_dict.update(reg_loss)
         for k, v in loss_dict.items():
-            print(f"{k}: {v.device}")
+            print(f"{k}: {v.grad_fn}")
         return loss_dict
 
 
