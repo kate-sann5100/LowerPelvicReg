@@ -97,6 +97,9 @@ class Registration(nn.Module):
         "ins": int
         :return:
         """
+
+        for k in ["t2w", "seg"]:
+            print(f"{k}: {moving_batch[k].shape}")
         if self.args.input == "img":
             x = torch.cat([moving_batch["t2w"], fixed_batch["t2w"]], dim=1)
         else:
