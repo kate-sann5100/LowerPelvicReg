@@ -175,7 +175,6 @@ def separate_seg(seg):
     """
     seg = [seg] * 8
     for i in range(8):
-        print(torch.unique(seg[i]))
+        print([torch.unique(s) for s in seg])
         seg[i][seg[i] != i + 1] = 0
-        print(torch.unique(seg[i]))
     return seg  # 8 x (B, 1, H, W, D)
