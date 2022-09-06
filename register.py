@@ -30,7 +30,6 @@ def train_worker(args):
     save_dir = get_save_dir(args)
     print(save_dir)
 
-    args.moving_ins = args.novel_ins
     train_dataset = RegDataset(args=args, mode="train")
     train_loader = DataLoader(
         train_dataset,
