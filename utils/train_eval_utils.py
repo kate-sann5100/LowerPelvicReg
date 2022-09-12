@@ -54,7 +54,6 @@ def get_save_dir(args):
     if args.overfit:
         save_dir += "_overfit"
     print(save_dir)
-    exit()
     return save_dir
 
 
