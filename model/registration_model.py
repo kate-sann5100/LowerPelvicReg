@@ -6,7 +6,7 @@ from monai.networks.blocks import Warp
 from monai.networks.nets import LocalNet
 from torch import nn
 
-from data.dataset_utils import organ_list
+from data.dataset_utils import organ_index_dict
 
 
 class Registration(nn.Module):
@@ -28,7 +28,7 @@ class Registration(nn.Module):
 
         if self.multi_head:
             self.output_block_list = nn.ModuleList(
-                [self.model.output_block] + [self.model.build_output_block() for _ in range(7)]
+                [self.model.output_block] + [self.model.build_output_block() for _ in range(len(args.organ_list) - 1)]
             )
 
         # self.img_loss = GlobalMutualInformationLoss()
@@ -65,9 +65,10 @@ class Registration(nn.Module):
                 decoded = decode_conv(decoded)
                 outs.append(decoded)
 
-            ddf_list = [self.output_block_list[i](outs, image_size=image_size) for i in range(8)]
+            ddf_list = [self.output_block_list[i](outs, image_size=image_size)
+                        for i in range(len(self.output_block_list))]
 
-            return ddf_list  # num_class x (B, 3, H, W, D)
+            return ddf_list  # N x (B, 3, H, W, D)
         else:
             return [self.model(x)]  # 1 x (B, 3, H, W, D)
 
@@ -107,8 +108,8 @@ class Registration(nn.Module):
         ddf_list = self.forward_localnet(x)  # num_class x (B, 3, H, W, D)
         moving_seg, fixed_seg = moving_batch["seg"], fixed_batch["seg"]  # (B, 1, ...)
         if self.multi_head:
-            moving_seg_list, fixed_seg_list = separate_seg(moving_seg), separate_seg(fixed_seg)  # 9 x (B, 1, ...)
-            loss_organ_list = organ_list
+            moving_seg_list, fixed_seg_list = self.separate_seg(moving_seg), self.separate_seg(fixed_seg)  # N x (B, 1, ...)
+            loss_organ_list = self.args.organ_list
         else:
             moving_seg_list, fixed_seg_list = [moving_seg], [fixed_seg]  # 1 x (B, 1, ...)
             loss_organ_list = ["all"]
@@ -122,7 +123,6 @@ class Registration(nn.Module):
             warped_seg = warped_seg_list[0]
             for ws in warped_seg_list[1:]:
                 warped_seg += ws * (warped_seg == 0)
-            print(torch.unique(warped_seg))
             binary = {"seg": warped_seg}
             return binary
 
@@ -164,10 +164,10 @@ class Registration(nn.Module):
         loss_dict.update(reg_loss)
         return loss_dict
 
-
-def separate_seg(seg):
-    """
-    divide a multi-class segmentation into 8 single-class segmentation of the same shape
-    :param seg: (B, 1, ...)
-    """
-    return [((seg == i) * i).to(seg) for i in range(1, 9)]  # 8 x (B, 1, ...)
+    def separate_seg(self, seg):
+        """
+        divide a multi-class segmentation into 8 single-class segmentation of the same shape
+        :param seg: (B, 1, ...)
+        """
+        organ_index_list = [organ_index_dict[organ] for organ in self.args.organ_list]
+        return [((seg == organ_index) * organ_index).to(seg) for organ_index in organ_index_list]  # 8 x (B, 1, ...)

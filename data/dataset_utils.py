@@ -107,13 +107,13 @@ def sample_pair(idx, img_list_len):
     return out
 
 
-def get_img(img, transform, image_path, seg_path, size):
+def get_img(img, transform, image_path, seg_path, args):
     """
     :param img: tuple (name, ins)
     :param transform:
     :param image_path: str
     :param seg_path: str
-    :param size: size of model input
+    :param args
     :return:
     t2w: (1, ...)
     seg: (1, ...)
@@ -131,7 +131,12 @@ def get_img(img, transform, image_path, seg_path, size):
         x[k] = x[k][..., target_slice]
         x[k] = F.interpolate(
             x[k].unsqueeze(0).to(torch.float),
-            size=size,
+            size=args.size,
             mode="trilinear" if k == "t2w" else "nearest"
         ).squeeze(0)
+    new_seg = torch.zeros_like(x["seg"])
+    for organ in args.organ_list:
+        organ_index = organ_index_dict[organ]
+        new_seg[x["seg"] == organ_index] = organ_index
+    x["seg"] = new_seg
     return x

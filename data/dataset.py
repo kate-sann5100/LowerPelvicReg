@@ -58,7 +58,7 @@ class RegDataset(Dataset):
         else:
             moving, fixed = self.val_pair[idx]
 
-        moving = get_img(moving, self.transform, self.image_path, self.seg_path, self.args.size)
-        fixed = get_img(fixed, self.transform, self.image_path, self.seg_path, self.args.size)
+        moving = get_img(moving, self.transform, self.image_path, self.seg_path, self.args)
+        fixed = get_img(fixed, self.transform, self.image_path, self.seg_path, self.args)
 
         return moving, fixed
