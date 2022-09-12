@@ -21,7 +21,7 @@ class LossMeter:
         if self.args.multi_head:
             self.sum_dict.update({
                 f"{organ}_label": 0
-                for organ in organ_list
+                for organ in self.args.organ_list
             })
         else:
             self.sum_dict.update({"all_label": 0})

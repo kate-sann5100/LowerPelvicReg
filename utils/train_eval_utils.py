@@ -44,7 +44,7 @@ def set_seed(manual_seed):
 
 
 def get_save_dir(args):
-    save_dir = f"ckpt/{args.input}"
+    save_dir = f"ckpt/{args.input}_{args.organ_list}"
     if args.multi_head:
         save_dir += "_multihead"
     if args.reg:

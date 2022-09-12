@@ -3,6 +3,7 @@ DATA:
   fold: 1
   resolution: [ 0.75, 0.75, 2.5 ]
   size: [ 256, 256, 40 ]
+  organ_list: ["bladder", "rectum"]
 
 MODEL:
   input: "img"
