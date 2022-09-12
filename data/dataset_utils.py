@@ -139,5 +139,4 @@ def get_img(img, transform, image_path, seg_path, args):
         organ_index = organ_index_dict[organ]
         new_seg[x["seg"] == organ_index] = organ_index
     x["seg"] = new_seg
-    print(torch.unique(x["seg"]))
     return x
