@@ -53,6 +53,8 @@ def get_save_dir(args):
         save_dir += "_reg"
     if args.overfit:
         save_dir += "_overfit"
+    print(save_dir)
+    exit()
     return save_dir
 
 
