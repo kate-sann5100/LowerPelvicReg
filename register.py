@@ -60,7 +60,7 @@ def train_worker(args):
     loss_meter = LossMeter(args, writer=writer)
 
     for epoch in range(start_epoch, num_epochs):
-        print(f"-----------epoch: {epoch}----------")
+        # print(f"-----------epoch: {epoch}----------")
 
         model.train()
         for step, (moving, fixed) in enumerate(train_loader):
