@@ -53,7 +53,7 @@ def train_worker(args):
     optimiser = Adam(model.parameters(), lr=1e-4)
     writer = SummaryWriter(log_dir=save_dir)
 
-    num_epochs = 50
+    num_epochs = 5000
     start_epoch = 0
     step_count = 0
     best_metric = 0
