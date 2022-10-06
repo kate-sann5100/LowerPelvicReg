@@ -82,9 +82,6 @@ class DiceMeter:
         :param fixed_ins: str, only used at few_shot test
         """
         seg_one_hot, pred_one_hot = self.one_hot(pred_binary, seg, cls)
-        print(torch.unique(pred_binary))
-        print(f"pred_one_hot of shape {pred_one_hot.shape}, {torch.unique(pred_one_hot)}")
-        print(f"seg_one_hot of shape {seg_one_hot.shape}, {torch.unique(seg_one_hot)}")
         mean_dice = self.metric_fn(y_pred=pred_one_hot, y=seg_one_hot).sum(dim=0)  # (C)
         nan = torch.isnan(mean_dice)
         n_n = (~nan).float()

@@ -2,3 +2,11 @@
 .idea/
 
 ckpt/
+
+nifty_temp/
+
+data/__pycache__/
+
+utils/__pycache__/
+
+.DS_Store

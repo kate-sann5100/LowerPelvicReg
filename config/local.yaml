@@ -1,0 +1,11 @@
+DATA:
+  data_path: "/Users/yiwenli/data/multiorgan_final"  # path to folder including institution.txt and data
+  fold: 1
+  resolution: [ 0.75, 0.75, 2.5 ]
+  size: [ 256, 256, 40 ]
+  organ_list: ["BladderMask", "RectumMask"]
+
+MODEL:
+  input: "img"
+  multi_head: False
+  reg: False
