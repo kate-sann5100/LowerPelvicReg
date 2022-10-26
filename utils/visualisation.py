@@ -11,36 +11,19 @@ class Visualisation:
         if not os.path.exists(save_path):
             os.mkdir(save_path)
 
-    def vis(self, query, support, pred, cls):
+    def vis(self, moving, fixed, pred):
         affine = np.array([[0.75, 0, 0, 0], [0, 0.75, 0, 0], [0, 0, 2.5, 0], [0, 0, 0, 1]])
-        name = query.pop("name")[0]
-        support_ins = support["ins"][0]
-        description = f"{name}_ins{support_ins}_cls{cls[0]}"
-        sz = query["t2w"].shape
+        moving_name = moving.pop("name")[0]
+        fixed_name = fixed.pop("name")[0]
+        description = f"{moving_name}_{fixed_name}"
+        sz = moving["t2w"].shape
 
-        # q_t2w, s_t2w, q_mask_gt, s_mask, q_mask
-        # q_seg, s_seg, q_seg_gt, s_seg_gt
-        # aligned_s_t2w, aligned_s_mask, aligned_s_seg_gt
+        # warped_t2w, warped_seg
 
         vis_dict = {
-            "q_t2w": query["t2w"],
-            "s_t2w": support["t2w"],
-            "q_mask_gt": query["mask"],
-            "s_mask": support["mask"],
-            "q_mask": pred["mask"]
+            "warped_t2w": pred["t2w"],
+            "warped_seg": pred["seg"],
         }
-        if "q_seg" in pred.keys():
-            vis_dict.update(
-                {
-                    "q_seg": pred["q_seg"],
-                    "s_seg": pred["s_seg"],
-                    "q_seg_gt": query["seg"],
-                    "s_seg_gt": support["seg"],
-                    "aligned_s_t2w": pred["aligned_s_t2w"],
-                    "aligned_s_mask": pred["aligned_s_mask"],
-                    "aligned_s_seg_gt": pred["aligned_s_seg_gt"]
-                }
-            )
 
         for k, v in vis_dict.items():
             img = nib.Nifti1Image(
