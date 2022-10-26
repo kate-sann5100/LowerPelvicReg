@@ -21,6 +21,10 @@ class Visualisation:
         # warped_t2w, warped_seg
 
         vis_dict = {
+            "moving_t2w": moving["t2w"],
+            "moving_seg": moving["seg"],
+            "fixed_t2w": fixed["t2w"],
+            "fixed_seg": fixed["seg"],
             "warped_t2w": pred["t2w"],
             "warped_seg": pred["seg"],
         }
