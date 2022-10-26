@@ -73,15 +73,15 @@ class Registration(nn.Module):
             return [self.model(x)]  # 1 x (B, 3, H, W, D)
 
     @staticmethod
-    def warp(moving, ddf, binary=False):
+    def warp(moving, ddf, one_hot_moving=True):
         """
         :param moving: (B, 1, W, H, D)
         :param ddf: (B, 3, W, H, D)
-        :param binary: if moving is binary
+        :param one_hot_moving: bool, one hot moving before warping
         :return:
         """
-        pred = Warp(mode="nearest" if binary else "bilinear")(
-            moving if binary else one_hot(moving, num_classes=9),
+        pred = Warp(mode="bilinear" if one_hot_moving else "nearest")(
+            one_hot(moving, num_classes=9) if one_hot_moving else moving,
             ddf
         )
         return pred  # (B, 9, ...) or (B, 1, ...)
@@ -114,7 +114,7 @@ class Registration(nn.Module):
             moving_seg_list, fixed_seg_list = [moving_seg], [fixed_seg]  # 1 x (B, 1, ...)
             loss_organ_list = ["all"]
         warped_seg_list = [
-            self.warp(ms, ddf, binary=not self.training)
+            self.warp(ms, ddf, one_hot_moving=self.training)
             for ms, ddf in zip(moving_seg_list, ddf_list)
         ]  # num_class x (B, 9, ...) or num_class x (B, 1, ...)
         if self.training:
@@ -124,6 +124,9 @@ class Registration(nn.Module):
             for ws in warped_seg_list[1:]:
                 warped_seg += ws * (warped_seg == 0)
             binary = {"seg": warped_seg}
+            if not self.multi_head:
+                warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False)
+                binary["t2w"] = warped_t2w
             return binary
 
     def get_label_loss(self, warped_seg_list, fixed_seg_list, loss_organ_list):
