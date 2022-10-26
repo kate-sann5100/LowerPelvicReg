@@ -23,7 +23,7 @@ class RegDataset(Dataset):
         self.img_list = []
         for ins, patient_list in institution_patient_dict.items():
             self.img_list.extend([(p, ins) for p in patient_list])
-        if self.mode == "val":
+        if self.mode != "train":
             self.val_pair = []
             # for each query image
             for moving_p, moving_ins in self.img_list:
