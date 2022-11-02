@@ -108,7 +108,6 @@ def val_worker(args):
 
     save_dir = get_save_dir(args)
 
-    args.moving_ins = args.novel_ins
     val_dataset = RegDataset(args=args, mode="test")
     val_loader = DataLoader(val_dataset, batch_size=1)
 
