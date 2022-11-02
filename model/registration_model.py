@@ -151,7 +151,7 @@ class Registration(nn.Module):
         if self.args.reg:
             return {
                 "reg": 0.1 * torch.mean(
-                    torch.tensor([BendingEnergyLoss(ddf) for ddf in ddf_list])
+                    torch.tensor([BendingEnergyLoss()(ddf) for ddf in ddf_list])
                 )
             }
         else:
