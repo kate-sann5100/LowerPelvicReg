@@ -150,7 +150,7 @@ class Registration(nn.Module):
     def get_reg_loss(self, ddf_list):
         if self.args.reg:
             return {
-                "reg": torch.mean(
+                "reg": 0.1 * torch.mean(
                     torch.tensor([BendingEnergyLoss(ddf) for ddf in ddf_list])
                 )
             }
