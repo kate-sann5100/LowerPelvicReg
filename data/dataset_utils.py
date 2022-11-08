@@ -151,8 +151,8 @@ def get_patch(x, pos, args):
     """
     w, h, d = args.patch_size
     x = {
-        "t2w": x["t2w"][pos[0]:pos[0]+w, pos[1]:pos[1]+h, pos[2]:pos[2]+d],
-        "seg": x["seg"][pos[0]:pos[0]+w, pos[1]:pos[1]+h, pos[2]:pos[2]+d],
+        "t2w": x["t2w"][:, pos[0]:pos[0]+w, pos[1]:pos[1]+h, pos[2]:pos[2]+d],
+        "seg": x["seg"][:, pos[0]:pos[0]+w, pos[1]:pos[1]+h, pos[2]:pos[2]+d],
         "name": x["name"],
         "pos": pos
     }
