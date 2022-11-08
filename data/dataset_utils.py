@@ -161,4 +161,4 @@ def get_patch(x, pos, args):
 
 def sample_patch(args):
     w, h, d = np.array(args.size) - np.array(args.patch_size)
-    return np.random.uniform()*w, np.random.uniform()*h, np.random.uniform()*d
+    return int(np.random.uniform()*w), int(np.random.uniform()*h), int(np.random.uniform()*d)
