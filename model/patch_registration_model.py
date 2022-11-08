@@ -124,5 +124,8 @@ class PatchRegistration(nn.Module):
         :param fixed_batch:
         :return:
         """
-        loss = F.mse_loss(ddf, fixed_batch["pos"] - moving_batch["pos"])
+        loss = F.mse_loss(
+            ddf,
+            (fixed_batch["pos"] - moving_batch["pos"]).to(ddf)
+        )
         return {"total": loss}
