@@ -1,4 +1,5 @@
 import torch
+from torch.nn import functional as F
 from monai.metrics import DiceMetric, HausdorffDistanceMetric
 from monai.networks import one_hot
 
@@ -135,3 +136,28 @@ class HausdorffMeter(DiceMeter):
         )
         self.tag = "hausdorff"
         self.reset()
+
+
+class MSEMeter:
+    def __init__(self, writer, test=False):
+        self.writer = writer
+        self.tag = "mse"
+        self.reset()
+
+    def reset(self):
+        self.count, self.sum = 0, 0
+
+    def update(self, mse):
+        """
+        :param mse: float
+        :return:
+        """
+        self.sum += mse
+        self.count += 1
+
+    def get_average(self, step):
+        metric = self.sum / self.count
+        if self.writer is not None:
+            self.writer.add_scalar(tag=f"{self.tag}/mean", scalar_value=metric, global_step=step)
+            print(f"mean: {metric}")
+        return metric

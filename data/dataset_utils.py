@@ -140,3 +140,25 @@ def get_img(img, transform, image_path, seg_path, args):
         new_seg[x["seg"] == organ_index] = organ_index
     x["seg"] = new_seg
     return x
+
+
+def get_patch(x, pos, args):
+    """
+    :param x: dict with t2w:(1, ...) seg:(1, ...) name:str
+    :param pos: front-left-top coordinate of the patch
+    :param args:
+    :return:
+    """
+    w, h, d = args.patch_size
+    x = {
+        "t2w": x["t2w"][pos[0]:pos[0]+w, pos[1]:pos[1]+h, pos[2]:pos[2]+d],
+        "seg": x["seg"][pos[0]:pos[0]+w, pos[1]:pos[1]+h, pos[2]:pos[2]+d],
+        "name": x["name"],
+        "pos": pos
+    }
+    return x
+
+
+def sample_patch(args):
+    w, h, d = np.array(args.size) - np.array(args.patch_size)
+    return np.random.uniform()*w, np.random.uniform()*h, np.random.uniform()*d

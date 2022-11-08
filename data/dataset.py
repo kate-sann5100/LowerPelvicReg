@@ -3,7 +3,8 @@ from monai.transforms import RandSpatialCropd
 
 from torch.utils.data import Dataset
 
-from data.dataset_utils import get_institution_patient_dict, get_transform, sample_pair, get_img
+from data.dataset_utils import get_institution_patient_dict, get_transform, sample_pair, get_img, sample_patch, \
+    get_patch
 
 
 class RegDataset(Dataset):
@@ -60,5 +61,56 @@ class RegDataset(Dataset):
 
         moving = get_img(moving, self.transform, self.image_path, self.seg_path, self.args)
         fixed = get_img(fixed, self.transform, self.image_path, self.seg_path, self.args)
+
+        return moving, fixed
+
+
+class PatchDataset(Dataset):
+
+    def __init__(self, args, mode):
+        super(PatchDataset, self).__init__()
+        self.args = args
+        self.mode = mode
+
+        self.seg_path, self.image_path = f"{args.data_path}/data", f"{args.data_path}/data"
+
+        institution_patient_dict = get_institution_patient_dict(
+            data_path=args.data_path,
+            mode=mode,
+        )
+
+        self.img_list = []
+        for ins, patient_list in institution_patient_dict.items():
+            self.img_list.extend([(p, ins) for p in patient_list])
+        if self.mode != "train":
+            self.val_pair = [
+                (img, sample_patch(self.args), sample_patch(self.args))
+                for img in self.img_list
+            ]
+
+        self.transform = get_transform(
+            augmentation=self.mode == "train",
+            size=[args.size[0], args.size[1], 76],
+            resolution=args.resolution
+        )
+
+        self.random_crop = RandSpatialCropd(
+            keys=["t2w", "mask", "seg"],
+            roi_size=(args.size[0], args.size[1], 10),
+            random_size=False
+        )
+
+    def __len__(self):
+        return len(self.img_list) if self.mode == "train" else len(self.val_pair)
+
+    def __getitem__(self, idx):
+        if self.mode == "train":
+            img = self.img_list[idx]
+            moving, fixed = sample_patch(self.args), sample_patch(self.args)
+        else:
+            img, moving, fixed = self.val_pair[idx]
+
+        img = get_img(img, self.transform, self.image_path, self.seg_path, self.args)
+        moving, fixed = get_patch(img, moving, self.args), get_patch(img, fixed, self.args)
 
         return moving, fixed
