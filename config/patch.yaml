@@ -7,6 +7,6 @@ DATA:
   organ_list: ["BladderMask", "BoneMask", "ObdInternMask", "TZ", "CG", "RectumMask", "SV", "NVB"]
 
 MODEL:
-  input: "img"
+  input: "patch"
   multi_head: False
   reg: False
