@@ -11,7 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 from data.dataset import RegDataset
 from model.registration_model import Registration
 from utils.meter import LossMeter, DiceMeter, HausdorffMeter
-from utils.train_eval_utils import get_parser, set_seed, get_save_dir, cuda_batch, save_result_dicts
+from utils.train_eval_utils import get_parser, set_seed, get_save_dir, cuda_batch, save_result_dicts, overwrite_save_dir
 from utils.visualisation import Visualisation
 
 
@@ -31,6 +31,7 @@ def train_worker(args):
     set_seed(args.manual_seed)
     save_dir = get_save_dir(args)
     print(save_dir)
+    overwrite_save_dir(args, save_dir)
 
     train_dataset = RegDataset(args=args, mode="train")
     train_loader = DataLoader(
@@ -52,12 +53,6 @@ def train_worker(args):
 
     model = Registration(args)
     model = torch.nn.DataParallel(model.cuda())
-
-    if os.path.exists(f"{save_dir}/best_ckpt.pth"):
-        if args.overwrite:
-            os.rmdir(save_dir)
-        else:
-            raise ValueError(f"already exists: {save_dir}")
 
     optimiser = Adam(model.parameters(), lr=1e-4)
     writer = SummaryWriter(log_dir=save_dir)
