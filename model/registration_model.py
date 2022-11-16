@@ -81,7 +81,7 @@ class Registration(nn.Module):
         :param t2w: if input is t2w, warp with "bilinear"
         :return:
         """
-        mode = "bilinear" if (one_hot_moving or t2w)
+        mode = "bilinear" if (one_hot_moving or t2w) else "nearest"
         print(mode)
         pred = Warp(mode="bilinear" if (one_hot_moving or t2w) else "nearest")(
             one_hot(moving, num_classes=9) if one_hot_moving else moving,
