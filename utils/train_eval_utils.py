@@ -1,6 +1,8 @@
 import argparse
 import os
 import random
+import shutil
+
 import torch
 
 import numpy as np
@@ -74,6 +76,6 @@ def save_result_dicts(save_dir, dice_result_dict, hausdorff_result_dict):
 def overwrite_save_dir(args, save_dir):
     if os.path.exists(f"{save_dir}/best_ckpt.pth"):
         if args.overwrite:
-            os.rmdir(save_dir)
+            shutil.rmtree(save_dir)
         else:
             raise ValueError(f"already exists: {save_dir}")
