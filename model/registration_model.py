@@ -1,10 +1,14 @@
+from typing import Tuple, Union, List, Optional
+
 import torch
 import numpy as np
 from monai.losses import DiceLoss, BendingEnergyLoss
 from monai.networks import one_hot
 from monai.networks.blocks import Warp
+from monai.networks.blocks.regunet_block import get_conv_block
 from monai.networks.nets import LocalNet
 from torch import nn
+from torch.nn import functional as F
 
 from data.dataset_utils import organ_index_dict
 
@@ -30,6 +34,8 @@ class Registration(nn.Module):
             self.output_block_list = nn.ModuleList(
                 [self.model.output_block] + [self.model.build_output_block() for _ in range(len(args.organ_list) - 1)]
             )
+        else:
+            self.output_block_list = nn.ModuleList([self.model.output_block])
 
         # self.img_loss = GlobalMutualInformationLoss()
         self.img_loss = nn.MSELoss()
@@ -41,36 +47,45 @@ class Registration(nn.Module):
         )
         self.regularisation = BendingEnergyLoss()
 
+    def forward_output_block(self, output_block, feature_list, image_size):
+        layers = output_block.layers
+        feature_list = [
+            F.interpolate(
+                layer(feature_list[max(self.extarct_levels) - level]),
+                mode="bilinear", size=image_size
+            )
+            for layer, level in zip(layers, self.extract_levels)
+        ]
+        out: torch.Tensor = torch.mean(torch.stack(feature_list, dim=0), dim=0)
+        return out
+
     def forward_localnet(self, x):
-        if self.multi_head:
-            image_size = x.shape[2:]
-            skips = []  # [0, ..., depth - 1]
-            encoded = x
-            for encode_conv, encode_pool in zip(self.model.encode_convs, self.model.encode_pools):
-                skip = encode_conv(encoded)
-                encoded = encode_pool(skip)
-                skips.append(skip)
-            decoded = self.model.bottom_block(encoded)
+        image_size = x.shape[2:]
+        skips = []  # [0, ..., depth - 1]
+        encoded = x
+        for encode_conv, encode_pool in zip(self.model.encode_convs, self.model.encode_pools):
+            skip = encode_conv(encoded)
+            encoded = encode_pool(skip)
+            skips.append(skip)
+        decoded = self.model.bottom_block(encoded)
 
-            outs = [decoded]
+        outs = [decoded]
 
-            # [depth - 1, ..., min_extract_level]
-            for i, (decode_deconv, decode_conv) in enumerate(zip(self.model.decode_deconvs, self.model.decode_convs)):
-                # [depth - 1, depth - 2, ..., min_extract_level]
-                decoded = decode_deconv(decoded)
-                if self.model.concat_skip:
-                    decoded = torch.cat([decoded, skips[-i - 1]], dim=1)
-                else:
-                    decoded = decoded + skips[-i - 1]
-                decoded = decode_conv(decoded)
-                outs.append(decoded)
+        # [depth - 1, ..., min_extract_level]
+        for i, (decode_deconv, decode_conv) in enumerate(zip(self.model.decode_deconvs, self.model.decode_convs)):
+            # [depth - 1, depth - 2, ..., min_extract_level]
+            decoded = decode_deconv(decoded)
+            if self.model.concat_skip:
+                decoded = torch.cat([decoded, skips[-i - 1]], dim=1)
+            else:
+                decoded = decoded + skips[-i - 1]
+            decoded = decode_conv(decoded)
+            outs.append(decoded)
 
-            ddf_list = [self.output_block_list[i](outs, image_size=image_size)
-                        for i in range(len(self.output_block_list))]
+        ddf_list = [self.forward_output_block(self.output_block_list[i], outs, image_size)
+                    for i in range(len(self.output_block_list))]
 
-            return ddf_list  # N x (B, 3, H, W, D)
-        else:
-            return [self.model(x)]  # 1 x (B, 3, H, W, D)
+        return ddf_list  # N x (B, 3, H, W, D)
 
     @staticmethod
     def warp(moving, ddf, one_hot_moving=True, t2w=False):
@@ -178,3 +193,64 @@ class Registration(nn.Module):
         """
         organ_index_list = [organ_index_dict[organ] for organ in self.args.organ_list]
         return [((seg == organ_index) * organ_index).to(seg) for organ_index in organ_index_list]  # 8 x (B, 1, ...)
+
+
+class RegistrationExtractionBlock(nn.Module):
+    """
+    The Extraction Block used in RegUNet.
+    Extracts feature from each ``extract_levels`` and takes the average.
+    """
+
+    def __init__(
+        self,
+        spatial_dims: int,
+        extract_levels: Tuple[int],
+        num_channels: Union[Tuple[int], List[int]],
+        out_channels: int,
+        kernel_initializer: Optional[str] = "kaiming_uniform",
+        activation: Optional[str] = None,
+    ):
+        """
+
+        Args:
+            spatial_dims: number of spatial dimensions
+            extract_levels: spatial levels to extract feature from, 0 refers to the input scale
+            num_channels: number of channels at each scale level,
+                List or Tuple of length equals to `depth` of the RegNet
+            out_channels: number of output channels
+            kernel_initializer: kernel initializer
+            activation: kernel activation function
+        """
+        super().__init__()
+        self.extract_levels = extract_levels
+        self.max_level = max(extract_levels)
+        self.layers = nn.ModuleList(
+            [
+                get_conv_block(
+                    spatial_dims=spatial_dims,
+                    in_channels=num_channels[d],
+                    out_channels=out_channels,
+                    norm=None,
+                    act=activation,
+                    initializer=kernel_initializer,
+                )
+                for d in extract_levels
+            ]
+        )
+
+    def forward(self, x: List[torch.Tensor], image_size: List[int]) -> torch.Tensor:
+        """
+
+        Args:
+            x: Decoded feature at different spatial levels, sorted from deep to shallow
+            image_size: output image size
+
+        Returns:
+            Tensor of shape (batch, `out_channels`, size1, size2, size3), where (size1, size2, size3) = ``image_size``
+        """
+        feature_list = [
+            F.interpolate(layer(x[self.max_level - level]), size=image_size)
+            for layer, level in zip(self.layers, self.extract_levels)
+        ]
+        out: torch.Tensor = torch.mean(torch.stack(feature_list, dim=0), dim=0)
+        return out
