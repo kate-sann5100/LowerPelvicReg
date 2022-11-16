@@ -72,7 +72,7 @@ class Registration(nn.Module):
         outs = [decoded]
 
         # [depth - 1, ..., min_extract_level]
-        print(len(self.mode.decode_deconvs))
+        print(len(self.model.decode_deconvs))
         exit()
         for i, (decode_deconv, decode_conv) in enumerate(zip(self.model.decode_deconvs, self.model.decode_convs)):
             print(i)
