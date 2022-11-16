@@ -73,14 +73,17 @@ class Registration(nn.Module):
             return [self.model(x)]  # 1 x (B, 3, H, W, D)
 
     @staticmethod
-    def warp(moving, ddf, one_hot_moving=True):
+    def warp(moving, ddf, one_hot_moving=True, t2w=False):
         """
         :param moving: (B, 1, W, H, D)
         :param ddf: (B, 3, W, H, D)
         :param one_hot_moving: bool, one hot moving before warping
+        :param t2w: if input is t2w, warp with "bilinear"
         :return:
         """
-        pred = Warp(mode="bilinear" if one_hot_moving else "nearest")(
+        mode = "bilinear" if (one_hot_moving or t2w)
+        print(mode)
+        pred = Warp(mode="bilinear" if (one_hot_moving or t2w) else "nearest")(
             one_hot(moving, num_classes=9) if one_hot_moving else moving,
             ddf
         )
@@ -125,7 +128,7 @@ class Registration(nn.Module):
                 warped_seg += ws * (warped_seg == 0)
             binary = {"seg": warped_seg}
             if not self.multi_head:
-                warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False)
+                warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False, t2w=True)
                 binary["t2w"] = warped_t2w
             return binary
 
