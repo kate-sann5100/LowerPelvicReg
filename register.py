@@ -1,3 +1,5 @@
+import os
+
 import torch
 from monai.transforms import Spacingd
 from torch.backends import cudnn
@@ -50,6 +52,13 @@ def train_worker(args):
 
     model = Registration(args)
     model = torch.nn.DataParallel(model.cuda())
+
+    if os.path.exists(f"{save_dir}/best_ckpt.pth"):
+        if args.overwrite:
+            os.rmdir(save_dir)
+        else:
+            raise ValueError(f"already exists: {save_dir}")
+
     optimiser = Adam(model.parameters(), lr=1e-4)
     writer = SummaryWriter(log_dir=save_dir)
 
