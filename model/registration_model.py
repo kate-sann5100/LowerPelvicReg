@@ -73,6 +73,7 @@ class Registration(nn.Module):
 
         # [depth - 1, ..., min_extract_level]
         for i, (decode_deconv, decode_conv) in enumerate(zip(self.model.decode_deconvs, self.model.decode_convs)):
+            print(i)
             # [depth - 1, depth - 2, ..., min_extract_level]
             decoded = decode_deconv(decoded)
             if self.model.concat_skip:
