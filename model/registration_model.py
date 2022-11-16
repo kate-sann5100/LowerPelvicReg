@@ -19,6 +19,7 @@ class Registration(nn.Module):
         super(Registration, self).__init__()
         self.args = args
         self.multi_head = args.multi_head
+        self.extract_levels = (0, 1, 2, 3)
 
         self.model = LocalNet(
             spatial_dims=3,
