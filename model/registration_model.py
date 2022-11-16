@@ -50,7 +50,7 @@ class Registration(nn.Module):
         layers = output_block.layers
         feature_list = [
             F.interpolate(
-                layer(feature_list[max(self.extarct_levels) - level]),
+                layer(feature_list[max(self.extract_levels) - level]),
                 mode="bilinear", size=image_size
             )
             for layer, level in zip(layers, self.extract_levels)
