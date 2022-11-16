@@ -34,8 +34,6 @@ class Registration(nn.Module):
             self.output_block_list = nn.ModuleList(
                 [self.model.output_block] + [self.model.build_output_block() for _ in range(len(args.organ_list) - 1)]
             )
-        else:
-            self.output_block_list = nn.ModuleList([self.model.output_block])
 
         # self.img_loss = GlobalMutualInformationLoss()
         self.img_loss = nn.MSELoss()
@@ -82,8 +80,11 @@ class Registration(nn.Module):
             decoded = decode_conv(decoded)
             outs.append(decoded)
 
-        ddf_list = [self.forward_output_block(self.output_block_list[i], outs, image_size)
-                    for i in range(len(self.output_block_list))]
+        if self.multi_head:
+            ddf_list = [self.forward_output_block(self.output_block_list[i], outs, image_size)
+                        for i in range(len(self.output_block_list))]
+        else:
+            ddf_list = [self.forward_output_block(self.model.output_block, outs, image_size)]
 
         return ddf_list  # N x (B, 3, H, W, D)
 
