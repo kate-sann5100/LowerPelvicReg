@@ -47,6 +47,7 @@ class Registration(nn.Module):
         self.regularisation = BendingEnergyLoss()
 
     def forward_output_block(self, output_block, feature_list, image_size):
+        print(len(feature_list))
         layers = output_block.layers
         feature_list = [
             F.interpolate(
