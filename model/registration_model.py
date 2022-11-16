@@ -48,8 +48,8 @@ class Registration(nn.Module):
 
     def forward_output_block(self, output_block, feature_list, image_size):
         layers = output_block.layers
-        print(output_block.extract_levels)
-        for layer, level in zip(layers, self.extract_levels):
+        print(output_block.extract_levels, self.extract_levels[-1:])
+        for layer, level in zip(layers, self.extract_levels[-1:]):
             print(max(self.extract_levels) - level)
             print("______")
         feature_list = [
