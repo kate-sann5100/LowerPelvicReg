@@ -48,16 +48,17 @@ class Registration(nn.Module):
 
     def forward_output_block(self, output_block, feature_list, image_size):
         layers = output_block.layers
+        extract_levels = self.extract_levels[-1:]
         print(output_block.extract_levels, self.extract_levels[-1:])
         for layer, level in zip(layers, self.extract_levels[-1:]):
             print(max(self.extract_levels) - level)
             print("______")
         feature_list = [
             F.interpolate(
-                layer(feature_list[max(self.extract_levels) - level]),
+                layer(feature_list[max(extract_levels) - level]),
                 mode="bilinear", size=image_size
             )
-            for layer, level in zip(layers, self.extract_levels)
+            for layer, level in zip(layers, extract_levels)
         ]
         out: torch.Tensor = torch.mean(torch.stack(feature_list, dim=0), dim=0)
         return out
