@@ -9,7 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 from data.dataset import PatchDataset
 from model.patch_registration_model import PatchRegistration
 from utils.meter import LossMeter, DiceMeter, HausdorffMeter, MSEMeter
-from utils.train_eval_utils import get_parser, set_seed, get_save_dir, cuda_batch, save_result_dicts
+from utils.train_eval_utils import get_parser, set_seed, get_save_dir, cuda_batch, save_result_dicts, overwrite_save_dir
 from utils.visualisation import Visualisation
 
 
@@ -29,6 +29,7 @@ def train_worker(args):
     set_seed(args.manual_seed)
     save_dir = get_save_dir(args)
     print(save_dir)
+    overwrite_save_dir(args, save_dir)
 
     train_dataset = PatchDataset(args=args, mode="train")
     train_loader = DataLoader(
