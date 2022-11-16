@@ -48,8 +48,8 @@ class Registration(nn.Module):
 
     def forward_output_block(self, output_block, feature_list, image_size):
         layers = output_block.layers
+        print(output_block.extract_levels)
         for layer, level in zip(layers, self.extract_levels):
-            print(layer, level)
             print(max(self.extract_levels) - level)
             print("______")
         feature_list = [
@@ -78,7 +78,6 @@ class Registration(nn.Module):
         print(self.model)
         print(len(self.model.decode_deconvs))
         for i, (decode_deconv, decode_conv) in enumerate(zip(self.model.decode_deconvs, self.model.decode_convs)):
-            print(i)
             # [depth - 1, depth - 2, ..., min_extract_level]
             decoded = decode_deconv(decoded)
             if self.model.concat_skip:
