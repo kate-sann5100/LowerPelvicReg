@@ -128,7 +128,7 @@ class Registration(nn.Module):
                 warped_seg += ws * (warped_seg == 0)
             binary = {"seg": warped_seg}
             if not self.multi_head:
-                print(ddf_list[0].shape)
+                print(ddf_list[0][0, 0])
                 warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False, t2w=True)
                 binary["t2w"] = warped_t2w
             return binary
