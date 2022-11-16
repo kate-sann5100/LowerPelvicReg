@@ -49,10 +49,6 @@ class Registration(nn.Module):
     def forward_output_block(self, output_block, feature_list, image_size):
         layers = output_block.layers
         extract_levels = self.extract_levels[-1:]
-        print(output_block.extract_levels, self.extract_levels[-1:])
-        for layer, level in zip(layers, self.extract_levels[-1:]):
-            print(max(self.extract_levels) - level)
-            print("______")
         feature_list = [
             F.interpolate(
                 layer(feature_list[max(extract_levels) - level]),
@@ -76,8 +72,6 @@ class Registration(nn.Module):
         outs = [decoded]
 
         # [depth - 1, ..., min_extract_level]
-        print(self.model)
-        print(len(self.model.decode_deconvs))
         for i, (decode_deconv, decode_conv) in enumerate(zip(self.model.decode_deconvs, self.model.decode_convs)):
             # [depth - 1, depth - 2, ..., min_extract_level]
             decoded = decode_deconv(decoded)
@@ -87,6 +81,8 @@ class Registration(nn.Module):
                 decoded = decoded + skips[-i - 1]
             decoded = decode_conv(decoded)
             outs.append(decoded)
+
+        print([o.shape for o in outs])
 
         if self.multi_head:
             ddf_list = [self.forward_output_block(self.output_block_list[i], outs, image_size)
