@@ -33,8 +33,6 @@ class Registration(nn.Module):
             out_activation=None,
             out_kernel_initializer="zeros"
         )
-        print(self.model)
-        exit()
 
         if self.multi_head:
             self.output_block_list = nn.ModuleList(
@@ -87,8 +85,6 @@ class Registration(nn.Module):
             decoded = decode_conv(decoded)
             outs.append(decoded)
 
-        print([o.shape for o in outs])
-
         if self.multi_head:
             ddf_list = [self.forward_output_block(self.output_block_list[i], outs, image_size)
                         for i in range(len(self.output_block_list))]
@@ -107,7 +103,6 @@ class Registration(nn.Module):
         :return:
         """
         mode = "bilinear" if (one_hot_moving or t2w) else "nearest"
-        print(mode)
         pred = Warp(mode="bilinear" if (one_hot_moving or t2w) else "nearest")(
             one_hot(moving, num_classes=9) if one_hot_moving else moving,
             ddf
