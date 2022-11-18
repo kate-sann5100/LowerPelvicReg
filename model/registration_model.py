@@ -1,10 +1,14 @@
+from typing import Tuple, Union, List, Optional
+
 import torch
 import numpy as np
 from monai.losses import DiceLoss, BendingEnergyLoss
 from monai.networks import one_hot
 from monai.networks.blocks import Warp
-from monai.networks.nets import LocalNet
+from monai.networks.blocks.regunet_block import get_conv_block, get_deconv_block
+from monai.networks.nets import LocalNet, RegUNet
 from torch import nn
+from torch.nn import functional as F
 
 from data.dataset_utils import organ_index_dict
 
@@ -15,8 +19,9 @@ class Registration(nn.Module):
         super(Registration, self).__init__()
         self.args = args
         self.multi_head = args.multi_head
+        self.extract_levels = (0, 1, 2, 3)
 
-        self.model = LocalNet(
+        self.model = NewLocalNet(
             spatial_dims=3,
             in_channels=2,
             out_channels=3,
@@ -41,46 +46,59 @@ class Registration(nn.Module):
         )
         self.regularisation = BendingEnergyLoss()
 
+    def forward_output_block(self, output_block, feature_list, image_size):
+        layers = output_block.layers
+        feature_list = [
+            F.interpolate(
+                layer(feature_list[max(self.extract_levels) - level]),
+                mode="trilinear", size=image_size
+            )
+            for layer, level in zip(layers, self.extract_levels)
+        ]
+        out: torch.Tensor = torch.mean(torch.stack(feature_list, dim=0), dim=0)
+        return out
+
     def forward_localnet(self, x):
+        image_size = x.shape[2:]
+        skips = []  # [0, ..., depth - 1]
+        encoded = x
+        for encode_conv, encode_pool in zip(self.model.encode_convs, self.model.encode_pools):
+            skip = encode_conv(encoded)
+            encoded = encode_pool(skip)
+            skips.append(skip)
+        decoded = self.model.bottom_block(encoded)
+
+        outs = [decoded]
+
+        # [depth - 1, ..., min_extract_level]
+        for i, (decode_deconv, decode_conv) in enumerate(zip(self.model.decode_deconvs, self.model.decode_convs)):
+            # [depth - 1, depth - 2, ..., min_extract_level]
+            decoded = decode_deconv(decoded)
+            if self.model.concat_skip:
+                decoded = torch.cat([decoded, skips[-i - 1]], dim=1)
+            else:
+                decoded = decoded + skips[-i - 1]
+            decoded = decode_conv(decoded)
+            outs.append(decoded)
+
         if self.multi_head:
-            image_size = x.shape[2:]
-            skips = []  # [0, ..., depth - 1]
-            encoded = x
-            for encode_conv, encode_pool in zip(self.model.encode_convs, self.model.encode_pools):
-                skip = encode_conv(encoded)
-                encoded = encode_pool(skip)
-                skips.append(skip)
-            decoded = self.model.bottom_block(encoded)
-
-            outs = [decoded]
-
-            # [depth - 1, ..., min_extract_level]
-            for i, (decode_deconv, decode_conv) in enumerate(zip(self.model.decode_deconvs, self.model.decode_convs)):
-                # [depth - 1, depth - 2, ..., min_extract_level]
-                decoded = decode_deconv(decoded)
-                if self.model.concat_skip:
-                    decoded = torch.cat([decoded, skips[-i - 1]], dim=1)
-                else:
-                    decoded = decoded + skips[-i - 1]
-                decoded = decode_conv(decoded)
-                outs.append(decoded)
-
-            ddf_list = [self.output_block_list[i](outs, image_size=image_size)
+            ddf_list = [self.forward_output_block(self.output_block_list[i], outs, image_size)
                         for i in range(len(self.output_block_list))]
-
-            return ddf_list  # N x (B, 3, H, W, D)
         else:
-            return [self.model(x)]  # 1 x (B, 3, H, W, D)
+            ddf_list = [self.forward_output_block(self.model.output_block, outs, image_size)]
+
+        return ddf_list  # N x (B, 3, H, W, D)
 
     @staticmethod
-    def warp(moving, ddf, one_hot_moving=True):
+    def warp(moving, ddf, one_hot_moving=True, t2w=False):
         """
         :param moving: (B, 1, W, H, D)
         :param ddf: (B, 3, W, H, D)
         :param one_hot_moving: bool, one hot moving before warping
+        :param t2w: if input is t2w, warp with "bilinear"
         :return:
         """
-        pred = Warp(mode="bilinear" if one_hot_moving else "nearest")(
+        pred = Warp(mode="bilinear" if (one_hot_moving or t2w) else "nearest")(
             one_hot(moving, num_classes=9) if one_hot_moving else moving,
             ddf
         )
@@ -125,7 +143,7 @@ class Registration(nn.Module):
                 warped_seg += ws * (warped_seg == 0)
             binary = {"seg": warped_seg}
             if not self.multi_head:
-                warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False)
+                warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False, t2w=True)
                 binary["t2w"] = warped_t2w
             return binary
 
@@ -174,3 +192,85 @@ class Registration(nn.Module):
         """
         organ_index_list = [organ_index_dict[organ] for organ in self.args.organ_list]
         return [((seg == organ_index) * organ_index).to(seg) for organ_index in organ_index_list]  # 8 x (B, 1, ...)
+
+
+class NewLocalNet(RegUNet):
+    """
+    Reimplementation of LocalNet, based on:
+    `Weakly-supervised convolutional neural networks for multimodal image registration
+    <https://doi.org/10.1016/j.media.2018.07.002>`_.
+    `Label-driven weakly-supervised learning for multimodal deformable image registration
+    <https://arxiv.org/abs/1711.01666>`_.
+
+    Adapted from:
+        DeepReg (https://github.com/DeepRegNet/DeepReg)
+    """
+
+    def __init__(
+        self,
+        spatial_dims: int,
+        in_channels: int,
+        num_channel_initial: int,
+        extract_levels: Tuple[int],
+        out_kernel_initializer: Optional[str] = "kaiming_uniform",
+        out_activation: Optional[str] = None,
+        out_channels: int = 3,
+        pooling: bool = True,
+        use_addictive_sampling: bool = True,
+        concat_skip: bool = False,
+    ):
+        """
+        Args:
+            spatial_dims: number of spatial dims
+            in_channels: number of input channels
+            num_channel_initial: number of initial channels
+            out_kernel_initializer: kernel initializer for the last layer
+            out_activation: activation at the last layer
+            out_channels: number of channels for the output
+            extract_levels: list, which levels from net to extract. The maximum level must equal to ``depth``
+            pooling: for down-sampling, use non-parameterized pooling if true, otherwise use conv3d
+            use_addictive_sampling: whether use additive up-sampling layer for decoding.
+            concat_skip: when up-sampling, concatenate skipped tensor if true, otherwise use addition
+        """
+        self.use_additive_upsampling = use_addictive_sampling
+        super().__init__(
+            spatial_dims=spatial_dims,
+            in_channels=in_channels,
+            num_channel_initial=num_channel_initial,
+            extract_levels=extract_levels,
+            depth=max(extract_levels),
+            out_kernel_initializer=out_kernel_initializer,
+            out_activation=out_activation,
+            out_channels=out_channels,
+            pooling=pooling,
+            concat_skip=concat_skip,
+            encode_kernel_sizes=[7] + [3] * max(extract_levels),
+        )
+
+    def build_bottom_block(self, in_channels: int, out_channels: int):
+        kernel_size = self.encode_kernel_sizes[self.depth]
+        return get_conv_block(
+            spatial_dims=self.spatial_dims, in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size
+        )
+
+    def build_up_sampling_block(self, in_channels: int, out_channels: int) -> nn.Module:
+        if self.use_additive_upsampling:
+            return AdditiveUpSampleBlock(
+                spatial_dims=self.spatial_dims, in_channels=in_channels, out_channels=out_channels
+            )
+
+        return get_deconv_block(spatial_dims=self.spatial_dims, in_channels=in_channels, out_channels=out_channels)
+
+
+class AdditiveUpSampleBlock(nn.Module):
+    def __init__(self, spatial_dims: int, in_channels: int, out_channels: int):
+        super().__init__()
+        self.deconv = get_deconv_block(spatial_dims=spatial_dims, in_channels=in_channels, out_channels=out_channels)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        output_size = [size * 2 for size in x.shape[2:]]
+        deconved = self.deconv(x)
+        resized = F.interpolate(x, output_size)
+        resized = torch.sum(torch.stack(resized.split(split_size=resized.shape[1] // 2, dim=1), dim=-1), dim=-1)
+        out: torch.Tensor = deconved + resized
+        return out
