@@ -7,7 +7,6 @@ from monai.networks import one_hot
 from monai.networks.blocks import Warp
 from monai.networks.blocks.regunet_block import get_conv_block, get_deconv_block
 from monai.networks.nets import LocalNet, RegUNet
-from monai.networks.nets.regunet import AdditiveUpSampleBlock
 from torch import nn
 from torch.nn import functional as F
 
@@ -266,3 +265,18 @@ class NewLocalNet(RegUNet):
             )
 
         return get_deconv_block(spatial_dims=self.spatial_dims, in_channels=in_channels, out_channels=out_channels)
+
+
+class AdditiveUpSampleBlock(nn.Module):
+    def __init__(self, spatial_dims: int, in_channels: int, out_channels: int):
+        super().__init__()
+        self.deconv = get_deconv_block(spatial_dims=spatial_dims, in_channels=in_channels, out_channels=out_channels)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        output_size = (size * 2 for size in x.shape[2:])
+        print(output_size)
+        deconved = self.deconv(x)
+        resized = F.interpolate(x, output_size)
+        resized = torch.sum(torch.stack(resized.split(split_size=resized.shape[1] // 2, dim=1), dim=-1), dim=-1)
+        out: torch.Tensor = deconved + resized
+        return out
