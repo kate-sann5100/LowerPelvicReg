@@ -30,6 +30,8 @@ class Registration(nn.Module):
             out_activation=None,
             out_kernel_initializer="zeros"
         )
+        print(self.model)
+        print(len(self.model.decode_convs), len(self.model.decode_deconvs))
 
         if self.multi_head:
             self.output_block_list = nn.ModuleList(
