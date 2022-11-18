@@ -55,7 +55,8 @@ class Registration(nn.Module):
             print(layer)
         for feature in feature_list:
             print(feature.shape)
-        exit()
+        for level in extract_levels:
+            print(max(extract_levels) - level)
         feature_list = [
             F.interpolate(
                 layer(feature_list[max(extract_levels) - level]),
