@@ -273,7 +273,7 @@ class AdditiveUpSampleBlock(nn.Module):
         self.deconv = get_deconv_block(spatial_dims=spatial_dims, in_channels=in_channels, out_channels=out_channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        output_size = (size * 2 for size in x.shape[2:])
+        output_size = [size * 2 for size in x.shape[2:]]
         print(output_size)
         deconved = self.deconv(x)
         resized = F.interpolate(x, output_size)
