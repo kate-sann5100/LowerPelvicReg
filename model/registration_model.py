@@ -51,6 +51,11 @@ class Registration(nn.Module):
     def forward_output_block(self, output_block, feature_list, image_size):
         layers = output_block.layers
         extract_levels = self.extract_levels[-1:]
+        for layer in layers:
+            print(layer)
+        for feature in feature_list:
+            print(feature.shape)
+        exit()
         feature_list = [
             F.interpolate(
                 layer(feature_list[max(extract_levels) - level]),
