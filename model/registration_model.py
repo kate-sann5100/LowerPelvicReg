@@ -11,7 +11,7 @@ from monai.networks.nets.regunet import AdditiveUpSampleBlock
 from torch import nn
 from torch.nn import functional as F
 
-import deepreg.model.backbone.local_net
+# import deepreg.model.backbone.local_net
 
 from data.dataset_utils import organ_index_dict
 
