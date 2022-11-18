@@ -256,6 +256,7 @@ class NewLocalNet(RegUNet):
             concat_skip=concat_skip,
             encode_kernel_sizes=[7] + [3] * max(extract_levels),
         )
+        self.use_additive_upsampling = use_addictive_sampling
 
     def build_bottom_block(self, in_channels: int, out_channels: int):
         kernel_size = self.encode_kernel_sizes[self.depth]
