@@ -11,6 +11,8 @@ from monai.networks.nets.regunet import AdditiveUpSampleBlock
 from torch import nn
 from torch.nn import functional as F
 
+import deepreg.model.backbone.local_net
+
 from data.dataset_utils import organ_index_dict
 
 
@@ -225,6 +227,7 @@ class NewLocalNet(RegUNet):
         out_activation: Optional[str] = None,
         out_channels: int = 3,
         pooling: bool = True,
+        use_addictive_sampling: bool = True,
         concat_skip: bool = False,
     ):
         """
@@ -237,6 +240,7 @@ class NewLocalNet(RegUNet):
             out_channels: number of channels for the output
             extract_levels: list, which levels from net to extract. The maximum level must equal to ``depth``
             pooling: for down-sampling, use non-parameterized pooling if true, otherwise use conv3d
+            use_addictive_sampling: whether use additive up-sampling layer for decoding.
             concat_skip: when up-sampling, concatenate skipped tensor if true, otherwise use addition
         """
         super().__init__(
@@ -260,7 +264,7 @@ class NewLocalNet(RegUNet):
         )
 
     def build_up_sampling_block(self, in_channels: int, out_channels: int) -> nn.Module:
-        if self._use_additive_upsampling:
+        if self.use_additive_upsampling:
             return AdditiveUpSampleBlock(
                 spatial_dims=self.spatial_dims, in_channels=in_channels, out_channels=out_channels
             )
