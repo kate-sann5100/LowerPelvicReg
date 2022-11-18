@@ -10,8 +10,6 @@ from monai.networks.nets import LocalNet, RegUNet
 from torch import nn
 from torch.nn import functional as F
 
-# import deepreg.model.backbone.local_net
-
 from data.dataset_utils import organ_index_dict
 
 
@@ -50,12 +48,6 @@ class Registration(nn.Module):
 
     def forward_output_block(self, output_block, feature_list, image_size):
         layers = output_block.layers
-        for layer in layers:
-            print(layer)
-        for feature in feature_list:
-            print(feature.shape)
-        for level in self.extract_levels:
-            print(max(self.extract_levels) - level)
         feature_list = [
             F.interpolate(
                 layer(feature_list[max(self.extract_levels) - level]),
@@ -106,7 +98,6 @@ class Registration(nn.Module):
         :param t2w: if input is t2w, warp with "bilinear"
         :return:
         """
-        mode = "bilinear" if (one_hot_moving or t2w) else "nearest"
         pred = Warp(mode="bilinear" if (one_hot_moving or t2w) else "nearest")(
             one_hot(moving, num_classes=9) if one_hot_moving else moving,
             ddf
@@ -152,7 +143,6 @@ class Registration(nn.Module):
                 warped_seg += ws * (warped_seg == 0)
             binary = {"seg": warped_seg}
             if not self.multi_head:
-                print(ddf_list[0][0, 0])
                 warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False, t2w=True)
                 binary["t2w"] = warped_t2w
             return binary
@@ -279,7 +269,6 @@ class AdditiveUpSampleBlock(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         output_size = [size * 2 for size in x.shape[2:]]
-        print(output_size)
         deconved = self.deconv(x)
         resized = F.interpolate(x, output_size)
         resized = torch.sum(torch.stack(resized.split(split_size=resized.shape[1] // 2, dim=1), dim=-1), dim=-1)
