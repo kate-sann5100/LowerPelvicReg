@@ -104,7 +104,8 @@ class Registration(nn.Module):
         )
         return pred  # (B, 9, ...) or (B, 1, ...)
 
-    def forward(self, moving_batch, fixed_batch, semi_supervision=False):
+    def forward(self, moving_batch, fixed_batch,
+                semi_supervision=False, semi_mode=None):
         """
         :param moving_batch:
         "t2w": (B, 1, ...)
@@ -117,6 +118,7 @@ class Registration(nn.Module):
         "name": str
         "ins": int
         :param semi_supervision: bool
+        :param semi_mode: "train" or "eval"
         :return:
         """
 
@@ -126,7 +128,7 @@ class Registration(nn.Module):
             x = torch.cat([moving_batch["seg"], fixed_batch["seg"]], dim=1)
         ddf_list = self.forward_localnet(x)  # num_class x (B, 3, H, W, D)
 
-        if semi_supervision and self.training:
+        if semi_supervision and semi_mode == "train":
             ddf = torch.mean(
                 torch.stack(ddf_list, dim=-1),  # (B, 3, H, W, D, num_class)
                 dim=-1
@@ -147,7 +149,7 @@ class Registration(nn.Module):
         if self.training:
             return self.get_loss(warped_seg_list, fixed_seg_list, ddf_list, loss_organ_list)
         else:
-            if semi_supervision:
+            if semi_supervision and semi_mode == "eval":
                 assert not self.multi_head, "semi-supervision does not support multi-head"
                 warped_seg = warped_seg_list[0]  # (B, 9, ...)
                 warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False, t2w=True)

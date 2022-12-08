@@ -103,7 +103,7 @@ def train_worker(args):
             # predict unlabelled pair with both models
             with torch.no_grad():
                 ul_t_pred = [
-                    v(ul_moving, ul_fixed, semi_supervision=True)
+                    v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
                     for _, v in teacher.items()
                 ]
                 ul_t_pred = torch.stack(ul_t_pred, dim=-1)
@@ -176,7 +176,7 @@ def validation(args, teacher, loader,
                 moving, fixed = overfit_moving, overfit_fixed
             cuda_batch(moving)
             cuda_batch(fixed)
-            teacher_pred = [v(moving, fixed, semi_supervision=False)  # (B, 9, ...)
+            teacher_pred = [v(moving, fixed, semi_supervision=True, semi_mode="eval")  # (B, 9, ...)
                             for _, v in teacher.items()]
             binary = {}
             for k in ["seg", "t2w"]:
