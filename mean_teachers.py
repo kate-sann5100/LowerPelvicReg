@@ -186,14 +186,14 @@ def validation(args, student, teacher, loader,
                 moving, fixed = overfit_moving, overfit_fixed
             cuda_batch(moving)
             cuda_batch(fixed)
+
             student.eval()
             student_binary = student(moving, fixed, semi_supervision=False)
-            print(student_binary["seg"].shape)
-            print(fixed["seg"].shape)
             student_dice_meter.update(
                 student_binary["seg"], fixed["seg"],
                 name=moving["name"], fixed_ins=fixed["ins"]
             )
+
             teacher_pred = [v(moving, fixed, semi_supervision=True, semi_mode="eval")  # (B, 9, ...)
                             for _, v in teacher.items()]
             binary = {}
@@ -204,6 +204,10 @@ def validation(args, student, teacher, loader,
                 )  # (B, C, ...)
             binary["seg"] = torch.argmax(binary["seg"], dim=1, keepdim=True)  # (B, 1, ...)
             print(moving["name"][0], fixed["ins"][0])
+            print("binary_seg")
+            print(torch.unique(binary["seg"]))
+            print("fixed_seg")
+            print(torch.unique(fixed["seg"]))
             dice_meter.update(
                 binary["seg"], fixed["seg"],
                 name=moving["name"], fixed_ins=fixed["ins"]
