@@ -112,6 +112,9 @@ def train_worker(args):
             ul_s_pred = student(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
             ul_loss = consistency_loss(ul_t_pred, ul_s_pred, ul[1]["affine_ddf"])
             ul_loss_meter.update({"semi": torch.mean(ul_loss)})
+            optimiser.zero_grad()
+            ul_loss.backward()
+            optimiser.step()
 
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
             l_loss = 0
@@ -120,10 +123,8 @@ def train_worker(args):
                 if k in ["label", "reg"]:
                     l_loss = l_loss + torch.mean(v)
             l_loss_meter.update(l_loss_dict)
-
-            loss = ul_loss + l_loss
             optimiser.zero_grad()
-            loss.backward()
+            l_loss.backward()
             optimiser.step()
 
             with torch.no_grad():
