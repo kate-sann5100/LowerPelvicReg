@@ -170,3 +170,10 @@ class MSEMeter:
             self.writer.add_scalar(tag=f"{self.tag}/mean", scalar_value=metric, global_step=step)
             print(f"mean: {metric}")
         return metric
+
+
+class StudentDiceMeter(DiceMeter):
+
+    def __init__(self, writer, test=False):
+        super(StudentDiceMeter, self).__init__(writer, test)
+        self.tag = "student_dice"

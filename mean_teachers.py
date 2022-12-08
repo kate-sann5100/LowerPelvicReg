@@ -11,8 +11,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 from data.dataset import SemiDataset
 from model.registration_model import Registration, ConsistencyLoss
-from utils.meter import LossMeter, SemiLossMeter, DiceMeter, HausdorffMeter
+from utils.meter import LossMeter, SemiLossMeter, DiceMeter, HausdorffMeter, StudentDiceMeter
 from utils.train_eval_utils import cuda_batch, set_seed, get_save_dir, overwrite_save_dir, get_parser
+
+# TODO: test augmentation
 
 
 def main():
@@ -91,6 +93,7 @@ def train_worker(args):
         curr_teacher_id = 0 if epoch % 2 != 0 else 1
         student.train()
         for step, (l, ul) in enumerate(dataloader):
+            step_count += 1
             l_moving, l_fixed = l
             ul_moving, ul_fixed = ul
             if args.overfit:
@@ -103,6 +106,7 @@ def train_worker(args):
             # predict unlabelled pair with both models
             with torch.no_grad():
                 # TODO: not support multi-gpu
+                # TODO: divide ul and l to separate gpu
                 ul_t_pred = [
                     v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
                     for _, v in teacher.items()
@@ -144,7 +148,7 @@ def train_worker(args):
         print("validating...")
 
         val_metric, _, _ = validation(
-            args, teacher, val_loader,
+            args, student, teacher, val_loader,
             writer=writer, step=step_count, vis=None, test=False,
             overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
         )
@@ -169,9 +173,10 @@ def update_teacher(teacher, student, args):
     teacher.load_state_dict(new_teacher_state_dict)
 
 
-def validation(args, teacher, loader,
+def validation(args, student, teacher, loader,
                writer=None, step=None, vis=None, test=False,
                overfit_moving=None, overfit_fixed=None):
+    student_dice_meter = StudentDiceMeter(writer, test=test)
     dice_meter = DiceMeter(writer, test=test)
     hausdorff_meter = HausdorffMeter(writer, test=test)
 
@@ -181,6 +186,11 @@ def validation(args, teacher, loader,
                 moving, fixed = overfit_moving, overfit_fixed
             cuda_batch(moving)
             cuda_batch(fixed)
+            student_binary = student(moving, fixed, semi_supervision=False)
+            student_binary.update(
+                binary["seg"], fixed["seg"],
+                name=moving["name"], fixed_ins=fixed["ins"]
+            )
             teacher_pred = [v(moving, fixed, semi_supervision=True, semi_mode="eval")  # (B, 9, ...)
                             for _, v in teacher.items()]
             binary = {}
@@ -222,6 +232,7 @@ def validation(args, teacher, loader,
             if args.overfit:
                 break
 
+        student_dice_metric, student_dice_result_dict = dice_meter.get_average(step)
         dice_metric, dice_result_dict = dice_meter.get_average(step)
         if test:
             hausdorff_metric, hausdorff_result_dict = hausdorff_meter.get_average(step)
