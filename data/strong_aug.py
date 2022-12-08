@@ -126,7 +126,7 @@ class RandAffine(RandomizableTransform):
         """
         self.randomize()
         grid = self.get_identity_grid(self.spatial_size)
-        grid = self.rand_affine_grid(grid=grid, randomize=True)
+        grid = self.rand_affine_grid(grid=grid)
         img["t2w"] = self.resampler(
             img=img["t2w"], grid=grid, mode=self.mode, padding_mode=self.padding_mode
         )
