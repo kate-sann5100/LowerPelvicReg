@@ -11,3 +11,4 @@ MODEL:
   input: "img"
   multi_head: False
   reg: False
+  keep_rate: 0.996
