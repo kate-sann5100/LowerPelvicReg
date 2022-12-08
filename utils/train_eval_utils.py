@@ -56,6 +56,8 @@ def get_save_dir(args):
         save_dir += "_multihead"
     if args.reg:
         save_dir += "_reg"
+    if args.semi_supervision:
+        save_dir += f"_semi{args.label_ratio}"
     if args.overfit:
         save_dir += "_overfit"
     print(save_dir)

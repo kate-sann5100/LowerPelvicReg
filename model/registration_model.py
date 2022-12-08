@@ -8,7 +8,7 @@ from monai.networks.blocks import Warp
 from monai.networks.blocks.regunet_block import get_conv_block, get_deconv_block
 from monai.networks.nets import LocalNet, RegUNet
 from torch import nn
-from torch.nn import functional as F
+from torch.nn import functional as F, MSELoss
 
 from data.dataset_utils import organ_index_dict
 
@@ -104,7 +104,7 @@ class Registration(nn.Module):
         )
         return pred  # (B, 9, ...) or (B, 1, ...)
 
-    def forward(self, moving_batch, fixed_batch):
+    def forward(self, moving_batch, fixed_batch, semi_supervision=False):
         """
         :param moving_batch:
         "t2w": (B, 1, ...)
@@ -116,6 +116,7 @@ class Registration(nn.Module):
         "seg": (B, 1, ...)
         "name": str
         "ins": int
+        :param semi_supervision: bool
         :return:
         """
 
@@ -124,6 +125,14 @@ class Registration(nn.Module):
         else:
             x = torch.cat([moving_batch["seg"], fixed_batch["seg"]], dim=1)
         ddf_list = self.forward_localnet(x)  # num_class x (B, 3, H, W, D)
+
+        if semi_supervision and self.training:
+            ddf = torch.mean(
+                torch.stack(ddf_list, dim=-1),  # (B, 3, H, W, D, num_class)
+                dim=-1
+            )  # (B, 3, H, W, D)
+            return ddf
+
         moving_seg, fixed_seg = moving_batch["seg"], fixed_batch["seg"]  # (B, 1, ...)
         if self.multi_head:
             moving_seg_list, fixed_seg_list = self.separate_seg(moving_seg), self.separate_seg(fixed_seg)  # N x (B, 1, ...)
@@ -132,20 +141,29 @@ class Registration(nn.Module):
             moving_seg_list, fixed_seg_list = [moving_seg], [fixed_seg]  # 1 x (B, 1, ...)
             loss_organ_list = ["all"]
         warped_seg_list = [
-            self.warp(ms, ddf, one_hot_moving=self.training)
+            self.warp(ms, ddf, one_hot_moving=self.training or semi_supervision)
             for ms, ddf in zip(moving_seg_list, ddf_list)
         ]  # num_class x (B, 9, ...) or num_class x (B, 1, ...)
         if self.training:
             return self.get_loss(warped_seg_list, fixed_seg_list, ddf_list, loss_organ_list)
         else:
-            warped_seg = warped_seg_list[0]
-            for ws in warped_seg_list[1:]:
-                warped_seg += ws * (warped_seg == 0)
-            binary = {"seg": warped_seg}
-            if not self.multi_head:
+            if semi_supervision:
+                assert not self.multi_head, "semi-supervision does not support multi-head"
+                warped_seg = warped_seg_list[0]  # (B, 9, ...)
                 warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False, t2w=True)
-                binary["t2w"] = warped_t2w
-            return binary
+                return {
+                    "seg": warped_seg,
+                    "t2w": warped_t2w
+                }
+            else:
+                warped_seg = warped_seg_list[0]
+                for ws in warped_seg_list[1:]:
+                    warped_seg += ws * (warped_seg == 0)
+                binary = {"seg": warped_seg}
+                if not self.multi_head:
+                    warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False, t2w=True)
+                    binary["t2w"] = warped_t2w
+                return binary
 
     def get_label_loss(self, warped_seg_list, fixed_seg_list, loss_organ_list):
         """
@@ -274,3 +292,20 @@ class AdditiveUpSampleBlock(nn.Module):
         resized = torch.sum(torch.stack(resized.split(split_size=resized.shape[1] // 2, dim=1), dim=-1), dim=-1)
         out: torch.Tensor = deconved + resized
         return out
+
+
+class ConsistencyLoss(nn.Module):
+    def __init__(self):
+        super(ConsistencyLoss, self).__init__()
+        self.warp = Warp()
+        self.loss_fn = MSELoss()
+
+    def forward(self, s_ddf, t_ddf, affine_ddf):
+        """
+        :param s_ddf: (B, 3, W, H, D)
+        :param t_ddf: (B, 3, W, H, D)
+        :param affine_ddf: (B, 3, W, H, D)
+        :return:
+        """
+        s_ddf = affine_ddf + self.warp(s_ddf, affine_ddf)
+        return self.loss_fn(s_ddf, t_ddf)

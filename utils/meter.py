@@ -19,6 +19,7 @@ class LossMeter:
             "label": 0,
             "reg": 0,
         }
+
         if self.args.multi_head:
             self.sum_dict.update({
                 f"{organ}_label": 0
@@ -42,6 +43,15 @@ class LossMeter:
             )
 
         self.reset()
+
+
+class SemiLossMeter(LossMeter):
+    def __init__(self, args, writer):
+        super(SemiLossMeter, self).__init__(args, writer)
+
+    def reset(self):
+        self.sum_dict = {"semi": 0}
+        self.count = 0
 
 
 class DiceMeter:
