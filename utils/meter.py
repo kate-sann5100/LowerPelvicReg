@@ -61,7 +61,6 @@ class DiceMeter:
         self.metric_fn = DiceMetric(
             include_background=False,
             reduction="sum_batch",
-            ignore_empty=True
         )
         self.tag = "dice"
 
