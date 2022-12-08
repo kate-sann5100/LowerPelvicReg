@@ -127,9 +127,9 @@ class Registration(nn.Module):
         else:
             x = torch.cat([moving_batch["seg"], fixed_batch["seg"]], dim=1)
         ddf_list = self.forward_localnet(x)  # num_class x (B, 3, H, W, D)
-        print("here")
 
         if semi_supervision and semi_mode == "train":
+            print("line132")
             ddf = torch.mean(
                 torch.stack(ddf_list, dim=-1),  # (B, 3, H, W, D, num_class)
                 dim=-1
