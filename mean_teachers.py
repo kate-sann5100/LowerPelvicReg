@@ -187,6 +187,8 @@ def validation(args, student, teacher, loader,
             cuda_batch(moving)
             cuda_batch(fixed)
             student_binary = student(moving, fixed, semi_supervision=False)
+            print(student_binary["seg"].shape)
+            print(fixed["seg"].shape)
             student_dice_meter.update(
                 student_binary["seg"], fixed["seg"],
                 name=moving["name"], fixed_ins=fixed["ins"]
