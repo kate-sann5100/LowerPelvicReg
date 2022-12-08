@@ -187,8 +187,8 @@ def validation(args, student, teacher, loader,
             cuda_batch(moving)
             cuda_batch(fixed)
             student_binary = student(moving, fixed, semi_supervision=False)
-            student_binary.update(
-                binary["seg"], fixed["seg"],
+            student_dice_meter.update(
+                student_binary["seg"], fixed["seg"],
                 name=moving["name"], fixed_ins=fixed["ins"]
             )
             teacher_pred = [v(moving, fixed, semi_supervision=True, semi_mode="eval")  # (B, 9, ...)
