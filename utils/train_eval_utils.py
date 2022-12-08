@@ -79,8 +79,5 @@ def overwrite_save_dir(args, save_dir):
     if os.path.exists(f"{save_dir}/best_ckpt.pth"):
         if args.overwrite:
             shutil.rmtree(save_dir)
-            os.mkdir(save_dir)
         else:
             raise ValueError(f"already exists: {save_dir}")
-    else:
-        os.mkdir(save_dir)
