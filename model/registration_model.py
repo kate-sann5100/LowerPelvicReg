@@ -129,7 +129,6 @@ class Registration(nn.Module):
         ddf_list = self.forward_localnet(x)  # num_class x (B, 3, H, W, D)
 
         if semi_supervision and semi_mode == "train":
-            print("line132")
             ddf = torch.mean(
                 torch.stack(ddf_list, dim=-1),  # (B, 3, H, W, D, num_class)
                 dim=-1
