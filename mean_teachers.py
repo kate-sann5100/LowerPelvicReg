@@ -3,6 +3,7 @@ from itertools import cycle
 
 import torch
 from monai.transforms import Spacingd
+from torch.backends import cudnn
 from torch.cuda import device_count
 from torch.optim import Adam
 from torch.utils.data import DataLoader
@@ -11,7 +12,20 @@ from torch.utils.tensorboard import SummaryWriter
 from data.dataset import SemiDataset
 from model.registration_model import Registration, ConsistencyLoss
 from utils.meter import LossMeter, SemiLossMeter, DiceMeter, HausdorffMeter
-from utils.train_eval_utils import cuda_batch, set_seed, get_save_dir, overwrite_save_dir
+from utils.train_eval_utils import cuda_batch, set_seed, get_save_dir, overwrite_save_dir, get_parser
+
+
+def main():
+    args = get_parser()
+    cudnn.benchmark = False
+    cudnn.deterministic = True
+    set_seed(args.manual_seed)
+
+    if args.test:
+        raise NotImplementedError
+        # val_worker(args)
+    else:
+        train_worker(args)
 
 
 def train_worker(args):
@@ -209,3 +223,7 @@ def validation(args, teacher, loader,
             hausdorff_result_dict = None
 
     return dice_metric, dice_result_dict, hausdorff_result_dict
+
+
+if __name__ == '__main__':
+    main()
