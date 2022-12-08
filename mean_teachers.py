@@ -58,7 +58,8 @@ def train_worker(args):
         for moving, fixed in val_loader:
             l_overfit_moving, l_overfit_fixed = moving, fixed
             ul_overfit_moving, ul_overfit_fixed = moving.copy(), fixed.copy()
-            ul_overfit_moving["seg"], ul_overfit_fixed["seg"] = None, None
+            del ul_overfit_moving["seg"]
+            del ul_overfit_fixed["seg"]
             break
     else:
         l_overfit_moving, l_overfit_fixed, ul_overfit_moving, ul_overfit_fixed = None, None, None, None
