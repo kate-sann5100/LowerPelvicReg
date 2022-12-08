@@ -105,7 +105,8 @@ def train_worker(args):
                 print(teacher)
                 for t_id, v in teacher.items():
                     print(t_id)
-                    _ = v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
+                    ddf = v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
+                    print(ddf)
                 # ul_t_pred = [
                 #     v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
                 #     for _, v in teacher.items()
