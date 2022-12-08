@@ -130,6 +130,9 @@ def train_worker(args):
             with torch.no_grad():
                 update_teacher(teacher[curr_teacher_id], student, args)
 
+            if args.overfit:
+                break
+
         ul_loss_meter.get_average(step_count)
         l_loss_meter.get_average(step_count)
         ckpt = {
