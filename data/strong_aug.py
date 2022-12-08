@@ -11,7 +11,7 @@ class RandAffine(RandomizableTransform):
 
     """
 
-    backend = Affine.backend
+    # backend = Affine.backend
 
     def __init__(
         self,
