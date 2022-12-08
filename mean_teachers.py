@@ -186,6 +186,7 @@ def validation(args, student, teacher, loader,
                 moving, fixed = overfit_moving, overfit_fixed
             cuda_batch(moving)
             cuda_batch(fixed)
+            student.eval()
             student_binary = student(moving, fixed, semi_supervision=False)
             print(student_binary["seg"].shape)
             print(fixed["seg"].shape)
