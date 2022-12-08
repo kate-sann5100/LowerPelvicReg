@@ -133,7 +133,6 @@ class Registration(nn.Module):
                 torch.stack(ddf_list, dim=-1),  # (B, 3, H, W, D, num_class)
                 dim=-1
             )  # (B, 3, H, W, D)
-            print("line136")
             return ddf
 
         moving_seg, fixed_seg = moving_batch["seg"], fixed_batch["seg"]  # (B, 1, ...)
