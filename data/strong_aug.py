@@ -95,7 +95,6 @@ class RandAffine(RandomizableTransform):
         """
         return create_grid(
             spatial_size=spatial_size,
-            device=self.rand_affine_grid.device,
             backend="torch"
         )
 
