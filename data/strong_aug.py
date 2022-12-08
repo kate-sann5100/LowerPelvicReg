@@ -95,7 +95,6 @@ class RandAffine(RandomizableTransform):
         """
         return create_grid(
             spatial_size=spatial_size,
-            backend="torch"
         )
 
     def set_random_state(self, seed=None, state=None):
