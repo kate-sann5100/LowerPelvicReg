@@ -102,6 +102,7 @@ def train_worker(args):
             cuda_batch(ul_fixed)
             # predict unlabelled pair with both models
             with torch.no_grad():
+                print(teacher)
                 for t_id, v in teacher.items():
                     print(t_id)
                     _ = v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
