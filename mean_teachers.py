@@ -141,7 +141,7 @@ def train_worker(args):
             if args.overfit:
                 break
 
-        ul_loss_meter.get_average(step_count)
+        # ul_loss_meter.get_average(step_count)
         l_loss_meter.get_average(step_count)
         ckpt = {
             "epoch": epoch,
