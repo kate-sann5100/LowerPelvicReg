@@ -119,6 +119,7 @@ class DiceMeter:
 
         self.count[self.count == 0] = -1
         mean = self.sum / self.count
+        print(mean)
         print(self.tag)
         for k, v in zip(self.labels, mean):
             if self.writer is not None:
