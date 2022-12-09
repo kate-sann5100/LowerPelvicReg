@@ -96,6 +96,8 @@ class DiceMeter:
         nan = torch.isnan(mean_dice)
         n_n = (~nan).float()
         mean_dice[nan] = 0
+        print(mean_dice)
+        print(n_n)
         self.sum += mean_dice.cpu()
         self.count += n_n.cpu()
 
