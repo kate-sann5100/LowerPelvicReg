@@ -113,6 +113,7 @@ def train_worker(args):
                     l_loss = l_loss + torch.mean(v)
             l_loss_meter.update(l_loss_dict)
             optimiser.zero_grad()
+            l_loss = l_loss * 0.01
             l_loss.backward()
             optimiser.step()
 
