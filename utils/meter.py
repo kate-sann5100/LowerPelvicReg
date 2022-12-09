@@ -96,8 +96,6 @@ class DiceMeter:
         nan = torch.isnan(mean_dice)
         n_n = (~nan).float()
         mean_dice[nan] = 0
-        print(mean_dice)
-        print(n_n)
         self.sum += mean_dice.cpu()
         self.count += n_n.cpu()
 
@@ -119,7 +117,6 @@ class DiceMeter:
 
         self.count[self.count == 0] = -1
         mean = self.sum / self.count
-        print(mean)
         print(self.tag)
         for k, v in zip(self.labels, mean):
             if self.writer is not None:

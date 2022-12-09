@@ -203,11 +203,6 @@ def validation(args, student, teacher, loader,
                     dim=-1
                 )  # (B, C, ...)
             binary["seg"] = torch.argmax(binary["seg"], dim=1, keepdim=True)  # (B, 1, ...)
-            print(moving["name"][0], fixed["ins"][0])
-            print("binary_seg")
-            print(torch.unique(binary["seg"]))
-            print("fixed_seg")
-            print(torch.unique(fixed["seg"]))
             dice_meter.update(
                 binary["seg"], fixed["seg"],
                 name=moving["name"], fixed_ins=fixed["ins"]
@@ -239,7 +234,7 @@ def validation(args, student, teacher, loader,
             if args.overfit:
                 break
 
-        student_dice_metric, student_dice_result_dict = dice_meter.get_average(step)
+        student_dice_metric, student_dice_result_dict = student_dice_meter.get_average(step)
         dice_metric, dice_result_dict = dice_meter.get_average(step)
         if test:
             hausdorff_metric, hausdorff_result_dict = hausdorff_meter.get_average(step)
