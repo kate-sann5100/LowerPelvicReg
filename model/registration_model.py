@@ -309,7 +309,5 @@ class ConsistencyLoss(nn.Module):
         :param affine_ddf: (B, 3, W, H, D)
         :return:
         """
-        print(s_ddf)
-        print(affine_ddf)
         s_ddf = affine_ddf.to(s_ddf) + self.warp(s_ddf, affine_ddf.to(s_ddf))
         return self.loss_fn(s_ddf, t_ddf)

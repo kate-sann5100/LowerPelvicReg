@@ -104,6 +104,18 @@ def train_worker(args):
             cuda_batch(ul_moving)
             cuda_batch(ul_fixed)
             # predict unlabelled pair with both models
+
+            l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
+            l_loss = 0
+            for k, v in l_loss_dict.items():
+                l_loss_dict[k] = torch.mean(v)
+                if k in ["label", "reg"]:
+                    l_loss = l_loss + torch.mean(v)
+            l_loss_meter.update(l_loss_dict)
+            optimiser.zero_grad()
+            l_loss.backward()
+            optimiser.step()
+
             with torch.no_grad():
                 # TODO: not support multi-gpu
                 # TODO: divide ul and l to separate gpu
@@ -120,16 +132,7 @@ def train_worker(args):
             ul_loss.backward()
             optimiser.step()
 
-            l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
-            l_loss = 0
-            for k, v in l_loss_dict.items():
-                l_loss_dict[k] = torch.mean(v)
-                if k in ["label", "reg"]:
-                    l_loss = l_loss + torch.mean(v)
-            l_loss_meter.update(l_loss_dict)
-            optimiser.zero_grad()
-            l_loss.backward()
-            optimiser.step()
+            print(ul_loss, l_loss)
 
             with torch.no_grad():
                 update_teacher(teacher[curr_teacher_id], student, args)
