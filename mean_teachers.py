@@ -90,7 +90,7 @@ def train_worker(args):
         torch.load(f"{warm_up_save_dir}/student_ckpt.pth")["model"],
         strict=True
     )
-    for t_id, t_model in teacher.keys():
+    for t_id, t_model in teacher.items():
         t_model.load_state_dict(
             torch.load(f"{warm_up_save_dir}/t_{t_id}_ckpt.pth")["model"],
             strict=True
@@ -246,7 +246,7 @@ def validation(args, student, teacher, loader,
             )
 
             # teacher prediction
-            for t_id, t_model in teacher.keys():
+            for t_id, t_model in teacher.items():
                 t_model.eval()
             teacher_pred = {
                 t_id: t_model(moving, fixed, semi_supervision=True, semi_mode="eval")
