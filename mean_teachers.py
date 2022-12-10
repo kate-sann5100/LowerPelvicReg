@@ -169,11 +169,9 @@ def train_worker(args):
             with torch.no_grad():
                 update_teacher(teacher[curr_teacher_id], student, args)
 
-            print("before memory")
             writer.add_scalar(
                 tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
             )
-            print("after memory")
 
             if args.overfit:
                 break
