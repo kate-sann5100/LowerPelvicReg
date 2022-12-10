@@ -7,10 +7,11 @@ from data.dataset_utils import organ_list
 
 
 class LossMeter:
-    def __init__(self, args, writer):
+    def __init__(self, args, writer, tag=None):
         self.writer = writer
         self.sum_dict, self.count = None, None
         self.args = args
+        self.tag = tag
         self.reset()
 
     def reset(self):
@@ -37,7 +38,7 @@ class LossMeter:
     def get_average(self, step):
         for k, v in self.sum_dict.items():
             self.writer.add_scalar(
-                tag=k,
+                tag=k if self.tag is None else f"{self.tag}_k",
                 scalar_value=v / self.count,
                 global_step=step
             )
@@ -55,14 +56,14 @@ class SemiLossMeter(LossMeter):
 
 
 class DiceMeter:
-    def __init__(self, writer, test=False):
+    def __init__(self, writer, test=False, tag=None):
         self.writer = writer
         self.labels = organ_list
         self.metric_fn = DiceMetric(
             include_background=False,
             reduction="sum_batch",
         )
-        self.tag = "dice"
+        self.tag = "dice" if tag is None else f"{tag}_dice"
 
         self.test = test
         if test:
@@ -170,10 +171,3 @@ class MSEMeter:
             self.writer.add_scalar(tag=f"{self.tag}/mean", scalar_value=metric, global_step=step)
             print(f"mean: {metric}")
         return metric
-
-
-class StudentDiceMeter(DiceMeter):
-
-    def __init__(self, writer, test=False):
-        super(StudentDiceMeter, self).__init__(writer, test)
-        self.tag = "student_dice"

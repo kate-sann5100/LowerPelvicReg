@@ -50,19 +50,25 @@ def set_seed(manual_seed):
     random.seed(manual_seed)
 
 
-def get_save_dir(args):
+def get_save_dir(args, warm_up=False):
     save_dir = f"ckpt/{args.input}"
-    organ_list = "&".join(args.organ_list)
+    if len(args.organ_list) == 8:
+        organ_list = "all"
+    else:
+        organ_list = "&".join(args.organ_list)
     save_dir += f"_{organ_list}"
     if args.multi_head:
         save_dir += "_multihead"
     if args.reg:
         save_dir += "_reg"
-    if args.label_ratio < 1:
-        if args.semi_supervision:
-            save_dir += f"_semi{args.label_ratio}"
-        else:
-            save_dir += f"_supervised{args.label_ratio}"
+    if warm_up:
+        save_dir += f"_warmup{args.label_ratio}"
+    else:
+        if args.label_ratio < 1:
+            if args.semi_supervision:
+                save_dir += f"_semi{args.label_ratio}"
+            else:
+                save_dir += f"_supervised{args.label_ratio}"
     if args.overfit:
         save_dir += "_overfit"
     print(save_dir)
