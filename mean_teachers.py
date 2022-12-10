@@ -246,6 +246,8 @@ def validation(args, student, teacher, loader,
             )
 
             # teacher prediction
+            for t_id, t_model in teacher.keys():
+                t_model.eval()
             teacher_pred = {
                 t_id: t_model(moving, fixed, semi_supervision=True, semi_mode="eval")
                 for t_id, t_model in teacher.items()
