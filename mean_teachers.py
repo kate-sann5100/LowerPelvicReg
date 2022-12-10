@@ -395,8 +395,8 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
                 f'{save_dir}/student_ckpt.pth'
             )
 
-        for t_id, t_dice in teacher_dice.items():
-            if t_dice[0] > t_best_metric[t_id]:
+        for t_id, bm in t_best_metric.items():
+            if teacher_dice[t_id][0] > bm:
                 torch.save(
                     {
                         "epoch": epoch,
