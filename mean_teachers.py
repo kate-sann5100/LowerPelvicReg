@@ -117,7 +117,7 @@ def train_worker(args):
             l_loss.backward()
             optimiser.step()
 
-            if args.semi_supervison:
+            if args.semi_supervision:
                 with torch.no_grad():
                     # TODO: not support multi-gpu
                     # TODO: divide ul and l to separate gpu
