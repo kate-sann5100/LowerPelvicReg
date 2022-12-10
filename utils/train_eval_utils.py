@@ -17,6 +17,7 @@ def get_parser():
     parser.add_argument('--overfit', action='store_true')
     parser.add_argument('--multi_head', action='store_true')
     parser.add_argument('--reg', action='store_true')
+    parser.add_argument('--supervised', action='store_true')
 
     parser.add_argument('--overwrite', action='store_true')
     parser.add_argument('--test', action='store_true')
@@ -32,6 +33,7 @@ def get_parser():
     cfg.overfit = args.overfit
     cfg.multi_head = args.multi_head
     cfg.reg = args.reg
+    cfg.semi_supervision = not args.supervised
     cfg.overwrite = args.overwrite
     cfg.test = args.test
     cfg.vis = args.vis
