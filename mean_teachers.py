@@ -252,7 +252,6 @@ def validation(args, student, teacher, loader,
                 t_id: t_model(moving, fixed, semi_supervision=True, semi_mode="eval")
                 for t_id, t_model in teacher.items()
             }  # (B, 1, ...), (B, 9, ...)
-            print(teacher_pred[0].keys())
             teacher_pred["total"] = {
                 k: torch.mean(  # "t2w", "seg"
                     torch.stack(
@@ -395,6 +394,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
                 f'{save_dir}/student_ckpt.pth'
             )
 
+        print(teacher_dice)
         for t_id, bm in t_best_metric.items():
             print(teacher_dice[t_id])
             if teacher_dice[t_id][0] > bm:
