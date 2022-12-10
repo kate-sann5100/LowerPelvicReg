@@ -396,6 +396,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
             )
 
         for t_id, bm in t_best_metric.items():
+            print(teacher_dice[t_id])
             if teacher_dice[t_id][0] > bm:
                 torch.save(
                     {
