@@ -4,7 +4,7 @@ from itertools import cycle
 import torch
 from monai.transforms import Spacingd
 from torch.backends import cudnn
-from torch.cuda import device_count
+from torch.cuda import device_count, reset_peak_memory_stats, max_memory_allocated
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -95,6 +95,7 @@ def train_worker(args):
         curr_teacher_id = 0 if epoch % 2 != 0 else 1
         student.train()
         for step, (l, ul) in enumerate(dataloader):
+            reset_peak_memory_stats()
             print(step)
             step_count += 1
             l_moving, l_fixed = l
@@ -140,6 +141,9 @@ def train_worker(args):
 
             with torch.no_grad():
                 update_teacher(teacher[curr_teacher_id], student, args)
+            writer.add_scalar(
+                tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
+            )
 
             if args.overfit:
                 break
