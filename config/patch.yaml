@@ -6,6 +6,7 @@ DATA:
   size: [ 256, 256, 40 ]
   organ_list: ["BladderMask", "BoneMask", "ObdInternMask", "TZ", "CG", "RectumMask", "SV", "NVB"]
   semi_supervision: False
+  label_ratio: 1.0
 
 MODEL:
   input: "patch"

@@ -113,27 +113,27 @@ def train_worker(args):
                     l_loss = l_loss + torch.mean(v)
             l_loss_meter.update(l_loss_dict)
             optimiser.zero_grad()
-            l_loss = l_loss * 0.01
+            l_loss = l_loss
             l_loss.backward()
             optimiser.step()
 
-            with torch.no_grad():
-                # TODO: not support multi-gpu
-                # TODO: divide ul and l to separate gpu
-                ul_t_pred = [
-                    v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
-                    for _, v in teacher.items()
-                ]
-                ul_t_pred = torch.stack(ul_t_pred, dim=-1)
-                ul_t_pred = torch.mean(ul_t_pred, dim=-1)
-            ul_s_pred = student(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
-            ul_loss = consistency_loss(ul_t_pred, ul_s_pred, ul[1]["affine_ddf"])
-            ul_loss_meter.update({"semi": torch.mean(ul_loss)})
-            optimiser.zero_grad()
-            ul_loss.backward()
-            optimiser.step()
-
-            print(ul_loss, l_loss)
+            if args.semi_supervison:
+                with torch.no_grad():
+                    # TODO: not support multi-gpu
+                    # TODO: divide ul and l to separate gpu
+                    ul_t_pred = [
+                        v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
+                        for _, v in teacher.items()
+                    ]
+                    ul_t_pred = torch.stack(ul_t_pred, dim=-1)
+                    ul_t_pred = torch.mean(ul_t_pred, dim=-1)
+                ul_s_pred = student(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
+                ul_loss = consistency_loss(ul_t_pred, ul_s_pred, ul[1]["affine_ddf"])
+                ul_loss_meter.update({"semi": torch.mean(ul_loss)})
+                optimiser.zero_grad()
+                ul_loss = ul_loss * 0.01
+                ul_loss.backward()
+                optimiser.step()
 
             with torch.no_grad():
                 update_teacher(teacher[curr_teacher_id], student, args)
@@ -141,12 +141,14 @@ def train_worker(args):
             if args.overfit:
                 break
 
-        ul_loss_meter.get_average(step_count)
+        if args.semi_supervision:
+            ul_loss_meter.get_average(step_count)
         l_loss_meter.get_average(step_count)
         ckpt = {
             "epoch": epoch,
             "step_count": step_count,
-            "model": student.state_dict(),
+            "student": student.state_dict(),
+            "teacher": {k: v.state_dict() for k, v in teacher.items()},
             "optimiser": optimiser.state_dict(),
         }
         print("validating...")
