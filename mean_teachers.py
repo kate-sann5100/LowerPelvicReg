@@ -52,6 +52,8 @@ def train_worker(args):
         drop_last=True,
         persistent_workers=False,
     )
+    print(f"labelled dataset of size {len(l_loader)}")
+    print(f"unlabelled dataset of size {len(ul_loader)}")
 
     val_dataset = SemiDataset(args=args, mode="val", label=True)
     val_loader = DataLoader(val_dataset, batch_size=1)

@@ -138,7 +138,6 @@ class SemiDataset(Dataset):
                 label_num = int(len(patient_list) * args.label_ratio)
                 patient_list = patient_list[:label_num] if label else patient_list[label_num:]
             self.img_list.extend([(p, ins) for p in patient_list])
-        print(len(self.img_list))
 
         if self.mode != "train":
             self.val_pair = []
@@ -151,8 +150,6 @@ class SemiDataset(Dataset):
                         if fixed_p != moving_p:
                             break
                     self.val_pair.append([(moving_p, moving_ins), (fixed_p, fixed_ins)])
-        print(len(self.val_pair))
-        exit()
 
         self.transform = get_transform(
             augmentation=self.mode == "train",
