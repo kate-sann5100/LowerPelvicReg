@@ -11,4 +11,3 @@ MODEL:
   input: "img"
   multi_head: False
   reg: False
-  warm_up_epoch: 50
