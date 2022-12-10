@@ -250,6 +250,7 @@ def validation(args, student, teacher, loader,
                 t_id: t_model(moving, fixed, semi_supervision=True, semi_mode="eval")
                 for t_id, t_model in teacher.items()
             }  # (B, 1, ...), (B, 9, ...)
+            print(teacher_pred[t_id].keys())
             teacher_pred["total"] = {
                 k: torch.mean(  # "t2w", "seg"
                     torch.stack(
@@ -352,7 +353,6 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
 
         for step, (fixed, moving) in enumerate(l_loader):
             reset_peak_memory_stats()
-            print(step)
             step_count += 1
             if args.overfit:
                 moving, fixed = overfit_moving, overfit_fixed
