@@ -298,7 +298,7 @@ def validation(args, student, teacher, loader,
 
         student_dice = student_dice_meter.get_average(step)  # (dice, dict)
         teacher_dice = {
-            t_id: t_meter[t_id].get_average(step)
+            t_id: t_meter.get_average(step)
             for t_id, t_meter in teacher_dice_meter.items()
         }  # t_id: (dice, dict)
         if test:
