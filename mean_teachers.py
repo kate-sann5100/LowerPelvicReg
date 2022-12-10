@@ -95,6 +95,7 @@ def train_worker(args):
         curr_teacher_id = 0 if epoch % 2 != 0 else 1
         student.train()
         for step, (l, ul) in enumerate(dataloader):
+            print(step)
             step_count += 1
             l_moving, l_fixed = l
             ul_moving, ul_fixed = ul
