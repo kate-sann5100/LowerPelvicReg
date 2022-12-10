@@ -84,7 +84,7 @@ def train_worker(args):
     # warm up student and teacher models
 
     warm_up_save_dir = get_save_dir(args, warm_up=True)
-    if not os.path.exists(warm_up_save_dir):
+    if not os.path.exists(f"warm_up_save_dir/student_ckpt.pth"):
         warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
     student.load_state_dict(
         torch.load(f"{warm_up_save_dir}/student_ckpt.pth")["model"],
