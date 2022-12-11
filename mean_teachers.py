@@ -82,20 +82,19 @@ def train_worker(args):
     }
 
     # warm up student and teacher models
-
-    warm_up_save_dir = get_save_dir(args, warm_up=True)
-    if not os.path.exists(f"warm_up_save_dir/student_ckpt.pth"):
-        warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
-    student.load_state_dict(
-        torch.load(f"{warm_up_save_dir}/student_ckpt.pth")["model"],
-        strict=True
-    )
-    for t_id, t_model in teacher.items():
-        t_model.load_state_dict(
-            torch.load(f"{warm_up_save_dir}/t_{t_id}_ckpt.pth")["model"],
-            strict=True
-        )
-        t_model.eval()
+    # warm_up_save_dir = get_save_dir(args, warm_up=True)
+    # if not os.path.exists(f"warm_up_save_dir/student_ckpt.pth"):
+    #     warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
+    # student.load_state_dict(
+    #     torch.load(f"{warm_up_save_dir}/student_ckpt.pth")["model"],
+    #     strict=True
+    # )
+    # for t_id, t_model in teacher.items():
+    #     t_model.load_state_dict(
+    #         torch.load(f"{warm_up_save_dir}/t_{t_id}_ckpt.pth")["model"],
+    #         strict=True
+    #     )
+    #     t_model.eval()
 
     # initialise student optimiser
     optimiser = Adam(student.parameters(), lr=1e-4)
@@ -395,9 +394,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
                 f'{save_dir}/student_ckpt.pth'
             )
 
-        print(teacher_dice)
         for t_id, bm in t_best_metric.items():
-            print(teacher_dice[t_id])
             if teacher_dice[t_id][0] > bm:
                 torch.save(
                     {
