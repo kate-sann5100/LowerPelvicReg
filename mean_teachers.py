@@ -133,51 +133,50 @@ def train_worker(args):
             cuda_batch(ul_fixed)
 
             # backprop on labelled data
-            l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
-            l_loss = 0
-            for k, v in l_loss_dict.items():
-                l_loss_dict[k] = torch.mean(v)
-                if k in ["label", "reg"]:
-                    l_loss = l_loss + torch.mean(v)
-            l_loss_meter.update(l_loss_dict)
-            optimiser.zero_grad()
-            l_loss = l_loss
-            l_loss.backward()
-            optimiser.step()
-
-            # backprop on unlabelled data
-            if args.semi_supervision:
-                with torch.no_grad():
-                    # TODO: not support multi-gpu
-                    # TODO: divide ul and l to separate gpu
-                    ul_t_pred = [
-                        v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
-                        for _, v in teacher.items()
-                    ]
-                    ul_t_pred = torch.stack(ul_t_pred, dim=-1)
-                    ul_t_pred = torch.mean(ul_t_pred, dim=-1)
-                ul_s_pred = student(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
-                ul_loss = consistency_loss(ul_t_pred, ul_s_pred, ul[1]["affine_ddf"])
-                ul_loss_meter.update({"semi": torch.mean(ul_loss)})
-                optimiser.zero_grad()
-                ul_loss = ul_loss * 0.01
-                ul_loss.backward()
-                optimiser.step()
-
-            # update teacher models
-            with torch.no_grad():
-                update_teacher(teacher[curr_teacher_id], student, args)
-
-            writer.add_scalar(
-                tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
-            )
-
-            if args.overfit:
-                break
-
-        if args.semi_supervision:
-            ul_loss_meter.get_average(step_count)
-        l_loss_meter.get_average(step_count)
+        #     l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
+        #     l_loss = 0
+        #     for k, v in l_loss_dict.items():
+        #         l_loss_dict[k] = torch.mean(v)
+        #         if k in ["label", "reg"]:
+        #             l_loss = l_loss + torch.mean(v)
+        #     l_loss_meter.update(l_loss_dict)
+        #     optimiser.zero_grad()
+        #     l_loss.backward()
+        #     optimiser.step()
+        #
+        #     # backprop on unlabelled data
+        #     if args.semi_supervision:
+        #         with torch.no_grad():
+        #             # TODO: not support multi-gpu
+        #             # TODO: divide ul and l to separate gpu
+        #             ul_t_pred = [
+        #                 v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
+        #                 for _, v in teacher.items()
+        #             ]
+        #             ul_t_pred = torch.stack(ul_t_pred, dim=-1)
+        #             ul_t_pred = torch.mean(ul_t_pred, dim=-1)
+        #         ul_s_pred = student(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
+        #         ul_loss = consistency_loss(ul_t_pred, ul_s_pred, ul[1]["affine_ddf"])
+        #         ul_loss_meter.update({"semi": torch.mean(ul_loss)})
+        #         optimiser.zero_grad()
+        #         ul_loss = ul_loss * 0.01
+        #         ul_loss.backward()
+        #         optimiser.step()
+        #
+        #     # update teacher models
+        #     with torch.no_grad():
+        #         update_teacher(teacher[curr_teacher_id], student, args)
+        #
+        #     writer.add_scalar(
+        #         tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
+        #     )
+        #
+        #     if args.overfit:
+        #         break
+        #
+        # if args.semi_supervision:
+        #     ul_loss_meter.get_average(step_count)
+        # l_loss_meter.get_average(step_count)
 
         # update ckpt based on validation performance
         ckpt = {
