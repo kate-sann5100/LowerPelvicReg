@@ -121,6 +121,7 @@ class DiceMeter:
         print(self.tag)
         for k, v in zip(self.labels, mean):
             if self.writer is not None:
+                print(k)
                 self.writer.add_scalar(tag=f"{self.tag}/{k}", scalar_value=v, global_step=step)
             print(f"{k}: {v}")
 
