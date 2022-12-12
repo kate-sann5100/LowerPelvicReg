@@ -126,24 +126,24 @@ def train_worker(args):
             ul_moving, ul_fixed = ul
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
-                # ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
+                ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
             cuda_batch(l_moving)
             cuda_batch(l_fixed)
-            # cuda_batch(ul_moving)
-            # cuda_batch(ul_fixed)
+            cuda_batch(ul_moving)
+            cuda_batch(ul_fixed)
 
-            # backprop on labelled data
-            l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
-            print(l_loss_dict)
-            l_loss = 0
-            for k, v in l_loss_dict.items():
-                l_loss_dict[k] = torch.mean(v)
-                if k in ["label", "reg"]:
-                    l_loss = l_loss + torch.mean(v)
-            l_loss_meter.update(l_loss_dict)
-            optimiser.zero_grad()
-            l_loss.backward()
-            optimiser.step()
+            # # backprop on labelled data
+            # l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
+            # print(l_loss_dict)
+            # l_loss = 0
+            # for k, v in l_loss_dict.items():
+            #     l_loss_dict[k] = torch.mean(v)
+            #     if k in ["label", "reg"]:
+            #         l_loss = l_loss + torch.mean(v)
+            # l_loss_meter.update(l_loss_dict)
+            # optimiser.zero_grad()
+            # l_loss.backward()
+            # optimiser.step()
 
         #     # backprop on unlabelled data
         #     if args.semi_supervision:
@@ -179,24 +179,24 @@ def train_worker(args):
         #     ul_loss_meter.get_average(step_count)
         # l_loss_meter.get_average(step_count)
 
-        # update ckpt based on validation performance
-        ckpt = {
-            "epoch": epoch,
-            "step_count": step_count,
-            "student": student.state_dict(),
-            "teacher": {k: v.state_dict() for k, v in teacher.items()},
-            "optimiser": optimiser.state_dict(),
-        }
-        print("validating...")
-        student_dice, teacher_dice, hausdorff_result_dict = validation(
-            args, student, teacher, val_loader,
-            writer=writer, step=step_count, vis=None, test=False,
-            overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
-        )
-        val_metric = teacher_dice["total"][0]
-        if val_metric > best_metric:
-            best_metric = val_metric
-            torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
+        # # update ckpt based on validation performance
+        # ckpt = {
+        #     "epoch": epoch,
+        #     "step_count": step_count,
+        #     "student": student.state_dict(),
+        #     "teacher": {k: v.state_dict() for k, v in teacher.items()},
+        #     "optimiser": optimiser.state_dict(),
+        # }
+        # print("validating...")
+        # student_dice, teacher_dice, hausdorff_result_dict = validation(
+        #     args, student, teacher, val_loader,
+        #     writer=writer, step=step_count, vis=None, test=False,
+        #     overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
+        # )
+        # val_metric = teacher_dice["total"][0]
+        # if val_metric > best_metric:
+        #     best_metric = val_metric
+        #     torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
 
 
 def update_teacher(teacher, student, args):
