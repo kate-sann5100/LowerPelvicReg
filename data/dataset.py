@@ -173,9 +173,9 @@ class SemiDataset(Dataset):
         moving = get_img(moving, self.transform, self.image_path, self.seg_path, self.args)
         fixed = get_img(fixed, self.transform, self.image_path, self.seg_path, self.args)
 
-        if self.mode == "train" and not self.label:
-            del moving["seg"]
-            del fixed["seg"]
-            self.strong_aug(fixed)
+        # if self.mode == "train" and not self.label:
+        #     del moving["seg"]
+        #     del fixed["seg"]
+        #     self.strong_aug(fixed)
 
         return moving, fixed
