@@ -174,21 +174,15 @@ class Registration(nn.Module):
         :param loss_organ_list:
         :return:
         """
-        # label_loss = {
-        #     f"{organ}_label": self.label_loss(
-        #         ws, fs  # (B, 9, ...), (B, 1, ...)
-        #     )
-        #     for organ, ws, fs in zip(loss_organ_list, warped_seg_list, fixed_seg_list)
-        # }
         label_loss = {
-            f"label": self.label_loss(
+            f"{organ}_label": self.label_loss(
                 ws, fs  # (B, 9, ...), (B, 1, ...)
             )
             for organ, ws, fs in zip(loss_organ_list, warped_seg_list, fixed_seg_list)
         }
-        # label_loss["label"] = torch.mean(
-        #     torch.stack([v for _, v in label_loss.items()], dim=0), dim=0
-        # )
+        label_loss["label"] = torch.mean(
+            torch.stack([v for _, v in label_loss.items()], dim=0), dim=0
+        )
         return label_loss
 
     def get_reg_loss(self, ddf_list):

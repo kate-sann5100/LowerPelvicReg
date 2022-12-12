@@ -124,21 +124,17 @@ class RandAffine(RandomizableTransform):
             -"ins": int
             -"name": str
         """
-        self.randomize()
-        grid = self.get_identity_grid(self.spatial_size)
-        grid = self.rand_affine_grid(grid=grid)
-        img["t2w"] = self.resampler(
-            img=img["t2w"], grid=grid, mode=self.mode, padding_mode=self.padding_mode
-        )
-        grid = grid.clone()[:-1, :, :]
-        for i, dim in enumerate(self.spatial_size):
-            grid[i] += (dim-1) / 2
-        ddf = grid - self.reference_grid
-        img["affine_ddf"] = ddf
-        # warp_out = Warp(padding_mode="zeros")(img[None, ...], ddf[None, ...])[0]
-        # assert torch.equal(warp_out, out)
-
-
-if __name__ == '__main__':
-    affine = RandAffine(spatial_size=(3, 3))
-    affine(torch.rand(1, 3, 3))
+        with torch.no_grad():
+            self.randomize()
+            grid = self.get_identity_grid(self.spatial_size)
+            grid = self.rand_affine_grid(grid=grid)
+            img["t2w"] = self.resampler(
+                img=img["t2w"], grid=grid, mode=self.mode, padding_mode=self.padding_mode
+            )
+            grid = grid.clone()[:-1, :, :]
+            for i, dim in enumerate(self.spatial_size):
+                grid[i] += (dim-1) / 2
+            ddf = grid - self.reference_grid
+            img["affine_ddf"] = ddf
+            # warp_out = Warp(padding_mode="zeros")(img[None, ...], ddf[None, ...])[0]
+            # assert torch.equal(warp_out, out)
