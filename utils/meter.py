@@ -38,7 +38,7 @@ class LossMeter:
     def get_average(self, step):
         for k, v in self.sum_dict.items():
             self.writer.add_scalar(
-                tag=k if self.tag is None else f"{self.tag}_k",
+                tag=k if self.tag is None else f"{self.tag}_{k}",
                 scalar_value=v / self.count,
                 global_step=step
             )
@@ -118,7 +118,6 @@ class DiceMeter:
 
         self.count[self.count == 0] = -1
         mean = self.sum / self.count
-        print(self.tag)
         for k, v in zip(self.labels, mean):
             if self.writer is not None:
                 print(k)

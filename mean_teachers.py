@@ -134,6 +134,7 @@ def train_worker(args):
 
             # backprop on labelled data
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
+            print(l_loss_dict)
             l_loss = 0
             for k, v in l_loss_dict.items():
                 l_loss_dict[k] = torch.mean(v)
