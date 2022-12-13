@@ -132,18 +132,18 @@ def train_worker(args):
             cuda_batch(ul_moving)
             cuda_batch(ul_fixed)
 
-            # # backprop on labelled data
-            # l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
-            # print(l_loss_dict)
-            # l_loss = 0
-            # for k, v in l_loss_dict.items():
-            #     l_loss_dict[k] = torch.mean(v)
-            #     if k in ["label", "reg"]:
-            #         l_loss = l_loss + torch.mean(v)
+            # backprop on labelled data
+            l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
+            print(l_loss_dict)
+            l_loss = 0
+            for k, v in l_loss_dict.items():
+                l_loss_dict[k] = torch.mean(v)
+                if k in ["label", "reg"]:
+                    l_loss = l_loss + torch.mean(v)
             # l_loss_meter.update(l_loss_dict)
-            # optimiser.zero_grad()
-            # l_loss.backward()
-            # optimiser.step()
+            optimiser.zero_grad()
+            l_loss.backward()
+            optimiser.step()
 
         #     # backprop on unlabelled data
         #     if args.semi_supervision:
