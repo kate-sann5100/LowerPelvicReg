@@ -47,13 +47,13 @@ def train_worker(args):
         drop_last=True,
         persistent_workers=False,
     )
-    # ul_loader = DataLoader(
-    #     ul_dataset,
-    #     batch_size=device_count(),
-    #     shuffle=True,
-    #     drop_last=True,
-    #     persistent_workers=False,
-    # )
+    ul_loader = DataLoader(
+        ul_dataset,
+        batch_size=device_count(),
+        shuffle=True,
+        drop_last=True,
+        persistent_workers=False,
+    )
     print(f"labelled dataset of size {len(l_loader)}")
     # print(f"unlabelled dataset of size {len(ul_loader)}")
 
@@ -118,8 +118,8 @@ def train_worker(args):
         curr_teacher_id = 0 if epoch % 2 != 0 else 1
 
         student.train()
-        # for step, (l, ul) in enumerate(dataloader):
-        for step, l in enumerate(l_loader):
+        for step, (l, ul) in enumerate(dataloader):
+        # for step, l in enumerate(l_loader):
             reset_peak_memory_stats()
             step_count += 1
 
