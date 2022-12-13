@@ -125,6 +125,8 @@ def train_worker(args):
 
             # load and cuda data
             l_moving, l_fixed = l
+            print(l_moving["t2w"].device, l_moving["seg"].device,)
+            print(l_fixed["t2w"].device, l_fixed["seg"].device, )
             # ul_moving, ul_fixed = ul
             # if args.overfit:
             #     l_moving, l_fixed = l_overfit_moving, l_overfit_fixed

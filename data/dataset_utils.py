@@ -76,7 +76,7 @@ def get_transform(augmentation, size, resolution):
                 mode=("bilinear", "nearest"),
                 padding_mode="zeros",
                 as_tensor_output=False,
-                device=torch.device('cuda'),
+                device=torch.device('cpu'),
                 allow_missing_keys=False
             )
         ]
