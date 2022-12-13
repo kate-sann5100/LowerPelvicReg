@@ -76,10 +76,10 @@ def train_worker(args):
     student = torch.nn.DataParallel(
         Registration(args).cuda()
     )
-    teacher = {
-        teacher_id: torch.nn.DataParallel(Registration(args).cuda())
-        for teacher_id in range(2)
-    }
+    # teacher = {
+    #     teacher_id: torch.nn.DataParallel(Registration(args).cuda())
+    #     for teacher_id in range(2)
+    # }
 
     # warm up student and teacher models
     # warm_up_save_dir = get_save_dir(args, warm_up=True)
@@ -103,10 +103,10 @@ def train_worker(args):
     num_epochs = 5000
     start_epoch = 0
     step_count = 0
-    best_metric = 0
-    consistency_loss = ConsistencyLoss()
-    l_loss_meter = LossMeter(args, writer=writer)
-    ul_loss_meter = SemiLossMeter(args, writer=writer)
+    # best_metric = 0
+    # consistency_loss = ConsistencyLoss()
+    # l_loss_meter = LossMeter(args, writer=writer)
+    # ul_loss_meter = SemiLossMeter(args, writer=writer)
 
     for epoch in range(start_epoch, num_epochs):
         print(f"-----------epoch: {epoch}----------")
