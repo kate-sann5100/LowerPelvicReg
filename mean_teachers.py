@@ -118,7 +118,7 @@ def train_worker(args):
 
         student.train()
         # for step, (l, ul) in enumerate(dataloader):
-        for step, (l, ul) in enumerate(l_loader):
+        for step, l in enumerate(l_loader):
             reset_peak_memory_stats()
             step_count += 1
 
