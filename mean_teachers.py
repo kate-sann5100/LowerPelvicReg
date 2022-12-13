@@ -39,7 +39,7 @@ def train_worker(args):
 
     # initialise training dataloaders
     l_dataset = SemiDataset(args=args, mode="train", label=True)
-    ul_dataset = SemiDataset(args=args, mode="train", label=False)
+    ul_dataset = SemiDataset(args=args, mode="train", label=True)
     l_loader = DataLoader(
         l_dataset,
         batch_size=device_count(),
