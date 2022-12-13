@@ -118,17 +118,17 @@ def train_worker(args):
         curr_teacher_id = 0 if epoch % 2 != 0 else 1
 
         student.train()
-        for step, (l, ul) in enumerate(dataloader):
-        # for step, l in enumerate(l_loader):
+        # for step, (l, ul) in enumerate(dataloader):
+        for step, l in enumerate(l_loader):
             reset_peak_memory_stats()
             step_count += 1
 
             # load and cuda data
             l_moving, l_fixed = l
             # ul_moving, ul_fixed = ul
-            if args.overfit:
-                l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
-                # ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
+            # if args.overfit:
+            #     l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
+            #     # ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
             cuda_batch(l_moving)
             cuda_batch(l_fixed)
             # cuda_batch(ul_moving)
