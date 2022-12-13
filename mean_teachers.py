@@ -39,7 +39,7 @@ def train_worker(args):
 
     # initialise training dataloaders
     l_dataset = SemiDataset(args=args, mode="train", label=True)
-    # ul_dataset = SemiDataset(args=args, mode="train", label=False)
+    ul_dataset = SemiDataset(args=args, mode="train", label=False)
     l_loader = DataLoader(
         l_dataset,
         batch_size=device_count(),
@@ -47,13 +47,13 @@ def train_worker(args):
         drop_last=True,
         persistent_workers=False,
     )
-    # ul_loader = DataLoader(
-    #     ul_dataset,
-    #     batch_size=device_count(),
-    #     shuffle=True,
-    #     drop_last=True,
-    #     persistent_workers=False,
-    # )
+    ul_loader = DataLoader(
+        ul_dataset,
+        batch_size=device_count(),
+        shuffle=True,
+        drop_last=True,
+        persistent_workers=False,
+    )
     print(f"labelled dataset of size {len(l_loader)}")
     # print(f"unlabelled dataset of size {len(ul_loader)}")
 
