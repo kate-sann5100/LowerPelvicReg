@@ -124,14 +124,14 @@ def train_worker(args):
 
             # load and cuda data
             l_moving, l_fixed = l
-            ul_moving, ul_fixed = ul
+            # ul_moving, ul_fixed = ul
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
-                ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
+                # ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
             cuda_batch(l_moving)
             cuda_batch(l_fixed)
-            cuda_batch(ul_moving)
-            cuda_batch(ul_fixed)
+            # cuda_batch(ul_moving)
+            # cuda_batch(ul_fixed)
 
             # backprop on labelled data
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
