@@ -2,7 +2,7 @@ DATA:
   data_path: "/raid/candi/yiwen/data/multiorgan_final"  # path to folder including institution.txt and data
   fold: 1
   resolution: [ 0.75, 0.75, 2.5 ]
-  size: [40, 40, 40] #[ 256, 256, 40 ]
+  size: [ 256, 256, 40 ]
   organ_list: ["BladderMask", "BoneMask", "ObdInternMask", "TZ", "CG", "RectumMask", "SV", "NVB"]
   semi_supervision: True
   label_ratio: 0.25
