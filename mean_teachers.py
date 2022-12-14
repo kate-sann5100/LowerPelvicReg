@@ -39,7 +39,7 @@ def train_worker(args):
 
     # initialise training dataloaders
     l_dataset = SemiDataset(args=args, mode="train", label=True)
-    ul_dataset = SemiDataset(args=args, mode="train", label=True)
+    ul_dataset = SemiDataset(args=args, mode="train", label=False)
     l_loader = DataLoader(
         l_dataset,
         batch_size=device_count(),
@@ -112,8 +112,8 @@ def train_worker(args):
         print(f"-----------epoch: {epoch}----------")
 
         # zip labeled and unlabeled datasets
-        # dataloader = iter(zip(cycle(l_loader), ul_loader))
-        dataloader = iter(zip(cycle(l_loader), l_loader))
+        dataloader = iter(zip(cycle(l_loader), ul_loader))
+        # dataloader = iter(zip(cycle(l_loader), l_loader))
         # alternate training teacher each epoch
         curr_teacher_id = 0 if epoch % 2 != 0 else 1
 
