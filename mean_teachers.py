@@ -55,7 +55,7 @@ def train_worker(args):
         persistent_workers=False,
     )
     print(f"labelled dataset of size {len(l_loader)}")
-    # print(f"unlabelled dataset of size {len(ul_loader)}")
+    print(f"unlabelled dataset of size {len(ul_loader)}")
 
     # initialise validation dataloader
     val_dataset = SemiDataset(args=args, mode="val", label=True)
@@ -76,10 +76,10 @@ def train_worker(args):
     student = torch.nn.DataParallel(
         Registration(args).cuda()
     )
-    # teacher = {
-    #     teacher_id: torch.nn.DataParallel(Registration(args).cuda())
-    #     for teacher_id in range(2)
-    # }
+    teacher = {
+        teacher_id: torch.nn.DataParallel(Registration(args).cuda())
+        for teacher_id in range(2)
+    }
 
     # warm up student and teacher models
     # warm_up_save_dir = get_save_dir(args, warm_up=True)
@@ -103,10 +103,10 @@ def train_worker(args):
     num_epochs = 5000
     start_epoch = 0
     step_count = 0
-    # best_metric = 0
-    # consistency_loss = ConsistencyLoss()
-    # l_loss_meter = LossMeter(args, writer=writer)
-    # ul_loss_meter = SemiLossMeter(args, writer=writer)
+    best_metric = 0
+    consistency_loss = ConsistencyLoss()
+    l_loss_meter = LossMeter(args, writer=writer)
+    ul_loss_meter = SemiLossMeter(args, writer=writer)
 
     for epoch in range(start_epoch, num_epochs):
         print(f"-----------epoch: {epoch}----------")
@@ -127,80 +127,79 @@ def train_worker(args):
             l_moving, l_fixed = l
             print(l_moving["t2w"].device, l_moving["seg"].device,)
             print(l_fixed["t2w"].device, l_fixed["seg"].device, )
-            # ul_moving, ul_fixed = ul
-            # if args.overfit:
-            #     l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
-            #     # ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
+            ul_moving, ul_fixed = ul
+            if args.overfit:
+                l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
+                ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
             cuda_batch(l_moving)
             cuda_batch(l_fixed)
-            # cuda_batch(ul_moving)
-            # cuda_batch(ul_fixed)
+            cuda_batch(ul_moving)
+            cuda_batch(ul_fixed)
 
             # backprop on labelled data
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
-            print(l_loss_dict)
             l_loss = 0
             for k, v in l_loss_dict.items():
                 l_loss_dict[k] = torch.mean(v)
                 if k in ["label", "reg"]:
                     l_loss = l_loss + torch.mean(v)
-            # l_loss_meter.update(l_loss_dict)
+            l_loss_meter.update(l_loss_dict)
             optimiser.zero_grad()
             l_loss.backward()
             optimiser.step()
 
-        #     # backprop on unlabelled data
-        #     if args.semi_supervision:
-        #         with torch.no_grad():
-        #             # TODO: not support multi-gpu
-        #             # TODO: divide ul and l to separate gpu
-        #             ul_t_pred = [
-        #                 v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
-        #                 for _, v in teacher.items()
-        #             ]
-        #             ul_t_pred = torch.stack(ul_t_pred, dim=-1)
-        #             ul_t_pred = torch.mean(ul_t_pred, dim=-1)
-        #         ul_s_pred = student(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
-        #         ul_loss = consistency_loss(ul_t_pred, ul_s_pred, ul[1]["affine_ddf"])
-        #         ul_loss_meter.update({"semi": torch.mean(ul_loss)})
-        #         optimiser.zero_grad()
-        #         ul_loss = ul_loss * 0.01
-        #         ul_loss.backward()
-        #         optimiser.step()
-        #
-        #     # update teacher models
-        #     with torch.no_grad():
-        #         update_teacher(teacher[curr_teacher_id], student, args)
-        #
+            # backprop on unlabelled data
+            if args.semi_supervision:
+                with torch.no_grad():
+                    # TODO: not support multi-gpu
+                    # TODO: divide ul and l to separate gpu
+                    ul_t_pred = [
+                        v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
+                        for _, v in teacher.items()
+                    ]
+                    ul_t_pred = torch.stack(ul_t_pred, dim=-1)
+                    ul_t_pred = torch.mean(ul_t_pred, dim=-1)
+                ul_s_pred = student(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
+                ul_loss = consistency_loss(ul_t_pred, ul_s_pred, ul[1]["affine_ddf"])
+                ul_loss_meter.update({"semi": torch.mean(ul_loss)})
+                optimiser.zero_grad()
+                ul_loss = ul_loss * 0.01
+                ul_loss.backward()
+                optimiser.step()
+
+            # update teacher models
+            with torch.no_grad():
+                update_teacher(teacher[curr_teacher_id], student, args)
+
             writer.add_scalar(
                 tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
             )
-        #
-        #     if args.overfit:
-        #         break
-        #
-        # if args.semi_supervision:
-        #     ul_loss_meter.get_average(step_count)
-        # l_loss_meter.get_average(step_count)
 
-        # # update ckpt based on validation performance
-        # ckpt = {
-        #     "epoch": epoch,
-        #     "step_count": step_count,
-        #     "student": student.state_dict(),
-        #     "teacher": {k: v.state_dict() for k, v in teacher.items()},
-        #     "optimiser": optimiser.state_dict(),
-        # }
-        # print("validating...")
-        # student_dice, teacher_dice, hausdorff_result_dict = validation(
-        #     args, student, teacher, val_loader,
-        #     writer=writer, step=step_count, vis=None, test=False,
-        #     overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
-        # )
-        # val_metric = teacher_dice["total"][0]
-        # if val_metric > best_metric:
-        #     best_metric = val_metric
-        #     torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
+            if args.overfit:
+                break
+
+        if args.semi_supervision:
+            ul_loss_meter.get_average(step_count)
+        l_loss_meter.get_average(step_count)
+
+        # update ckpt based on validation performance
+        ckpt = {
+            "epoch": epoch,
+            "step_count": step_count,
+            "student": student.state_dict(),
+            "teacher": {k: v.state_dict() for k, v in teacher.items()},
+            "optimiser": optimiser.state_dict(),
+        }
+        print("validating...")
+        student_dice, teacher_dice, hausdorff_result_dict = validation(
+            args, student, teacher, val_loader,
+            writer=writer, step=step_count, vis=None, test=False,
+            overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
+        )
+        val_metric = teacher_dice["total"][0]
+        if val_metric > best_metric:
+            best_metric = val_metric
+            torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
 
 
 def update_teacher(teacher, student, args):
