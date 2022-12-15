@@ -82,19 +82,19 @@ def train_worker(args):
     }
 
     # warm up student and teacher models
-    # warm_up_save_dir = get_save_dir(args, warm_up=True)
-    # if not os.path.exists(f"warm_up_save_dir/student_ckpt.pth"):
-    #     warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
-    # student.load_state_dict(
-    #     torch.load(f"{warm_up_save_dir}/student_ckpt.pth")["model"],
-    #     strict=True
-    # )
-    # for t_id, t_model in teacher.items():
-    #     t_model.load_state_dict(
-    #         torch.load(f"{warm_up_save_dir}/t_{t_id}_ckpt.pth")["model"],
-    #         strict=True
-    #     )
-    #     t_model.eval()
+    warm_up_save_dir = get_save_dir(args, warm_up=True)
+    if not os.path.exists(f"warm_up_save_dir/student_{args.warm_up_epoch}_ckpt.pth"):
+        warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
+    student.load_state_dict(
+        torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["model"],
+        strict=True
+    )
+    for t_id, t_model in teacher.items():
+        t_model.load_state_dict(
+            torch.load(f"{warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")["model"],
+            strict=True
+        )
+        t_model.eval()
 
     # initialise student optimiser
     optimiser = Adam(student.parameters(), lr=1e-4)
@@ -341,7 +341,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
         overfit_moving, overfit_fixed = None, None
 
     step_count = 0
-    s_best_metric = 0
+    s_best_metric, t_best_metric, epoch_decade = None, None, None
     t_best_metric = {t_id: 0 for t_id in teacher.keys()}
     s_l_loss_meter = LossMeter(args, writer=writer, tag="student")
     t_l_loss_meter = {
@@ -351,10 +351,16 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
 
     for epoch in range(args.warm_up_epoch):
         print(f"-----------epoch: {epoch}----------")
+        # save best metric per 10 epochs
+        if epoch % 10 == 0:
+            s_best_metric = 0
+            t_best_metric = {t_id: 0 for t_id in teacher.keys()}
+            epoch_decade = (epoch // 10 + 1) * 10
+
+        # train
         student.train()
         for k in teacher.keys():
             teacher[k].train()
-
         for step, (fixed, moving) in enumerate(l_loader):
             reset_peak_memory_stats()
             step_count += 1
@@ -362,18 +368,15 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
                 moving, fixed = overfit_moving, overfit_fixed
             cuda_batch(moving)
             cuda_batch(fixed)
-
             warm_up_step(student, moving, fixed, s_optimiser, s_l_loss_meter)
             for t_id in teacher.keys():
                 warm_up_step(teacher[t_id], moving, fixed, t_optimiser[t_id], t_l_loss_meter[t_id])
-
             writer.add_scalar(
                 tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
             )
-
             if args.overfit:
                 break
-
+        # log loss
         s_l_loss_meter.get_average(step_count)
         for t_id in t_l_loss_meter.keys():
             t_l_loss_meter[t_id].get_average(step_count)
@@ -394,7 +397,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
                     "step_count": step_count,
                     "model": student.state_dict(),
                 },
-                f'{save_dir}/student_ckpt.pth'
+                f'{save_dir}/student_{epoch_decade}_ckpt.pth'
             )
 
         for t_id, bm in t_best_metric.items():
@@ -405,7 +408,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
                         "step_count": step_count,
                         "model": teacher[t_id].state_dict(),
                     },
-                    f'{save_dir}/t_{t_id}_ckpt.pth'
+                    f'{save_dir}/t{t_id}_{epoch_decade}_ckpt.pth'
                 )
 
 
