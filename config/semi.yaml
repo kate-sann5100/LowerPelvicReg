@@ -12,4 +12,4 @@ MODEL:
   multi_head: False
   reg: False
   keep_rate: 0.996
-  warm_up_epoch: 50
+  warm_up_epoch: 1000
