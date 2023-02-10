@@ -135,6 +135,7 @@ class SemiDataset(Dataset):
         self.img_list = []
         for ins, patient_list in institution_patient_dict.items():
             if mode == "train":
+                print(f"total training size: {len(patient_list)}")
                 label_num = int(len(patient_list) * args.label_ratio)
                 patient_list = patient_list[:label_num] if label else patient_list[label_num:]
             self.img_list.extend([(p, ins) for p in patient_list])
