@@ -3,6 +3,8 @@
 
 ckpt/
 
+ckpt_old/
+
 nifty_temp/
 
 data/__pycache__/

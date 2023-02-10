@@ -10,4 +10,4 @@ DATA:
 MODEL:
   input: "img"
   multi_head: False
-  reg: False
+  reg: True

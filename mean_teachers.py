@@ -97,7 +97,7 @@ def train_worker(args):
         t_model.eval()
 
     # initialise student optimiser
-    optimiser = Adam(student.parameters(), lr=1e-4)
+    optimiser = Adam(student.parameters(), lr=args.lr)
     writer = SummaryWriter(log_dir=save_dir)
 
     num_epochs = 5000
@@ -182,7 +182,7 @@ def train_worker(args):
             ul_loss_meter.get_average(step_count)
         l_loss_meter.get_average(step_count)
 
-        # update ckpt based on validation performance
+        # update ckpt_old based on validation performance
         ckpt = {
             "epoch": epoch,
             "step_count": step_count,
@@ -327,9 +327,9 @@ def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
 
 def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
     writer = SummaryWriter(log_dir=save_dir)
-    s_optimiser = Adam(student.parameters(), lr=1e-4)
+    s_optimiser = Adam(student.parameters(), lr=args.lr)
     t_optimiser = {
-        t_id: Adam(t_model.parameters(), lr=1e-4)
+        t_id: Adam(t_model.parameters(), lr=args.lr)
         for t_id, t_model in teacher.items()
     }
 
@@ -389,7 +389,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
             overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
         )
 
-        # update ckpt for each model separately based on validation performance
+        # update ckpt_old for each model separately based on validation performance
         if student_dice[0] > s_best_metric:
             torch.save(
                 {
