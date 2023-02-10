@@ -39,7 +39,6 @@ def train_worker(args):
 
     # initialise training dataloaders
     l_dataset = SemiDataset(args=args, mode="train", label=True)
-    print("l_dataset generated")
     ul_dataset = SemiDataset(args=args, mode="train", label=False)
     l_loader = DataLoader(
         l_dataset,
@@ -354,10 +353,10 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
     for epoch in range(args.warm_up_epoch):
         print(f"-----------epoch: {epoch}----------")
         # save best metric per 10 epochs
-        if epoch % 10 == 0:
+        if epoch % 100 == 0:
             s_best_metric = 0
             t_best_metric = {t_id: 0 for t_id in teacher.keys()}
-            epoch_decade = (epoch // 10 + 1) * 10
+            epoch_decade = (epoch // 100 + 1) * 100
 
         # train
         student.train()
