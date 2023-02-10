@@ -13,4 +13,4 @@ MODEL:
   reg: False
   keep_rate: 0.996
   warm_up_epoch: 1000
-  lr: 1e-3
+  lr: 0.001

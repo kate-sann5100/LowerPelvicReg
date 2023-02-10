@@ -348,6 +348,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
         t_id: LossMeter(args, writer, tag=f"t{t_id}")
         for t_id in teacher.keys()
     }
+    print(f"warming up with dataset of size {len(l_loader)}")
 
     for epoch in range(args.warm_up_epoch):
         print(f"-----------epoch: {epoch}----------")
