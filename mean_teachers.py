@@ -39,6 +39,7 @@ def train_worker(args):
 
     # initialise training dataloaders
     l_dataset = SemiDataset(args=args, mode="train", label=True)
+    print("l_dataset generated")
     ul_dataset = SemiDataset(args=args, mode="train", label=False)
     l_loader = DataLoader(
         l_dataset,
