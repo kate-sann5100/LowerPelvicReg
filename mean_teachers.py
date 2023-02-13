@@ -1,4 +1,5 @@
 import os
+import time
 from collections import OrderedDict
 from itertools import cycle
 
@@ -360,6 +361,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
 
         # train
         student.train()
+        training_start = time.time()
         for k in teacher.keys():
             teacher[k].train()
         for step, (fixed, moving) in enumerate(l_loader):
@@ -382,13 +384,17 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
         for t_id in t_l_loss_meter.keys():
             t_l_loss_meter[t_id].get_average(step_count)
 
+        print(f"training takes {time.time() - training_start} seconds")
+
         # validate current weight
         print("validating...")
+        validation_start = time.time()
         student_dice, teacher_dice, hausdorff_result_dict = validation(
             args, student, teacher, val_loader,
             writer=writer, step=step_count, vis=None, test=False,
             overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
         )
+        print(f"validation takes {time.time() - validation_start} seconds")
 
         # update ckpt_old for each model separately based on validation performance
         if student_dice[0] > s_best_metric:
