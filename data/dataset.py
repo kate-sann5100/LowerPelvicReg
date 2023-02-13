@@ -138,6 +138,7 @@ class SemiDataset(Dataset):
                 label_num = int(len(patient_list) * args.label_ratio)
                 patient_list = patient_list[:label_num] if label else patient_list[label_num:]
             self.img_list.extend([(p, ins) for p in patient_list])
+        print(mode, len(self.img_list))
 
         if self.mode != "train":
             self.val_pair = []
