@@ -391,6 +391,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
 
         # validate current weight
         print("validating...")
+        print(len(val_loader))
         validation_start = time.time()
         student_dice, teacher_dice, hausdorff_result_dict = validation(
             args, student, teacher, val_loader,
