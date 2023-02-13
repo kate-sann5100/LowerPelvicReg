@@ -361,31 +361,31 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
             epoch_decade = (epoch // 100 + 1) * 100
 
         # train
-        student.train()
-        training_start = time.time()
-        for k in teacher.keys():
-            teacher[k].train()
-        for step, (fixed, moving) in enumerate(l_loader):
-            reset_peak_memory_stats()
-            step_count += 1
-            if args.overfit:
-                moving, fixed = overfit_moving, overfit_fixed
-            cuda_batch(moving)
-            cuda_batch(fixed)
-            warm_up_step(student, moving, fixed, s_optimiser, s_l_loss_meter)
-            for t_id in teacher.keys():
-                warm_up_step(teacher[t_id], moving, fixed, t_optimiser[t_id], t_l_loss_meter[t_id])
-            writer.add_scalar(
-                tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
-            )
-            if args.overfit:
-                break
-        # log loss
-        s_l_loss_meter.get_average(step_count)
-        for t_id in t_l_loss_meter.keys():
-            t_l_loss_meter[t_id].get_average(step_count)
-
-        print(f"training takes {time.time() - training_start} seconds")
+        # student.train()
+        # training_start = time.time()
+        # for k in teacher.keys():
+        #     teacher[k].train()
+        # for step, (fixed, moving) in enumerate(l_loader):
+        #     reset_peak_memory_stats()
+        #     step_count += 1
+        #     if args.overfit:
+        #         moving, fixed = overfit_moving, overfit_fixed
+        #     cuda_batch(moving)
+        #     cuda_batch(fixed)
+        #     warm_up_step(student, moving, fixed, s_optimiser, s_l_loss_meter)
+        #     for t_id in teacher.keys():
+        #         warm_up_step(teacher[t_id], moving, fixed, t_optimiser[t_id], t_l_loss_meter[t_id])
+        #     writer.add_scalar(
+        #         tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
+        #     )
+        #     if args.overfit:
+        #         break
+        # # log loss
+        # s_l_loss_meter.get_average(step_count)
+        # for t_id in t_l_loss_meter.keys():
+        #     t_l_loss_meter[t_id].get_average(step_count)
+        #
+        # print(f"training takes {time.time() - training_start} seconds")
 
         # validate current weight
         print("validating...")
