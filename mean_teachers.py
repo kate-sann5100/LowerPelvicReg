@@ -55,6 +55,7 @@ def train_worker(args):
         drop_last=True,
         persistent_workers=False,
     )
+    print(f"{device_count()} gpus")
     print(f"labelled dataset of size {len(l_loader)}")
     print(f"unlabelled dataset of size {len(ul_loader)}")
 
