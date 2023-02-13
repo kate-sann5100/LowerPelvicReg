@@ -42,6 +42,7 @@ def get_institution_patient_dict(data_path, mode):
             institution_patient_dict[k] = v[:-len(v)//4]
         elif mode == "val":
             print(-len(v)//4, -len(v)//4-2)
+            print(v[-len(v)//4:-len(v)//4-2])
             institution_patient_dict[k] = v[-len(v)//4:-len(v)//4-2]
         else:
             institution_patient_dict[k] = v[-len(v)//4-2:]
