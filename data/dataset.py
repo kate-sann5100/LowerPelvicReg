@@ -36,7 +36,6 @@ class RegDataset(Dataset):
                         if fixed_p != moving_p:
                             break
                     self.val_pair.append([(moving_p, moving_ins), (fixed_p, fixed_ins)])
-        print(self.mode, len(self.img_list), len(self.val_pair))
 
         self.transform = get_transform(
             augmentation=self.mode == "train",
@@ -151,6 +150,7 @@ class SemiDataset(Dataset):
                         if fixed_p != moving_p:
                             break
                     self.val_pair.append([(moving_p, moving_ins), (fixed_p, fixed_ins)])
+            print(self.mode, len(self.img_list), len(self.val_pair))
 
         self.transform = get_transform(
             augmentation=self.mode == "train",
