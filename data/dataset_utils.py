@@ -40,8 +40,10 @@ def get_institution_patient_dict(data_path, mode):
     for k, v in institution_patient_dict.items():
         if mode == "train":
             institution_patient_dict[k] = v[:-len(v)//4]
+        if mode == "val":
+            institution_patient_dict[k] = v[:-len(v)//4-2]
         else:
-            institution_patient_dict[k] = v[-len(v) // 4:]
+            institution_patient_dict[k] = v[-len(v)//4-2:]
 
     return institution_patient_dict
 
