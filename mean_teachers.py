@@ -360,64 +360,66 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
             epoch_decade = (epoch // 100 + 1) * 100
 
         # train
-        # student.train()
-        # training_start = time.time()
-        # for k in teacher.keys():
-        #     teacher[k].train()
-        # for step, (fixed, moving) in enumerate(l_loader):
-        #     reset_peak_memory_stats()
-        #     step_count += 1
-        #     if args.overfit:
-        #         moving, fixed = overfit_moving, overfit_fixed
-        #     cuda_batch(moving)
-        #     cuda_batch(fixed)
-        #     warm_up_step(student, moving, fixed, s_optimiser, s_l_loss_meter)
-        #     for t_id in teacher.keys():
-        #         warm_up_step(teacher[t_id], moving, fixed, t_optimiser[t_id], t_l_loss_meter[t_id])
-        #     writer.add_scalar(
-        #         tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
-        #     )
-        #     if args.overfit:
-        #         break
-        # # log loss
-        # s_l_loss_meter.get_average(step_count)
-        # for t_id in t_l_loss_meter.keys():
-        #     t_l_loss_meter[t_id].get_average(step_count)
-        #
-        # print(f"training takes {time.time() - training_start} seconds")
-
-        # validate current weight
-        print("validating...")
-        validation_start = time.time()
-        student_dice, teacher_dice, hausdorff_result_dict = validation(
-            args, student, teacher, val_loader,
-            writer=writer, step=step_count, vis=None, test=False,
-            overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
-        )
-        print(f"validation takes {time.time() - validation_start} seconds")
-        exit()
-
-        # update ckpt_old for each model separately based on validation performance
-        if student_dice[0] > s_best_metric:
-            torch.save(
-                {
-                    "epoch": epoch,
-                    "step_count": step_count,
-                    "model": student.state_dict(),
-                },
-                f'{save_dir}/student_{epoch_decade}_ckpt.pth'
+        student.train()
+        training_start = time.time()
+        for k in teacher.keys():
+            teacher[k].train()
+        for step, (fixed, moving) in enumerate(l_loader):
+            reset_peak_memory_stats()
+            step_count += 1
+            if args.overfit:
+                moving, fixed = overfit_moving, overfit_fixed
+            cuda_batch(moving)
+            cuda_batch(fixed)
+            warm_up_step(student, moving, fixed, s_optimiser, s_l_loss_meter)
+            for t_id in teacher.keys():
+                warm_up_step(teacher[t_id], moving, fixed, t_optimiser[t_id], t_l_loss_meter[t_id])
+            writer.add_scalar(
+                tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
             )
-
-        for t_id, bm in t_best_metric.items():
-            if teacher_dice[t_id][0] > bm:
-                torch.save(
-                    {
-                        "epoch": epoch,
-                        "step_count": step_count,
-                        "model": teacher[t_id].state_dict(),
-                    },
-                    f'{save_dir}/t{t_id}_{epoch_decade}_ckpt.pth'
+            if args.overfit:
+                break
+            if step % 500 == 1:
+                # validate current weight
+                print("validating...")
+                validation_start = time.time()
+                student_dice, teacher_dice, hausdorff_result_dict = validation(
+                    args, student, teacher, val_loader,
+                    writer=writer, step=step_count, vis=None, test=False,
+                    overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
                 )
+                print(f"validation takes {time.time() - validation_start} seconds")
+
+                # update ckpt_old for each model separately based on validation performance
+                if student_dice[0] > s_best_metric:
+                    torch.save(
+                        {
+                            "epoch": epoch,
+                            "step_count": step_count,
+                            "model": student.state_dict(),
+                        },
+                        f'{save_dir}/student_{epoch_decade}_ckpt.pth'
+                    )
+
+                for t_id, bm in t_best_metric.items():
+                    if teacher_dice[t_id][0] > bm:
+                        torch.save(
+                            {
+                                "epoch": epoch,
+                                "step_count": step_count,
+                                "model": teacher[t_id].state_dict(),
+                            },
+                            f'{save_dir}/t{t_id}_{epoch_decade}_ckpt.pth'
+                        )
+
+        # log loss
+        s_l_loss_meter.get_average(step_count)
+        for t_id in t_l_loss_meter.keys():
+            t_l_loss_meter[t_id].get_average(step_count)
+        if epoch == 0:
+            print(f"training epoch takes {time.time() - training_start} seconds")
+
+
 
 
 if __name__ == '__main__':
