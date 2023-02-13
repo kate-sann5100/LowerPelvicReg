@@ -62,6 +62,7 @@ def train_worker(args):
     # initialise validation dataloader
     val_dataset = SemiDataset(args=args, mode="val", label=True)
     val_loader = DataLoader(val_dataset, batch_size=1)
+    print(f"validation dataset of size {len(val_loader)}")
 
     # if over-fit, use the first validation pair for both training and validation
     if args.overfit:
@@ -127,8 +128,6 @@ def train_worker(args):
 
             # load and cuda data
             l_moving, l_fixed = l
-            print(l_moving["t2w"].device, l_moving["seg"].device,)
-            print(l_fixed["t2w"].device, l_fixed["seg"].device, )
             ul_moving, ul_fixed = ul
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
@@ -256,8 +255,6 @@ def validation(args, student, teacher, loader,
                 t_id: t_model(moving, fixed, semi_supervision=True, semi_mode="eval")
                 for t_id, t_model in teacher.items()
             }  # (B, 1, ...), (B, 9, ...)
-            for t_id, t_p in teacher_pred.items():
-                print(f"{t_id}: {t_p}")
             teacher_pred["total"] = {
                 k: torch.mean(  # "t2w", "seg"
                     torch.stack(
@@ -391,7 +388,6 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
 
         # validate current weight
         print("validating...")
-        print(len(val_loader))
         validation_start = time.time()
         student_dice, teacher_dice, hausdorff_result_dict = validation(
             args, student, teacher, val_loader,
