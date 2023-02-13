@@ -256,6 +256,8 @@ def validation(args, student, teacher, loader,
                 t_id: t_model(moving, fixed, semi_supervision=True, semi_mode="eval")
                 for t_id, t_model in teacher.items()
             }  # (B, 1, ...), (B, 9, ...)
+            for t_id, t_p in teacher_pred.items():
+                print(f"{t_id}: {t_p}")
             teacher_pred["total"] = {
                 k: torch.mean(  # "t2w", "seg"
                     torch.stack(
@@ -396,6 +398,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
             overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
         )
         print(f"validation takes {time.time() - validation_start} seconds")
+        exit()
 
         # update ckpt_old for each model separately based on validation performance
         if student_dice[0] > s_best_metric:
