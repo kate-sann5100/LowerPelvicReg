@@ -131,6 +131,8 @@ class SemiDataset(Dataset):
             data_path=args.data_path,
             mode=mode,
         )
+        if mode == "val":
+            print(institution_patient_dict)
 
         self.img_list = []
         for ins, patient_list in institution_patient_dict.items():
