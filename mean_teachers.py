@@ -314,6 +314,7 @@ def validation(args, student, teacher, loader,
 
 def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
     l_loss_dict = model(moving, fixed, semi_supervision=False)
+    print([k for k in l_loss_dict.keys()])
     l_loss = 0
     for k, v in l_loss_dict.items():
         l_loss_dict[k] = torch.mean(v)
