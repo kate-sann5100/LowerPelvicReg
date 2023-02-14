@@ -381,7 +381,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
             )
             if args.overfit:
                 break
-            if step % 500 == 1:
+            if step_count % 500 == 1:
                 # validate current weight
                 print("validating...")
                 validation_start = time.time()
