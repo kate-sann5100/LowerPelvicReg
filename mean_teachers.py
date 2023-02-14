@@ -392,6 +392,10 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
                 )
                 print(f"validation takes {time.time() - validation_start} seconds")
 
+                student.train()
+                for k in teacher.keys():
+                    teacher[k].train()
+
                 # update ckpt_old for each model separately based on validation performance
                 if student_dice[0] > s_best_metric:
                     torch.save(
