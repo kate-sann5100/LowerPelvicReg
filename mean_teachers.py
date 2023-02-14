@@ -379,8 +379,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
             writer.add_scalar(
                 tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
             )
-            if args.overfit:
-                break
+
             if step_count % 500 == 1:
                 # validate current weight
                 print("validating...")
@@ -417,6 +416,8 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
                             },
                             f'{save_dir}/t{t_id}_{epoch_decade}_ckpt.pth'
                         )
+            if args.overfit:
+                break
 
         # log loss
         s_l_loss_meter.get_average(step_count)
