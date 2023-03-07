@@ -86,7 +86,7 @@ def train_worker(args):
 
     # warm up student and teacher models
     warm_up_save_dir = get_save_dir(args, warm_up=True)
-    if not os.path.exists(f"warm_up_save_dir/student_{args.warm_up_epoch}_ckpt.pth"):
+    if not os.path.exists(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth"):
         warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
     student.load_state_dict(
         torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["model"],
@@ -117,6 +117,11 @@ def train_worker(args):
     consistency_loss = ConsistencyLoss()
     l_loss_meter = LossMeter(args, writer=writer)
     ul_loss_meter = SemiLossMeter(args, writer=writer)
+    student_dice, teacher_dice, hausdorff_result_dict = validation(
+        args, student, teacher, val_loader,
+        writer=writer, step=step_count, vis=None, test=False,
+        # overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
+    )
 
     for epoch in range(start_epoch, num_epochs):
         print(f"-----------epoch: {epoch}----------")
