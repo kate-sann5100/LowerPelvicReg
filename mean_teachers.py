@@ -314,7 +314,6 @@ def validation(args, student, teacher, loader,
 
 def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
     l_loss_dict = model(moving, fixed, semi_supervision=False)
-    print([k for k in l_loss_dict.keys()])
     l_loss = 0
     for k, v in l_loss_dict.items():
         l_loss_dict[k] = torch.mean(v)
@@ -372,7 +371,6 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
                 moving, fixed = overfit_moving, overfit_fixed
             cuda_batch(moving)
             cuda_batch(fixed)
-            print(step_count)
             warm_up_step(student, moving, fixed, s_optimiser, s_l_loss_meter)
             for t_id in teacher.keys():
                 warm_up_step(teacher[t_id], moving, fixed, t_optimiser[t_id], t_l_loss_meter[t_id])
