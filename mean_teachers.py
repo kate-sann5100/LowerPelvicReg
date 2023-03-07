@@ -100,7 +100,6 @@ def train_worker(args):
         )
         t_model.eval()
         print(f"loaded weights from {warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")
-    exit()
 
 
     # initialise student optimiser
