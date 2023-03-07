@@ -92,20 +92,27 @@ def train_worker(args):
         torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["model"],
         strict=True
     )
+    print(f"loaded weights from {warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
     for t_id, t_model in teacher.items():
         t_model.load_state_dict(
             torch.load(f"{warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")["model"],
             strict=True
         )
         t_model.eval()
+        print(f"loaded weights from {warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")
+    exit()
+
 
     # initialise student optimiser
     optimiser = Adam(student.parameters(), lr=args.lr)
+    # optimiser.load_state_dict(
+    #     torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["optimiser"]
+    # )
     writer = SummaryWriter(log_dir=save_dir)
 
     num_epochs = 5000
-    start_epoch = 0
-    step_count = 0
+    start_epoch = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["epoch"]
+    step_count = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["step_count"]
     best_metric = 0
     consistency_loss = ConsistencyLoss()
     l_loss_meter = LossMeter(args, writer=writer)
