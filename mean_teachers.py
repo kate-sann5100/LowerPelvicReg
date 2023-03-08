@@ -116,11 +116,11 @@ def train_worker(args):
     consistency_loss = ConsistencyLoss()
     l_loss_meter = LossMeter(args, writer=writer)
     ul_loss_meter = SemiLossMeter(args, writer=writer)
-    student_dice, teacher_dice, hausdorff_result_dict = validation(
-        args, student, teacher, val_loader,
-        writer=writer, step=step_count, vis=None, test=False,
-        # overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
-    )
+    # student_dice, teacher_dice, hausdorff_result_dict = validation(
+    #     args, student, teacher, val_loader,
+    #     writer=writer, step=step_count, vis=None, test=False,
+    #     # overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
+    # )
 
     for epoch in range(start_epoch, num_epochs):
         print(f"-----------epoch: {epoch}----------")
@@ -189,6 +189,9 @@ def train_worker(args):
             )
 
             if args.overfit:
+                break
+
+            if step == 10:
                 break
 
         if args.semi_supervision:

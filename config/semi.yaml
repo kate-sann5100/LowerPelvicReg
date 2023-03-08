@@ -11,7 +11,7 @@ MODEL:
   input: "img"
   multi_head: False
   reg: False
-  keep_rate: 0.996
+  keep_rate: 1
   warm_up_epoch: 500
   lr: 0.0005
   semi_co: 0.0005
