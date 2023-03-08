@@ -133,6 +133,8 @@ def train_worker(args):
 
         student.train()
         for step, (l, ul) in enumerate(dataloader):
+            print(step)
+            continue
         # for step, l in enumerate(l_loader):
             reset_peak_memory_stats()
             step_count += 1
@@ -175,7 +177,7 @@ def train_worker(args):
                 ul_loss = consistency_loss(ul_t_pred, ul_s_pred, ul[1]["affine_ddf"])
                 ul_loss_meter.update({"semi": torch.mean(ul_loss)})
                 optimiser.zero_grad()
-                ul_loss = ul_loss * 0.01
+                ul_loss = ul_loss * args.semi_co
                 ul_loss.backward()
                 optimiser.step()
 

@@ -68,7 +68,7 @@ def get_save_dir(args, warm_up=False):
     else:
         if args.label_ratio < 1:
             if args.semi_supervision:
-                save_dir += f"_semi{args.label_ratio}"
+                save_dir += f"_semi{args.label_ratio}_{args.semi_co}"
             else:
                 save_dir += f"_supervised{args.label_ratio}"
     if args.overfit:
