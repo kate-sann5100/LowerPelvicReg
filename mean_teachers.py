@@ -133,8 +133,6 @@ def train_worker(args):
 
         student.train()
         for step, (l, ul) in enumerate(dataloader):
-            print(step)
-            continue
         # for step, l in enumerate(l_loader):
             reset_peak_memory_stats()
             step_count += 1
@@ -157,6 +155,7 @@ def train_worker(args):
                 l_loss_dict[k] = torch.mean(v)
                 if k in ["label", "reg"]:
                     l_loss = l_loss + torch.mean(v)
+            print(l_loss)
             l_loss_meter.update(l_loss_dict)
             optimiser.zero_grad()
             l_loss.backward()
