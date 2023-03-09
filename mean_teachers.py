@@ -195,8 +195,8 @@ def train_worker(args):
             if args.overfit:
                 break
 
-            if step == 10:
-                break
+            # if step == 10:
+            #     break
 
         if args.semi_supervision:
             ul_loss_meter.get_average(step_count)
