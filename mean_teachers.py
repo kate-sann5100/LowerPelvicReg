@@ -94,8 +94,12 @@ def train_worker(args):
     )
     print(f"loaded weights from {warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
     for t_id, t_model in teacher.items():
+        # t_model.load_state_dict(
+        #     torch.load(f"{warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")["model"],
+        #     strict=True
+        # )
         t_model.load_state_dict(
-            torch.load(f"{warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")["model"],
+            torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["model"],
             strict=True
         )
         t_model.eval()
