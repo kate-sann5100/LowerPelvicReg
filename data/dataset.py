@@ -163,6 +163,21 @@ class SemiDataset(Dataset):
         return len(self.img_list) if self.mode == "train" else len(self.val_pair)
 
     def __getitem__(self, idx):
+        """
+        :param idx:
+        :return:
+        moving with keys:
+        -"t2w": (1, W, H, D)
+        -"seg": (1, W, H, D) or key not exist
+        -"ins": int
+        -"name": str
+        fixed with keys:
+        -"t2w": (1, W, H, D)
+        -"seg": (1, W, H, D) or key not exist
+        -"affine_ddf": (3, W, H, D)
+        -"ins": int
+        -"name": str
+        """
         if self.mode == "train":
             moving = idx
             fixed = sample_pair(idx, len(self.img_list))
@@ -176,6 +191,7 @@ class SemiDataset(Dataset):
         if self.mode == "train" and not self.label:
             del moving["seg"]
             del fixed["seg"]
-            self.strong_aug(fixed)
-
-        return moving, fixed
+            aug_fixed = self.strong_aug(fixed)
+            return moving, fixed, aug_fixed
+        else:
+            return moving, fixed

@@ -143,14 +143,12 @@ def train_worker(args):
 
             # load and cuda data
             l_moving, l_fixed = l
-            ul_moving, ul_fixed = ul
+            ul_moving, ul_fixed, aug_fixed = ul
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
-                ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
+                ul_moving, ul_fixed, aug_fixed = ul_overfit_moving, ul_overfit_fixed, aug_overfit_fixed
             cuda_batch(l_moving)
             cuda_batch(l_fixed)
-            cuda_batch(ul_moving)
-            cuda_batch(ul_fixed)
 
             # backprop on labelled data
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
@@ -167,15 +165,20 @@ def train_worker(args):
 
             # backprop on unlabelled data
             if args.semi_supervision:
+                cuda_batch(ul_moving)
+                cuda_batch(ul_fixed)
+                cuda_batch(aug_fixed)
+                print("training teacher")
                 with torch.no_grad():
                     # TODO: not support multi-gpu
                     # TODO: divide ul and l to separate gpu
                     ul_t_pred = [
-                        v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
+                        v(ul_moving, aug_fixed, semi_supervision=True, semi_mode="train")
                         for _, v in teacher.items()
                     ]
                     ul_t_pred = torch.stack(ul_t_pred, dim=-1)
                     ul_t_pred = torch.mean(ul_t_pred, dim=-1)
+                print("training student")
                 ul_s_pred = student(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
                 ul_loss = consistency_loss(ul_t_pred, ul_s_pred, ul[1]["affine_ddf"])
                 ul_loss_meter.update({"semi": torch.mean(ul_loss)})
@@ -197,6 +200,7 @@ def train_worker(args):
 
             # if step == 10:
             #     break
+            break
 
         if args.semi_supervision:
             ul_loss_meter.get_average(step_count)
@@ -260,6 +264,7 @@ def validation(args, student, teacher, loader,
             cuda_batch(fixed)
 
             # student prediction
+            print("validation student")
             student.eval()
             student_binary = student(moving, fixed, semi_supervision=False)
             student_dice_meter.update(
@@ -268,6 +273,7 @@ def validation(args, student, teacher, loader,
             )
 
             # teacher prediction
+            print("validation teacher")
             for t_id, t_model in teacher.items():
                 t_model.eval()
             teacher_pred = {
@@ -317,6 +323,7 @@ def validation(args, student, teacher, loader,
 
             if args.overfit:
                 break
+            break
 
         student_dice = student_dice_meter.get_average(step)  # (dice, dict)
         teacher_dice = {

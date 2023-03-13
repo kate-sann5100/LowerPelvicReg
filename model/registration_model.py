@@ -121,6 +121,8 @@ class Registration(nn.Module):
         :param semi_mode: "train" or "eval"
         :return:
         """
+        print(f"semi_supervision: {semi_supervision}, semi_mode: {semi_mode}")
+        print(f"self.training: {self.training}")
 
         if self.args.input == "img":
             x = torch.cat([moving_batch["t2w"], fixed_batch["t2w"]], dim=1)

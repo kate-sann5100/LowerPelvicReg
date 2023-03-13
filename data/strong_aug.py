@@ -128,13 +128,15 @@ class RandAffine(RandomizableTransform):
             self.randomize()
             grid = self.get_identity_grid(self.spatial_size)
             grid = self.rand_affine_grid(grid=grid)
-            img["t2w"] = self.resampler(
+            new_img = img.copy()
+            new_img["t2w"] = self.resampler(
                 img=img["t2w"], grid=grid, mode=self.mode, padding_mode=self.padding_mode
             )
             grid = grid.clone()[:-1, :, :]
             for i, dim in enumerate(self.spatial_size):
                 grid[i] += (dim-1) / 2
             ddf = grid - self.reference_grid
-            img["affine_ddf"] = ddf
+            new_img["affine_ddf"] = ddf
             # warp_out = Warp(padding_mode="zeros")(img[None, ...], ddf[None, ...])[0]
             # assert torch.equal(warp_out, out)
+            return new_img
