@@ -268,8 +268,7 @@ def validation(args, student, teacher, loader,
             # student prediction
             print("validation student")
             student.eval()
-            print(moving, fixed)
-            student_binary = student(moving, fixed, semi_supervision=False)
+            student_binary = student(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
             student_dice_meter.update(
                 student_binary["seg"], fixed["seg"],
                 name=moving["name"], fixed_ins=fixed["ins"]
