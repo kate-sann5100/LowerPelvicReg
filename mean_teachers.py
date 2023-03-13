@@ -153,13 +153,13 @@ def train_worker(args):
             cuda_batch(l_fixed)
 
             # backprop on labelled data
+            print("-----labelled data-----")
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
             l_loss = 0
             for k, v in l_loss_dict.items():
                 l_loss_dict[k] = torch.mean(v)
                 if k in ["label", "reg"]:
                     l_loss = l_loss + torch.mean(v)
-            print(l_loss)
             l_loss_meter.update(l_loss_dict)
             optimiser.zero_grad()
             l_loss.backward()
@@ -170,7 +170,7 @@ def train_worker(args):
                 cuda_batch(ul_moving)
                 cuda_batch(ul_fixed)
                 cuda_batch(aug_fixed)
-                print("training teacher")
+                print("-----training teacher-----")
                 with torch.no_grad():
                     # TODO: not support multi-gpu
                     # TODO: divide ul and l to separate gpu
@@ -180,9 +180,9 @@ def train_worker(args):
                     ]
                     ul_t_pred = torch.stack(ul_t_pred, dim=-1)
                     ul_t_pred = torch.mean(ul_t_pred, dim=-1)
-                print("training student")
+                print("-----training student-----")
                 ul_s_pred = student(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
-                ul_loss = consistency_loss(ul_t_pred, ul_s_pred, ul[1]["affine_ddf"])
+                ul_loss = consistency_loss(ul_t_pred, ul_s_pred, aug_fixed["affine_ddf"])
                 ul_loss_meter.update({"semi": torch.mean(ul_loss)})
                 optimiser.zero_grad()
                 ul_loss = ul_loss * args.semi_co
