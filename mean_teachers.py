@@ -114,8 +114,9 @@ def train_worker(args):
     writer = SummaryWriter(log_dir=save_dir)
 
     num_epochs = 5000
-    start_epoch = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["epoch"]
-    step_count = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["step_count"]
+    # start_epoch = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["epoch"]
+    # step_count = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["step_count"]
+    start_epoch, start_count = 0, 0
     best_metric = 0
     consistency_loss = ConsistencyLoss()
     l_loss_meter = LossMeter(args, writer=writer)
