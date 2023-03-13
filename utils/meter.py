@@ -115,6 +115,7 @@ class DiceMeter:
                 self.result_dict[cls][name][fixed_ins] = mean_dice[cls - 1].item()
 
     def get_average(self, step):
+        print(f"-----{self.tag}-----")
 
         self.count[self.count == 0] = -1
         mean = self.sum / self.count
