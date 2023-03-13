@@ -85,25 +85,25 @@ def train_worker(args):
     }
 
     # warm up student and teacher models
-    warm_up_save_dir = get_save_dir(args, warm_up=True)
-    if not os.path.exists(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth"):
-        warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
-    student.load_state_dict(
-        torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["model"],
-        strict=True
-    )
-    print(f"loaded weights from {warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
-    for t_id, t_model in teacher.items():
-        # t_model.load_state_dict(
-        #     torch.load(f"{warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")["model"],
-        #     strict=True
-        # )
-        t_model.load_state_dict(
-            torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["model"],
-            strict=True
-        )
-        t_model.eval()
-        print(f"loaded weights from {warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")
+    # warm_up_save_dir = get_save_dir(args, warm_up=True)
+    # if not os.path.exists(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth"):
+    #     warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
+    # student.load_state_dict(
+    #     torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["model"],
+    #     strict=True
+    # )
+    # print(f"loaded weights from {warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
+    # for t_id, t_model in teacher.items():
+    #     # t_model.load_state_dict(
+    #     #     torch.load(f"{warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")["model"],
+    #     #     strict=True
+    #     # )
+    #     t_model.load_state_dict(
+    #         torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["model"],
+    #         strict=True
+    #     )
+    #     t_model.eval()
+    #     print(f"loaded weights from {warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")
 
 
     # initialise student optimiser
@@ -266,6 +266,7 @@ def validation(args, student, teacher, loader,
             # student prediction
             print("validation student")
             student.eval()
+            print(moving, fixed)
             student_binary = student(moving, fixed, semi_supervision=False)
             student_dice_meter.update(
                 student_binary["seg"], fixed["seg"],
