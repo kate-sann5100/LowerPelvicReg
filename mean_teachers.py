@@ -279,7 +279,7 @@ def validation(args, student, teacher, loader,
             for t_id, t_model in teacher.items():
                 t_model.eval()
             teacher_pred = {
-                t_id: t_model(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
+                t_id: t_model(moving_batch=moving, fixed_batch=fixed, semi_supervision=True, semi_mode="eval")
                 for t_id, t_model in teacher.items()
             }  # (B, 1, ...), (B, 9, ...)
             teacher_pred["total"] = {
