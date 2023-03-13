@@ -105,7 +105,7 @@ class Registration(nn.Module):
         return pred  # (B, 9, ...) or (B, 1, ...)
 
     def forward(self, moving_batch, fixed_batch,
-                semi_supervision=False, semi_mode=None):
+                semi_supervision=False, semi_mode="eval"):
         """
         :param moving_batch:
         "t2w": (B, 1, ...)
@@ -148,26 +148,25 @@ class Registration(nn.Module):
             self.warp(ms, ddf, one_hot_moving=self.training or semi_supervision)
             for ms, ddf in zip(moving_seg_list, ddf_list)
         ]  # num_class x (B, 9, ...) or num_class x (B, 1, ...)
+        if semi_supervision:
+            assert not self.multi_head, "semi-supervision does not support multi-head"
+            warped_seg = warped_seg_list[0]  # (B, 9, ...)
+            warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False, t2w=True)
+            return {
+                "seg": warped_seg,
+                "t2w": warped_t2w
+            }
         if self.training:
             return self.get_loss(warped_seg_list, fixed_seg_list, ddf_list, loss_organ_list)
         else:
-            if semi_supervision and semi_mode == "eval":
-                assert not self.multi_head, "semi-supervision does not support multi-head"
-                warped_seg = warped_seg_list[0]  # (B, 9, ...)
+            warped_seg = warped_seg_list[0]
+            for ws in warped_seg_list[1:]:
+                warped_seg += ws * (warped_seg == 0)
+            binary = {"seg": warped_seg}
+            if not self.multi_head:
                 warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False, t2w=True)
-                return {
-                    "seg": warped_seg,
-                    "t2w": warped_t2w
-                }
-            else:
-                warped_seg = warped_seg_list[0]
-                for ws in warped_seg_list[1:]:
-                    warped_seg += ws * (warped_seg == 0)
-                binary = {"seg": warped_seg}
-                if not self.multi_head:
-                    warped_t2w = self.warp(moving_batch["t2w"], ddf_list[0], one_hot_moving=False, t2w=True)
-                    binary["t2w"] = warped_t2w
-                return binary
+                binary["t2w"] = warped_t2w
+            return binary
 
     def get_label_loss(self, warped_seg_list, fixed_seg_list, loss_organ_list):
         """
@@ -304,12 +303,12 @@ class ConsistencyLoss(nn.Module):
         self.warp = Warp()
         self.loss_fn = MSELoss()
 
-    def forward(self, s_ddf, t_ddf, affine_ddf):
+    def forward(self, ddf, aug_ddf, affine_ddf):
         """
-        :param s_ddf: (B, 3, W, H, D)
-        :param t_ddf: (B, 3, W, H, D)
+        :param ddf: (B, 3, W, H, D)
+        :param aug_ddf: (B, 3, W, H, D)
         :param affine_ddf: (B, 3, W, H, D)
         :return:
         """
-        s_ddf = affine_ddf.to(s_ddf) + self.warp(s_ddf, affine_ddf.to(s_ddf))
-        return self.loss_fn(s_ddf, t_ddf)
+        pred_aug_ddf = affine_ddf.to(ddf) + self.warp(ddf, affine_ddf.to(ddf))
+        return self.loss_fn(aug_ddf, pred_aug_ddf)

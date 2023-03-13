@@ -68,9 +68,11 @@ def train_worker(args):
     if args.overfit:
         for moving, fixed in val_loader:
             l_overfit_moving, l_overfit_fixed = moving, fixed
-            ul_overfit_moving, ul_overfit_fixed = moving.copy(), fixed.copy()
+            ul_overfit_moving, ul_overfit_fixed, aug_overfit_fixed = moving.copy(), fixed.copy(), fixed.copy()
             del ul_overfit_moving["seg"]
             del ul_overfit_fixed["seg"]
+            del aug_overfit_fixed["seg"]
+            aug_overfit_fixed["affine_ddf"] = torch.zeros((3, *args.size), dtype=torch.float)
             break
     else:
         l_overfit_moving, l_overfit_fixed, ul_overfit_moving, ul_overfit_fixed = None, None, None, None
@@ -137,8 +139,9 @@ def train_worker(args):
         curr_teacher_id = 0 if epoch % 2 != 0 else 1
 
         student.train()
+        for t_id, t_model in teacher.items():
+            t_model.eval()
         for step, (l, ul) in enumerate(dataloader):
-        # for step, l in enumerate(l_loader):
             print(step_count)
             reset_peak_memory_stats()
             step_count += 1
@@ -153,7 +156,6 @@ def train_worker(args):
             cuda_batch(l_fixed)
 
             # backprop on labelled data
-            print("-----labelled data-----")
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
             l_loss = 0
             for k, v in l_loss_dict.items():
@@ -170,19 +172,19 @@ def train_worker(args):
                 cuda_batch(ul_moving)
                 cuda_batch(ul_fixed)
                 cuda_batch(aug_fixed)
-                print("-----training teacher-----")
                 with torch.no_grad():
                     # TODO: not support multi-gpu
                     # TODO: divide ul and l to separate gpu
                     ul_t_pred = [
-                        v(ul_moving, aug_fixed, semi_supervision=True, semi_mode="train")
+                        v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
                         for _, v in teacher.items()
                     ]
                     ul_t_pred = torch.stack(ul_t_pred, dim=-1)
                     ul_t_pred = torch.mean(ul_t_pred, dim=-1)
-                print("-----training student-----")
-                ul_s_pred = student(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
-                ul_loss = consistency_loss(ul_t_pred, ul_s_pred, aug_fixed["affine_ddf"])
+                ul_s_pred = student(ul_moving, aug_fixed, semi_supervision=True, semi_mode="train")
+                ul_loss = consistency_loss(
+                    ddf=ul_t_pred, aug_ddf=ul_s_pred, affine_ddf=aug_fixed["affine_ddf"]
+                )
                 ul_loss_meter.update({"semi": torch.mean(ul_loss)})
                 optimiser.zero_grad()
                 ul_loss = ul_loss * args.semi_co
@@ -266,7 +268,6 @@ def validation(args, student, teacher, loader,
             cuda_batch(fixed)
 
             # student prediction
-            print("validation student")
             student.eval()
             student_binary = student(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
             student_dice_meter.update(
@@ -275,11 +276,10 @@ def validation(args, student, teacher, loader,
             )
 
             # teacher prediction
-            print("validation teacher")
             for t_id, t_model in teacher.items():
                 t_model.eval()
             teacher_pred = {
-                t_id: t_model(moving_batch=moving, fixed_batch=fixed, semi_supervision=True, semi_mode="eval")
+                t_id: t_model(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
                 for t_id, t_model in teacher.items()
             }  # (B, 1, ...), (B, 9, ...)
             teacher_pred["total"] = {
