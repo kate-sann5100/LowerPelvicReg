@@ -83,7 +83,7 @@ def train_worker(args):
     )
     teacher = {
         teacher_id: torch.nn.DataParallel(Registration(args).cuda())
-        for teacher_id in range(2)
+        for teacher_id in range(args.num_teacher)
     }
 
     # warm up student and teacher models
@@ -97,17 +97,15 @@ def train_worker(args):
         )
         print(f"loaded weights from {warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
         for t_id, t_model in teacher.items():
-            # t_model.load_state_dict(
-            #     torch.load(f"{warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")["model"],
-            #     strict=True
-            # )
+            if args.same_init:
+                weight_path = f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth"
+            else:
+                weight_path = f"{warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth"
             t_model.load_state_dict(
-                torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["model"],
-                strict=True
+                torch.load(weight_path)["model"], strict=True
             )
             t_model.eval()
-            print(f"loaded weights from {warm_up_save_dir}/t{t_id}_{args.warm_up_epoch}_ckpt.pth")
-
+            print(f"loaded weights from {weight_path}")
 
     # initialise student optimiser
     optimiser = Adam(student.parameters(), lr=args.lr)
@@ -117,9 +115,8 @@ def train_worker(args):
     writer = SummaryWriter(log_dir=save_dir)
 
     num_epochs = 5000
-    # start_epoch = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["epoch"]
-    # step_count = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["step_count"]
-    start_epoch, step_count = 0, 0
+    start_epoch = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["epoch"]
+    step_count = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["step_count"]
     best_metric = 0
     consistency_loss = ConsistencyLoss()
     l_loss_meter = LossMeter(args, writer=writer)
@@ -135,9 +132,8 @@ def train_worker(args):
 
         # zip labeled and unlabeled datasets
         dataloader = iter(zip(cycle(l_loader), ul_loader))
-        # dataloader = iter(zip(cycle(l_loader), l_loader))
         # alternate training teacher each epoch
-        curr_teacher_id = 0 if epoch % 2 != 0 else 1
+        curr_teacher_id = epoch % args.num_teacher
 
         student.train()
         for t_id, t_model in teacher.items():
@@ -203,15 +199,11 @@ def train_worker(args):
             if args.overfit:
                 break
 
-            # if step == 10:
-            #     break
-            break
-
         if args.semi_supervision:
             ul_loss_meter.get_average(step_count)
         l_loss_meter.get_average(step_count)
 
-        # update ckpt_old based on validation performance
+        # update ckpt based on validation performance
         ckpt = {
             "epoch": epoch,
             "step_count": step_count,
@@ -283,16 +275,19 @@ def validation(args, student, teacher, loader,
                 t_id: t_model(moving_batch=moving, fixed_batch=fixed, semi_supervision=True, semi_mode="eval")
                 for t_id, t_model in teacher.items()
             }  # (B, 1, ...), (B, 9, ...)
-            teacher_pred["total"] = {
-                k: torch.mean(  # "t2w", "seg"
-                    torch.stack(
-                        [teacher_pred[t_id][k] for t_id in teacher_pred.keys()],
+            if args.num_teacher > 1:
+                teacher_pred["total"] = {
+                    k: torch.mean(  # "t2w", "seg"
+                        torch.stack(
+                            [teacher_pred[t_id][k] for t_id in teacher_pred.keys()],
+                            dim=-1
+                        ),  # (B, 1, ..., num_teacher), (B, 9, ..., num_teacher)
                         dim=-1
-                    ),  # (B, 1, ..., num_teacher), (B, 9, ..., num_teacher)
-                    dim=-1
-                )  # (B, 1, ...), (B, 9, ...)
-                for k in ["seg", "t2w"]
-            }
+                    )  # (B, 1, ...), (B, 9, ...)
+                    for k in ["seg", "t2w"]
+                }
+            else:
+                teacher_pred["total"] = teacher_pred[0]
             for t_id, t_pred in teacher_pred.items():
                 t_pred["seg"] = torch.argmax(t_pred["seg"], dim=1, keepdim=True)  # (B, 1, ...)
                 teacher_dice_meter[t_id].update(
@@ -326,7 +321,6 @@ def validation(args, student, teacher, loader,
 
             if args.overfit:
                 break
-            break
 
         student_dice = student_dice_meter.get_average(step)  # (dice, dict)
         teacher_dice = {
