@@ -95,7 +95,7 @@ def train_worker(args):
             warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
         student_ckpt = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
         student.load_state_dict(student_ckpt["model"],  strict=True)
-        start_epoch = student_ckpt["start_epoch"]
+        start_epoch = student_ckpt["epoch"]
         step_count = student_ckpt["step_count"]
         print(f"loaded weights from {warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
         for t_id, t_model in teacher.items():
