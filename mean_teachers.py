@@ -139,7 +139,6 @@ def train_worker(args):
         for t_id, t_model in teacher.items():
             t_model.eval()
         for step, (l, ul) in enumerate(dataloader):
-            print(step_count)
             reset_peak_memory_stats()
             step_count += 1
 
