@@ -87,14 +87,15 @@ def train_worker(args):
     }
 
     # warm up student and teacher models
+    start_epoch, step_count = 0, 0
     if not args.overfit:
         warm_up_save_dir = get_save_dir(args, warm_up=True)
         if not os.path.exists(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth"):
             warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
-        student.load_state_dict(
-            torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["model"],
-            strict=True
-        )
+        student_ckpt = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
+        student.load_state_dict(student_ckpt["model"],  strict=True)
+        start_epoch = student_ckpt["start_epoch"]
+        step_count = student_ckpt["step_count"]
         print(f"loaded weights from {warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
         for t_id, t_model in teacher.items():
             if args.same_init:
@@ -115,8 +116,6 @@ def train_worker(args):
     writer = SummaryWriter(log_dir=save_dir)
 
     num_epochs = 5000
-    start_epoch = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["epoch"]
-    step_count = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["step_count"]
     best_metric = 0
     consistency_loss = ConsistencyLoss()
     l_loss_meter = LossMeter(args, writer=writer)
