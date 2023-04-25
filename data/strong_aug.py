@@ -77,7 +77,7 @@ class RandAffine(RandomizableTransform):
         RandomizableTransform.__init__(self, prob)
 
         rotate_range = [i * aug_multiplier for i in rotate_range]
-        shear_range = [i * aug_multiplier for i in shear_range]
+        scale_range = [i * aug_multiplier for i in scale_range]
         translate_range = [i * aug_multiplier for i in translate_range]
         self.rand_affine_grid = RandAffineGrid(
             rotate_range=rotate_range,
