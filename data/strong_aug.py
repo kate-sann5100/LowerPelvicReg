@@ -87,6 +87,7 @@ class RandAffine(RandomizableTransform):
         self.mode = GridSampleMode(mode)
         self.padding_mode = GridSamplePadMode(padding_mode)
         self.reference_grid = self.get_reference_grid()
+        self.aug = aug
 
     def get_identity_grid(self, spatial_size):
         """
@@ -130,8 +131,9 @@ class RandAffine(RandomizableTransform):
             self.randomize()
             grid = self.get_identity_grid(self.spatial_size)
             print(grid)
-            grid = self.rand_affine_grid(grid=grid)
-            print(grid)
+            if self.aug:
+                grid = self.rand_affine_grid(grid=grid)
+                print(grid)
             new_img = img.copy()
             new_img["t2w"] = self.resampler(
                 img=img["t2w"], grid=grid, mode=self.mode, padding_mode=self.padding_mode
