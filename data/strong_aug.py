@@ -133,7 +133,9 @@ class RandAffine(RandomizableTransform):
             print(type(grid))
             if self.aug:
                 grid = self.rand_affine_grid(grid=grid)
-                print(type(grid))
+            else:
+                grid = torch.tensor(grid)
+            print(grid)
             new_img = img.copy()
             new_img["t2w"] = self.resampler(
                 img=img["t2w"], grid=grid, mode=self.mode, padding_mode=self.padding_mode
