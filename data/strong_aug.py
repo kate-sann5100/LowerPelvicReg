@@ -130,10 +130,10 @@ class RandAffine(RandomizableTransform):
         with torch.no_grad():
             self.randomize()
             grid = self.get_identity_grid(self.spatial_size)
-            print(grid.shape)
+            print(type(grid))
             if self.aug:
                 grid = self.rand_affine_grid(grid=grid)
-                print(grid.shape)
+                print(type(grid))
             new_img = img.copy()
             new_img["t2w"] = self.resampler(
                 img=img["t2w"], grid=grid, mode=self.mode, padding_mode=self.padding_mode
