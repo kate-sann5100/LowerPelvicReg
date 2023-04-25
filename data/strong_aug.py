@@ -143,7 +143,6 @@ class RandAffine(RandomizableTransform):
                 grid[i] += (dim-1) / 2
             ddf = grid - self.reference_grid
             new_img["affine_ddf"] = ddf
-            print(torch.unique(ddf))
             # warp_out = Warp(padding_mode="zeros")(img[None, ...], ddf[None, ...])[0]
             # assert torch.equal(warp_out, out)
             return new_img
