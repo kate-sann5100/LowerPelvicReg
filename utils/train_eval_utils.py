@@ -41,6 +41,8 @@ def get_parser():
     cfg.test = args.test
     cfg.vis = args.vis
     cfg.manual_seed = args.manual_seed
+    print(args.label_ratio)
+    print(type(args.label_ratio))
     cfg.label_ratio = args.label_ratio
     cfg.same_init = not args.diff_init
     print(cfg)
