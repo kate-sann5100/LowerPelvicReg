@@ -91,7 +91,6 @@ class RandAffine(RandomizableTransform):
         self.mode = GridSampleMode(mode)
         self.padding_mode = GridSamplePadMode(padding_mode)
         self.reference_grid = self.get_reference_grid()
-        self.aug = aug
 
     def get_identity_grid(self, spatial_size):
         """
