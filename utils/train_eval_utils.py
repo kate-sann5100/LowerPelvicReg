@@ -24,6 +24,9 @@ def get_parser():
     parser.add_argument('--vis', action='store_true')
     parser.add_argument('--config', type=str, default='config/basic.yaml')
     parser.add_argument('--manual_seed', default=321, dest='manual_seed')
+
+    parser.add_argument('--label_ratio', default=0.1)
+    parser.add_argument('--diff_init', action='store_true')
     args = parser.parse_args()
 
     assert args.config is not None
@@ -38,6 +41,8 @@ def get_parser():
     cfg.test = args.test
     cfg.vis = args.vis
     cfg.manual_seed = args.manual_seed
+    cfg.label_ratio = args.label_ratio
+    cfg.same_init = not args.diff_init
     print(cfg)
     return cfg
 
