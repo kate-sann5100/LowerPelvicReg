@@ -17,4 +17,4 @@ MODEL:
   semi_co: 0.0001
   num_teacher: 1
   same_init: True
-  strong_aug: True
+  strong_aug: False
