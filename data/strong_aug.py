@@ -24,6 +24,7 @@ class RandAffine(RandomizableTransform):
         mode="bilinear",
         padding_mode="zeros",
         device=None,
+        aug=False
     ) -> None:
         """
         Args:
@@ -64,6 +65,7 @@ class RandAffine(RandomizableTransform):
                 Padding mode for outside grid values. Defaults to ``"reflection"``.
                 See also: https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html
             device: device on which the tensor will be allocated.
+            aug: bool, apply augmentation or not
 
         See also:
             - :py:class:`RandAffineGrid` for the random affine parameters configurations.
@@ -113,7 +115,7 @@ class RandAffine(RandomizableTransform):
 
     def __call__(
         self,
-        img,
+        img
     ):
         """
         Randomly affine transform the fixed t2w, and save the affine_ddf to dict

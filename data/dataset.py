@@ -157,7 +157,7 @@ class SemiDataset(Dataset):
             resolution=args.resolution
         )
 
-        self.strong_aug = RandAffine()
+        self.strong_aug = RandAffine(aug=args.strong_aug)
 
     def __len__(self):
         return len(self.img_list) if self.mode == "train" else len(self.val_pair)
