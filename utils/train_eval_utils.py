@@ -78,7 +78,7 @@ def get_save_dir(args, warm_up=False):
                 save_dir += f"_supervised{args.label_ratio}"
     if not warm_up:
         save_dir += "_same" if args.same_init else "_diff"
-        save_dir += "_noaug" if not args.strong_aug else ""
+        save_dir += f"_aug{args.aug_multiplier}"
     if args.num_teacher > 1:
         save_dir += f"_{args.num_teacher}teacher"
     if args.overfit:

@@ -24,6 +24,7 @@ class RandAffine(RandomizableTransform):
         mode="bilinear",
         padding_mode="zeros",
         device=None,
+        aug_multiplier=1.,
         aug=False
     ) -> None:
         """
@@ -65,6 +66,7 @@ class RandAffine(RandomizableTransform):
                 Padding mode for outside grid values. Defaults to ``"reflection"``.
                 See also: https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html
             device: device on which the tensor will be allocated.
+            aug_multiplier: float, augmentation multiplier
             aug: bool, apply augmentation or not
 
         See also:
@@ -74,6 +76,9 @@ class RandAffine(RandomizableTransform):
         """
         RandomizableTransform.__init__(self, prob)
 
+        rotate_range = [i * aug_multiplier for i in rotate_range]
+        shear_range = [i * aug_multiplier for i in shear_range]
+        translate_range = [i * aug_multiplier for i in translate_range]
         self.rand_affine_grid = RandAffineGrid(
             rotate_range=rotate_range,
             shear_range=shear_range,

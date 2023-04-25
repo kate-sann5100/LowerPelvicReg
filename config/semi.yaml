@@ -18,3 +18,4 @@ MODEL:
   num_teacher: 1
   same_init: True
   strong_aug: False
+  aug_multiplier: 0
