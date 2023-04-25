@@ -40,7 +40,6 @@ def train_worker(args):
 
     # initialise training dataloaders
     l_dataset = SemiDataset(args=args, mode="train", label=True)
-    ul_dataset = SemiDataset(args=args, mode="train", label=False)
     l_loader = DataLoader(
         l_dataset,
         batch_size=device_count(),
@@ -48,16 +47,19 @@ def train_worker(args):
         drop_last=True,
         persistent_workers=False,
     )
-    ul_loader = DataLoader(
-        ul_dataset,
-        batch_size=device_count(),
-        shuffle=True,
-        drop_last=True,
-        persistent_workers=False,
-    )
     print(f"{device_count()} gpus")
     print(f"labelled dataset of size {len(l_loader)}")
-    print(f"unlabelled dataset of size {len(ul_loader)}")
+
+    if args.label_ratio < 1:
+        ul_dataset = SemiDataset(args=args, mode="train", label=False)
+        ul_loader = DataLoader(
+            ul_dataset,
+            batch_size=device_count(),
+            shuffle=True,
+            drop_last=True,
+            persistent_workers=False,
+        )
+        print(f"unlabelled dataset of size {len(ul_loader)}")
 
     # initialise validation dataloader
     val_dataset = SemiDataset(args=args, mode="val", label=True)
@@ -108,6 +110,8 @@ def train_worker(args):
             )
             t_model.eval()
             print(f"loaded weights from {weight_path}")
+    if args.label_ratio == 1:
+        exit()
 
     # initialise student optimiser
     optimiser = Adam(student.parameters(), lr=args.lr)
