@@ -26,7 +26,9 @@ def get_parser():
     parser.add_argument('--manual_seed', default=321, dest='manual_seed')
 
     parser.add_argument('--label_ratio',type=float, default=0.1)
+    parser.add_argument('--aug_multiplier', type=float, default=1.0)
     parser.add_argument('--diff_init', action='store_true')
+
     args = parser.parse_args()
 
     assert args.config is not None
@@ -43,6 +45,7 @@ def get_parser():
     cfg.manual_seed = args.manual_seed
     cfg.label_ratio = args.label_ratio
     cfg.same_init = not args.diff_init
+    cfg.aug_multiplier = args.aug_multiplier
     print(cfg)
     return cfg
 
