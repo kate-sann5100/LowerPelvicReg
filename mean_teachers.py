@@ -131,13 +131,6 @@ def train_worker(args):
         # overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
     )
 
-    print(student_dice)
-    print(teacher_dice)
-    val_metric = student_dice[0]
-    for k, v in teacher_dice.items():
-        val_metric = max(val_metric, v[0])
-    print(val_metric)
-
     for epoch in range(start_epoch, num_epochs):
         print(f"-----------epoch: {epoch}----------")
 
@@ -227,8 +220,9 @@ def train_worker(args):
             writer=writer, step=step_count, vis=None, test=False,
             overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
         )
-        print(student_dice)
-        print(teacher_dice)
+        val_metric = student_dice[0]
+        for k, v in teacher_dice.items():
+            val_metric = max(val_metric, v[0])
         val_metric = teacher_dice["total"][0]
         if val_metric > best_metric:
             best_metric = val_metric
