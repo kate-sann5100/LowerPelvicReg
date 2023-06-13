@@ -90,3 +90,7 @@ def register(args, moving, fixed):
         nan = torch.isnan(mean_dice)
         mean_dice[nan] = 0
         print(mean_dice)
+
+
+if __name__ == '__main__':
+    main()
