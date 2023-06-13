@@ -18,7 +18,6 @@ class Registration(nn.Module):
     def __init__(self, args):
         super(Registration, self).__init__()
         self.args = args
-        print(self.args.reg)
         self.multi_head = args.multi_head
         self.extract_levels = (0, 1, 2, 3)
 

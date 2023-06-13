@@ -13,6 +13,8 @@ from utils.train_eval_utils import cuda_batch, get_parser, set_seed
 
 def main():
     args = get_parser()
+    print('----------------------------------')
+    print(args)
     cudnn.benchmark = False
     cudnn.deterministic = True
     set_seed(args.manual_seed)
