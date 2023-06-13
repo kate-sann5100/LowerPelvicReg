@@ -217,6 +217,6 @@ def register(args, moving, fixed, vis):
 
 
 if __name__ == '__main__':
-    # main()
-    ddf = fake_ddf()
-    plot_ddf(ddf, "make_diagram/fake_ddf.pdf")
+    main()
+    # ddf = fake_ddf()
+    # plot_ddf(ddf, "make_diagram/fake_ddf.pdf")
