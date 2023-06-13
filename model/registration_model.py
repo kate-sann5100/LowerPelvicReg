@@ -185,12 +185,14 @@ class Registration(nn.Module):
 
     def get_reg_loss(self, ddf_list):
         if self.args.reg:
+            print("self.args.reg = True")
             return {
                 "reg": 0.1 * torch.mean(
                     torch.tensor([BendingEnergyLoss()(ddf) for ddf in ddf_list])
                 )
             }
         else:
+            print("self.args.reg = False")
             return None
 
     def get_loss(self, warped_seg_list, fixed_seg_list, ddf_list, loss_organ_list):
@@ -198,7 +200,6 @@ class Registration(nn.Module):
         label_loss = self.get_label_loss(warped_seg_list, fixed_seg_list, loss_organ_list)  # n x scalar
         loss_dict.update(label_loss)
         reg_loss = self.get_reg_loss(ddf_list)
-        print(reg_loss)
         if reg_loss is None:
             reg_loss = {"reg": torch.zeros_like(label_loss["label"])}
         loss_dict.update(reg_loss)
