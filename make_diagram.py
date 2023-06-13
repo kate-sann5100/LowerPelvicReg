@@ -199,9 +199,8 @@ def register(args, moving, fixed, vis):
             )(y_pred=pred_one_hot, y=seg_one_hot).sum(dim=0)  # (C)
             nan = torch.isnan(mean_dice)
             mean_dice[nan] = 0
-            print(torch.mean(mean_dice))
             if best_dice < torch.mean(mean_dice):
-                best_dice = mean_dice
+                best_dice = torch.mean(mean_dice)
                 torch.save(
                     {
                         "model": student.state_dict(),
