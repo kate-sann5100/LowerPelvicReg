@@ -93,6 +93,7 @@ def regcut(moving, fixed, warped):
         "name": "augmove"
     }
     # augment ddf
+    ddf = warped["ddf"]
     aug_ddf = ddf * (1 - augmentation_mask)
     # augment warp
     aug_warp = {
