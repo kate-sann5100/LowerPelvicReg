@@ -1,6 +1,13 @@
+import os
+
+from mpl_toolkits.mplot3d import axes3d
+from matplotlib import pyplot as plt
+import numpy as np
 import torch
+
 from monai.metrics import DiceMetric
 from monai.networks import one_hot
+from monai.networks.blocks import Warp
 from torch.backends import cudnn
 from torch.cuda import device_count
 from torch.optim import Adam
@@ -21,7 +28,105 @@ def main():
     set_seed(args.manual_seed)
     vis = Visualisation(save_path="make_diagram")
     l_moving, l_fixed, ul_moving, ul_fixed, aug_fixed = get_data(args)
-    register(args, l_moving, l_fixed, vis)
+    if os.path.exists(f"make_diagram/best_ckpt.pth"):
+        ckpt = torch.load(f"make_diagram/best_ckpt.pth")
+        warped = ckpt["warped"]
+        regcut(l_moving, l_fixed, warped)
+    else:
+        register(args, l_moving, l_fixed, vis)
+
+
+def fake_ddf():
+    x, y, z = np.meshgrid(np.arange(0, 250, 0.2),
+                          np.arange(0, 250, 0.2),
+                          np.arange(0, 50, 0.8))
+
+    u = np.sin(np.pi * x) * np.cos(np.pi * y) * np.cos(np.pi * z)
+    v = -np.cos(np.pi * x) * np.sin(np.pi * y) * np.cos(np.pi * z)
+    w = (np.sqrt(2.0 / 3.0) * np.cos(np.pi * x) * np.cos(np.pi * y) *
+         np.sin(np.pi * z))
+    u, v, w = torch.tensor(u), torch.tensor(v), torch.tensor(w)
+    ddf = torch.stack([u, v, w], dim=0).unsqueeze(0)
+    # ddf = ddf[0, 0, :256, :256, :40]
+    ddf = ddf[0, 0, :10, :10, :5]
+    return ddf
+
+
+def regcut(moving, fixed, warped):
+    """
+
+    :param moving:
+        "t2w": (B, 1, ...)
+        "seg": (B, 1, ...)
+        "name": str
+        "ins": int
+    :param fixed:
+        "t2w": (B, 1, ...)
+        "seg": (B, 1, ...)
+        "name": str
+        "ins": int
+    :param ddf: (B, 3, ...)
+    :return: augmented moving, augmented_warped, ddf, augmented ddf
+    """
+    r_x, r_y, r_z = 100, 100, 20
+    r_w, r_h, r_d = 100, 100, 20
+    x, y, z = np.meshgrid(
+        np.arange(0, 256, 1), np.arange(0, 256, 1), np.arange(0, 40, 1)
+    )
+    x[x < r_x] = 0
+    x[x > r_x + r_w] = 0
+    y[y < r_y] = 0
+    y[y > r_y + r_h] = 0
+    z[z < r_z] = 0
+    z[z > r_z + r_d] = 0
+    augmentation_mask = x * y * z
+    augmentation_mask[augmentation_mask > 0] = 1
+    augmentation_mask = augmentation_mask[None, None, ...]
+    print(augmentation_mask.shape)  # (1, 1, ...)
+
+    # augment moving
+    aug_moving = {
+        "t2w": moving["t2w"] * (1 - augmentation_mask) + fixed["t2w"] * augmentation_mask,
+        "seg": moving["seg"] * (1 - augmentation_mask) + fixed["seg"] * augmentation_mask,
+        "name": "augmove"
+    }
+    # augment ddf
+    aug_ddf = ddf * (1 - augmentation_mask)
+    # augment warp
+    aug_warp = {
+        "t2w": Warp(mode="bilinear")(aug_moving["t2w"], ddf),
+        "seg": Warp(mode="nearest")(aug_moving["seg"], ddf)
+    }
+    # visualise ddf
+    plot_ddf(ddf, "make_diagram/ddf.pdf")
+    plot_ddf(aug_ddf, "make_diagram/aug_ddf.pdf")
+    exit()
+    # visualise t2w and seg
+    vis = Visualisation(save_path="make_diagram")
+    vis.vis(
+        moving=aug_moving,
+        fixed=fixed,
+        pred=aug_warp,
+    )
+
+
+def plot_ddf(ddf, name):
+    """
+    :param ddf: (B, 3, H, W, D)
+    :param name: str, name to save plot
+    :return:
+    """
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    x, y, z = np.meshgrid(
+        np.arange(0, 256, 1), np.arange(0, 256, 1), np.arange(0, 40, 1)
+    )
+    ddf = np.asarray(ddf)[0]
+    u, v, w = np.asarray(ddf)[0], np.asarray(ddf)[1], np.asarray(ddf)[2]
+    print(x.shape, y.shape, z.shape)
+    print(u.shape, v.shape, w.shape)
+    ax.quiver(x, y, z, u, v, w, length=0.5, color='black')
+    plt.savefig(name)
 
 
 def get_data(args):
@@ -69,26 +174,6 @@ def register(args, moving, fixed, vis):
     for step in range(10000):
         # if step > 10:
         #     exit()
-        with torch.no_grad():
-            student.eval()
-            student_binary = student(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
-            seg_one_hot = one_hot(student_binary["seg"], num_classes=9)  # (1, C, H, W, D)
-            # seg_one_hot = one_hot(fixed["seg"], num_classes=9)  # (1, C, H, W, D)
-            pred_one_hot = one_hot(fixed["seg"], num_classes=9)
-            # vis.vis(
-            #     moving=moving,
-            #     fixed=fixed,
-            #     pred=student_binary,
-            # )
-            # exit()
-            mean_dice = DiceMetric(
-                include_background=False,
-                reduction="sum_batch",
-            )(y_pred=pred_one_hot, y=seg_one_hot).sum(dim=0)  # (C)
-            nan = torch.isnan(mean_dice)
-            mean_dice[nan] = 0
-            print(mean_dice)
-
         student.train()
         # backprop on labelled data
         l_loss_dict = student(moving, fixed, semi_supervision=False)
@@ -103,6 +188,35 @@ def register(args, moving, fixed, vis):
         l_loss.backward()
         optimiser.step()
 
+        with torch.no_grad():
+            student.eval()
+            student_binary = student(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
+            seg_one_hot = one_hot(student_binary["seg"], num_classes=9)  # (1, C, H, W, D)
+            # seg_one_hot = one_hot(fixed["seg"], num_classes=9)  # (1, C, H, W, D)
+            pred_one_hot = one_hot(fixed["seg"], num_classes=9)
+            mean_dice = DiceMetric(
+                include_background=False,
+                reduction="sum_batch",
+            )(y_pred=pred_one_hot, y=seg_one_hot).sum(dim=0)  # (C)
+            nan = torch.isnan(mean_dice)
+            mean_dice[nan] = 0
+            if best_dice < torch.mean(mean_dice):
+                best_dice = mean_dice
+                torch.save(
+                    {
+                        "model": student.state_dict(),
+                        "warped": student_binary,
+                    },
+                    "make_diagram/best_ckpt.pth"
+                )
+                vis.vis(
+                    moving=moving,
+                    fixed=fixed,
+                    pred=student_binary,
+                )
+
 
 if __name__ == '__main__':
-    main()
+    # main()
+    ddf = fake_ddf()
+    plot_ddf(ddf, "make_diagram/fake_ddf.pdf")

@@ -11,6 +11,8 @@ data/__pycache__/
 
 utils/__pycache__/
 
+model/__pycache__/
+
 .DS_Store
 
 niftyreg_result/
