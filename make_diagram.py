@@ -16,7 +16,7 @@ def main():
     cudnn.benchmark = False
     cudnn.deterministic = True
     set_seed(args.manual_seed)
-    l_moving, l_fixed, ul_moving, ul_fixed = get_data(args)
+    l_moving, l_fixed, ul_moving, ul_fixed, aug_fixed = get_data(args)
     register(args, l_moving, l_fixed)
 
 
