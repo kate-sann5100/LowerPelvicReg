@@ -67,20 +67,20 @@ def register(args, moving, fixed, vis):
     best_dice = 0
 
     for step in range(10000):
-        if step > 10:
-            exit()
+        # if step > 10:
+        #     exit()
         with torch.no_grad():
             student.eval()
             student_binary = student(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
             seg_one_hot = one_hot(student_binary["seg"], num_classes=9)  # (1, C, H, W, D)
             # seg_one_hot = one_hot(fixed["seg"], num_classes=9)  # (1, C, H, W, D)
             pred_one_hot = one_hot(fixed["seg"], num_classes=9)
-            vis.vis(
-                moving=moving,
-                fixed=fixed,
-                pred=student_binary,
-            )
-            exit()
+            # vis.vis(
+            #     moving=moving,
+            #     fixed=fixed,
+            #     pred=student_binary,
+            # )
+            # exit()
             mean_dice = DiceMetric(
                 include_background=False,
                 reduction="sum_batch",
