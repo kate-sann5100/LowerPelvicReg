@@ -199,6 +199,7 @@ def register(args, moving, fixed, vis):
             nan = torch.isnan(mean_dice)
             mean_dice[nan] = 0
             if best_dice < torch.mean(mean_dice):
+                print(mean_dice)
                 best_dice = torch.mean(mean_dice)
                 torch.save(
                     {
@@ -209,11 +210,11 @@ def register(args, moving, fixed, vis):
                     },
                     "make_diagram/best_ckpt.pth"
                 )
-                vis.vis(
-                    moving=moving,
-                    fixed=fixed,
-                    pred=student_binary,
-                )
+                # vis.vis(
+                #     moving=moving,
+                #     fixed=fixed,
+                #     pred=student_binary,
+                # )
 
 
 if __name__ == '__main__':
