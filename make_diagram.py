@@ -27,12 +27,11 @@ def main():
     cudnn.deterministic = True
     set_seed(args.manual_seed)
     vis = Visualisation(save_path="make_diagram")
-    l_moving, l_fixed, ul_moving, ul_fixed, aug_fixed = get_data(args)
     if os.path.exists(f"make_diagram/best_ckpt.pth"):
         ckpt = torch.load(f"make_diagram/best_ckpt.pth")
-        warped = ckpt["warped"]
-        regcut(l_moving, l_fixed, warped)
+        regcut(ckpt["moving"], ckpt["fixed"], ckpt["warped"])
     else:
+        l_moving, l_fixed, ul_moving, ul_fixed, aug_fixed = get_data(args)
         register(args, l_moving, l_fixed, vis)
 
 
@@ -204,6 +203,8 @@ def register(args, moving, fixed, vis):
                 torch.save(
                     {
                         "model": student.state_dict(),
+                        "moving": moving,
+                        "fixed": fixed,
                         "warped": student_binary,
                     },
                     "make_diagram/best_ckpt.pth"
