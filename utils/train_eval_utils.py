@@ -28,6 +28,7 @@ def get_parser():
     parser.add_argument('--label_ratio',type=float, default=0.1)
     parser.add_argument('--aug_multiplier', type=float, default=1.0)
     parser.add_argument('--diff_init', action='store_true')
+    parser.add_argument('--labelled_only', action='store_true')
 
     args = parser.parse_args()
 
@@ -46,6 +47,7 @@ def get_parser():
     cfg.label_ratio = args.label_ratio
     cfg.same_init = not args.diff_init
     cfg.aug_multiplier = args.aug_multiplier
+    cfg.labelled_only = args.labelled_only
     print(cfg)
     return cfg
 

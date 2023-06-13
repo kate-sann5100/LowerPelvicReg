@@ -110,6 +110,12 @@ def train_worker(args):
             )
             t_model.eval()
             print(f"loaded weights from {weight_path}")
+
+        if args.labelled_only:
+            labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
+            warm_up(args, student, teacher, l_loader, val_loader, labelled_only_save_dir,
+                    start_epoch=start_epoch, step_count=step_count)
+
     if args.label_ratio == 1:
         exit()
 
@@ -355,7 +361,8 @@ def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
     optimiser.step()
 
 
-def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
+def warm_up(args, student, teacher, l_loader, val_loader, save_dir,
+            start_epoch=0, step_count=0):
     writer = SummaryWriter(log_dir=save_dir)
     s_optimiser = Adam(student.parameters(), lr=args.lr)
     t_optimiser = {
@@ -370,7 +377,6 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
     else:
         overfit_moving, overfit_fixed = None, None
 
-    step_count = 0
     s_best_metric, t_best_metric, epoch_decade = None, None, None
     t_best_metric = {t_id: 0 for t_id in teacher.keys()}
     s_l_loss_meter = LossMeter(args, writer=writer, tag="student")
@@ -380,7 +386,8 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
     }
     print(f"warming up with dataset of size {len(l_loader)}")
 
-    for epoch in range(args.warm_up_epoch):
+    end_epoch = 5000 if args.labelled_only else args.warm_up_epoch
+    for epoch in range(start_epoch, end_epoch):
         print(f"-----------epoch: {epoch}----------")
         # save best metric per 10 epochs
         if epoch % 100 == 0:
@@ -416,7 +423,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
                     writer=writer, step=step_count, vis=None, test=False,
                     overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
                 )
-                print(f"validation takes {time.time() - validation_start} seconds")
+                print(f"warm up validation takes {time.time() - validation_start} seconds")
 
                 student.train()
                 for k in teacher.keys():
@@ -451,7 +458,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir):
         for t_id in t_l_loss_meter.keys():
             t_l_loss_meter[t_id].get_average(step_count)
         if epoch == 0:
-            print(f"training epoch takes {time.time() - training_start} seconds")
+            print(f"warm up training epoch takes {time.time() - training_start} seconds")
 
 
 
