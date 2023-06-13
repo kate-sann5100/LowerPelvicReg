@@ -80,6 +80,7 @@ def regcut(moving, fixed, warped):
     z[z < r_z] = 0
     z[z > r_z + r_d] = 0
     augmentation_mask = x * y * z
+    augmentation_mask = torch.tensor(augmentation_mask)
     augmentation_mask[augmentation_mask > 0] = 1
     augmentation_mask = augmentation_mask[None, None, ...].to(moving["seg"])
     print(augmentation_mask.shape)  # (1, 1, ...)
