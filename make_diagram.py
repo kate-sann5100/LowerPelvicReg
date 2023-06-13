@@ -67,6 +67,20 @@ def register(args, moving, fixed):
     for step in range(10000):
         if step > 10:
             exit()
+        with torch.no_grad():
+            student.eval()
+            student_binary = student(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
+            seg_one_hot = one_hot(student_binary["seg"], num_classes=9)  # (1, C, H, W, D)
+            # seg_one_hot = one_hot(fixed["seg"], num_classes=9)  # (1, C, H, W, D)
+            pred_one_hot = one_hot(fixed["seg"], num_classes=9)
+            mean_dice = DiceMetric(
+                include_background=False,
+                reduction="sum_batch",
+            )(y_pred=pred_one_hot, y=seg_one_hot).sum(dim=0)  # (C)
+            nan = torch.isnan(mean_dice)
+            mean_dice[nan] = 0
+            print(mean_dice)
+            
         student.train()
         # backprop on labelled data
         l_loss_dict = student(moving, fixed, semi_supervision=False)
@@ -80,20 +94,6 @@ def register(args, moving, fixed):
         optimiser.zero_grad()
         l_loss.backward()
         optimiser.step()
-
-        with torch.no_grad():
-            student.eval()
-            student_binary = student(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
-            seg_one_hot = one_hot(student_binary["seg"], num_classes=9)  # (1, C, H, W, D)
-            seg_one_hot = one_hot(fixed["seg"], num_classes=9)  # (1, C, H, W, D)
-            pred_one_hot = one_hot(fixed["seg"], num_classes=9)
-            mean_dice = DiceMetric(
-                include_background=False,
-                reduction="sum_batch",
-            )(y_pred=pred_one_hot, y=seg_one_hot).sum(dim=0)  # (C)
-            nan = torch.isnan(mean_dice)
-            mean_dice[nan] = 0
-            print(mean_dice)
 
 
 if __name__ == '__main__':
