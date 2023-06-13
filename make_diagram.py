@@ -124,7 +124,7 @@ def plot_ddf(ddf, name):
     x, y, z = np.meshgrid(
         np.arange(0, 256, 1), np.arange(0, 256, 1), np.arange(0, 40, 1)
     )
-    ddf = np.asarray(ddf)[0]
+    ddf = np.asarray(ddf.cpu())[0]
     u, v, w = np.asarray(ddf)[0], np.asarray(ddf)[1], np.asarray(ddf)[2]
     print(x.shape, y.shape, z.shape)
     print(u.shape, v.shape, w.shape)
