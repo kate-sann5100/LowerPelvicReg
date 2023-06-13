@@ -83,9 +83,6 @@ def regcut(moving, fixed, warped):
     augmentation_mask = torch.tensor(augmentation_mask)
     augmentation_mask[augmentation_mask > 0] = 1
     augmentation_mask = augmentation_mask[None, None, ...].to(moving["seg"])
-    print(augmentation_mask.shape)  # (1, 1, ...)
-
-    print(augmentation_mask.dtype, moving["t2w"].dtype)
     # augment moving
     aug_moving = {
         "t2w": moving["t2w"] * (1 - augmentation_mask) + fixed["t2w"] * augmentation_mask,
@@ -101,9 +98,8 @@ def regcut(moving, fixed, warped):
         "seg": Warp(mode="nearest")(aug_moving["seg"], ddf)
     }
     # visualise ddf
-    plot_ddf(ddf, "make_diagram/ddf.pdf")
-    plot_ddf(aug_ddf, "make_diagram/aug_ddf.pdf")
-    exit()
+    # plot_ddf(ddf, "make_diagram/ddf.pdf")
+    # plot_ddf(aug_ddf, "make_diagram/aug_ddf.pdf")
     # visualise t2w and seg
     vis = Visualisation(save_path="make_diagram")
     vis.vis(
