@@ -84,6 +84,7 @@ def regcut(moving, fixed, warped):
     augmentation_mask = augmentation_mask[None, None, ...]
     print(augmentation_mask.shape)  # (1, 1, ...)
 
+    print(augmentation_mask.dtype, moving["t2w"].dtype)
     # augment moving
     aug_moving = {
         "t2w": moving["t2w"] * (1 - augmentation_mask) + fixed["t2w"] * augmentation_mask,
