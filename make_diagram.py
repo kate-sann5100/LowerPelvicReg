@@ -62,7 +62,7 @@ def register(args, moving, fixed):
     optimiser = Adam(student.parameters(), lr=args.lr)
     best_dice = 0
 
-    for step in enumerate(10000):
+    for step in range(10000):
         if step > 10:
             exit()
         student.train()
