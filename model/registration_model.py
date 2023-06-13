@@ -18,6 +18,7 @@ class Registration(nn.Module):
     def __init__(self, args):
         super(Registration, self).__init__()
         self.args = args
+        print(self.args.reg)
         self.multi_head = args.multi_head
         self.extract_levels = (0, 1, 2, 3)
 
@@ -185,14 +186,12 @@ class Registration(nn.Module):
 
     def get_reg_loss(self, ddf_list):
         if self.args.reg:
-            print("self.args.reg = True")
             return {
                 "reg": 0.1 * torch.mean(
                     torch.tensor([BendingEnergyLoss()(ddf) for ddf in ddf_list])
                 )
             }
         else:
-            print("self.args.reg = False")
             return None
 
     def get_loss(self, warped_seg_list, fixed_seg_list, ddf_list, loss_organ_list):
