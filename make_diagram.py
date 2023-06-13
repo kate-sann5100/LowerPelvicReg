@@ -80,11 +80,12 @@ def register(args, moving, fixed):
         optimiser.zero_grad()
         l_loss.backward()
         optimiser.step()
-        
+
         with torch.no_grad():
             student.eval()
             student_binary = student(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
             seg_one_hot = one_hot(student_binary["seg"], num_classes=9)  # (1, C, H, W, D)
+            seg_one_hot = one_hot(fixed["seg"], num_classes=9)  # (1, C, H, W, D)
             pred_one_hot = one_hot(fixed["seg"], num_classes=9)
             mean_dice = DiceMetric(
                 include_background=False,
