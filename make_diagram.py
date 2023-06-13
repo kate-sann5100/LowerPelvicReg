@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from data.dataset import SemiDataset
 from model.registration_model import Registration
 from utils.train_eval_utils import cuda_batch, get_parser, set_seed
+from utils.visualisation import Visualisation
 
 
 def main():
@@ -18,8 +19,9 @@ def main():
     cudnn.benchmark = False
     cudnn.deterministic = True
     set_seed(args.manual_seed)
+    vis = Visualisation(save_path="make_diagram")
     l_moving, l_fixed, ul_moving, ul_fixed, aug_fixed = get_data(args)
-    register(args, l_moving, l_fixed)
+    register(args, l_moving, l_fixed, vis)
 
 
 def get_data(args):
@@ -57,7 +59,7 @@ def get_data(args):
     return l_moving, l_fixed, ul_moving, ul_fixed, aug_fixed
 
 
-def register(args, moving, fixed):
+def register(args, moving, fixed, vis):
     student = torch.nn.DataParallel(
         Registration(args).cuda()
     )
@@ -73,6 +75,12 @@ def register(args, moving, fixed):
             seg_one_hot = one_hot(student_binary["seg"], num_classes=9)  # (1, C, H, W, D)
             # seg_one_hot = one_hot(fixed["seg"], num_classes=9)  # (1, C, H, W, D)
             pred_one_hot = one_hot(fixed["seg"], num_classes=9)
+            vis.vis(
+                moving=moving,
+                fixed=fixed,
+                pred=student_binary,
+            )
+            exit()
             mean_dice = DiceMetric(
                 include_background=False,
                 reduction="sum_batch",
@@ -80,7 +88,7 @@ def register(args, moving, fixed):
             nan = torch.isnan(mean_dice)
             mean_dice[nan] = 0
             print(mean_dice)
-            
+
         student.train()
         # backprop on labelled data
         l_loss_dict = student(moving, fixed, semi_supervision=False)
