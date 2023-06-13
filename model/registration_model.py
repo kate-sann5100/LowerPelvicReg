@@ -198,6 +198,7 @@ class Registration(nn.Module):
         label_loss = self.get_label_loss(warped_seg_list, fixed_seg_list, loss_organ_list)  # n x scalar
         loss_dict.update(label_loss)
         reg_loss = self.get_reg_loss(ddf_list)
+        print(reg_loss)
         if reg_loss is None:
             reg_loss = {"reg": torch.zeros_like(label_loss["label"])}
         loss_dict.update(reg_loss)
