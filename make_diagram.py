@@ -75,6 +75,8 @@ def warp_ddf(moving, fixed, warped, aug_fixed):
         "ddf": (B, 3, ...)
     :return:
     """
+    for k, v in aug_fixed.items():
+        print(k, v.shape)
     augmentation = aug_fixed["ddf"]
     ddf = warped["ddf"]
     aug_ddf = augmentation.to(ddf) + Warp()(ddf, augmentation.to(ddf))
