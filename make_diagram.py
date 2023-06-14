@@ -93,8 +93,8 @@ def regcut(moving, fixed, warped):
     aug_ddf = ddf * (1 - augmentation_mask)
     # augment warp
     aug_warp = {
-        "t2w": Warp(mode="bilinear")(aug_moving["t2w"], ddf),
-        "seg": Warp(mode="nearest")(aug_moving["seg"], ddf)
+        "t2w": Warp(mode="bilinear")(aug_moving["t2w"], aug_ddf),
+        "seg": Warp(mode="nearest")(aug_moving["seg"], aug_ddf)
     }
     # visualise ddf
     # plot_ddf(ddf, "make_diagram/ddf.pdf")
