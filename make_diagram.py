@@ -31,7 +31,9 @@ def main():
     vis = Visualisation(save_path="make_diagram")
     if os.path.exists(f"make_diagram/best_ckpt.pth"):
         ckpt = torch.load(f"make_diagram/best_ckpt.pth")
-        regcut(ckpt["moving"], ckpt["fixed"], ckpt["warped"])
+        # regcut(ckpt["moving"], ckpt["fixed"], ckpt["warped"])
+        _, _, _, _, aug_fixed = get_data(args)
+        warp_ddf(ckpt["moving"], ckpt["fixed"], ckpt["warped"], aug_fixed)
     else:
         l_moving, l_fixed, ul_moving, ul_fixed, aug_fixed = get_data(args)
         register(args, l_moving, l_fixed, vis)
