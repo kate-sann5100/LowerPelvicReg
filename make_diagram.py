@@ -97,8 +97,9 @@ def regcut(moving, fixed, warped):
         "seg": Warp(mode="nearest")(aug_moving["seg"], aug_ddf)
     }
     # visualise ddf
-    plot_ddf(ddf, "make_diagram/ddf.pdf")
-    plot_ddf(aug_ddf, "make_diagram/aug_ddf.pdf")
+    # plot_ddf(ddf, "make_diagram/ddf.pdf")
+    # plot_ddf(aug_ddf, "make_diagram/aug_ddf.pdf")
+
     # visualise t2w and seg
     vis = Visualisation(save_path="make_diagram")
     vis.vis(
