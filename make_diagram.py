@@ -92,10 +92,7 @@ def regcut(moving, fixed, warped):
     }
     # augment ddf
     ddf = warped["ddf"]
-    print(1 - augmentation_mask)
     aug_ddf = ddf * (1 - augmentation_mask)
-    print(aug_ddf)
-    exit()
     # augment warp
     aug_warp = {
         "t2w": Warp(mode="bilinear")(aug_moving["t2w"], aug_ddf),
