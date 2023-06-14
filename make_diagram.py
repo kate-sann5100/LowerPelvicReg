@@ -118,7 +118,7 @@ def plot_ddf(ddf, name):
     """
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    shape = (32, 32, 5)
+    shape = (16, 16, 3)
     x, y, z = np.meshgrid(
         np.arange(0, shape[0], 1), np.arange(0, shape[1], 1), np.arange(0, shape[2], 1)
     )
