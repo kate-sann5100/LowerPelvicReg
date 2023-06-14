@@ -53,6 +53,59 @@ def fake_ddf():
     return ddf
 
 
+def warp_ddf(moving, fixed, warped, aug_fixed):
+    """
+    :param moving:
+        "t2w": (B, 1, ...)
+        "seg": (B, 1, ...)
+        "name": str
+        "ins": int
+    :param fixed:
+        "t2w": (B, 1, ...)
+        "seg": (B, 1, ...)
+        "name": str
+        "ins": int
+    :param warped:
+        "t2w": (B, 1, ...)
+        "seg": (B, 1, ...)
+        "ddf": (B, 3, ...)
+    :param aug_fixed:
+        "ddf": (B, 3, ...)
+    :return:
+    """
+    augmentation = aug_fixed["ddf"]
+    ddf = warped["ddf"]
+    aug_ddf = augmentation.to(ddf) + Warp()(ddf, augmentation.to(ddf))
+    # plot_ddf(ddf, "make_diagram/ddf.png")
+    plot_ddf(aug_ddf, "make_diagram/augmentation_ddf.png")
+
+    aug_fixed["seg"] = Warp(mode="bilinear")(fixed["seg"], augmentation),
+    aug_fixed["name"] = [f"aug_{n}" for n in aug_fixed["name"]]
+    aug_warp = {
+        "t2w": Warp(mode="bilinear")(moving["t2w"], aug_ddf),
+        "seg": Warp(mode="nearest")(moving["seg"], aug_ddf)
+    }
+
+    warp = {
+        "t2w": Warp(mode="bilinear")(moving["t2w"], ddf),
+        "seg": Warp(mode="nearest")(moving["seg"], ddf)
+    }
+
+    vis = Visualisation(save_path="make_diagram")
+    moving_name = moving["name"]
+    vis.vis(
+        moving=moving,
+        fixed=aug_fixed,
+        pred=aug_warp,
+    )
+    moving["name"] = moving_name
+    vis.vis(
+        moving=moving,
+        fixed=fixed,
+        pred=warp,
+    )
+
+
 def regcut(moving, fixed, warped):
     """
 
@@ -66,7 +119,10 @@ def regcut(moving, fixed, warped):
         "seg": (B, 1, ...)
         "name": str
         "ins": int
-    :param ddf: (B, 3, ...)
+    :param warped:
+        "t2w": (B, 1, ...)
+        "seg": (B, 1, ...)
+        "ddf": (B, 3, ...)
     :return: augmented moving, augmented_warped, ddf, augmented ddf
     """
     r_x, r_y, r_z = 100, 100, 0
@@ -260,7 +316,7 @@ def slicer():
 
 
 if __name__ == '__main__':
-    # crop_visulisation()
-    main()
+    crop_visulisation()
+    # main()
     # ddf = fake_ddf()
     # plot_ddf(ddf, "make_diagram/fake_ddf.pdf")
