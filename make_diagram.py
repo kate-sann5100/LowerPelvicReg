@@ -123,9 +123,13 @@ def plot_ddf(ddf, name):
         np.arange(0, shape[0], 1), np.arange(0, shape[1], 1), np.arange(0, shape[2], 1)
     )
     ddf = F.interpolate(ddf, mode="trilinear", size=shape)
-    print(torch.unique(ddf))
+    # print(torch.unique(ddf))
     ddf = np.asarray(ddf.cpu())[0]
     u, v, w = np.asarray(ddf)[0], np.asarray(ddf)[1], np.asarray(ddf)[2]
+    u, v, w = u / shape[0], v / shape[1], w / shape[2]
+    print(torch.unique(u))
+    print(torch.unique(v))
+    print(torch.unique(w))
     ax.quiver(x, y, z, u, v, w, length=0.1, color='black')
     plt.savefig(name)
 
