@@ -118,7 +118,7 @@ def plot_ddf(ddf, name):
     """
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-    shape = (16, 16, 3)
+    shape = (32, 32, 5)
     x, y, z = np.meshgrid(
         np.arange(0, shape[0], 1), np.arange(0, shape[1], 1), np.arange(0, shape[2], 1)
     )
@@ -130,7 +130,8 @@ def plot_ddf(ddf, name):
     print(np.unique(u))
     print(np.unique(v))
     print(np.unique(w))
-    ax.quiver(x, y, z, u, v, w, length=0.1, color='black')
+    ax.quiver(x, y, z, u, v, w, length=0.2, color='black')
+    plt.axis("off")
     plt.savefig(name)
 
 
