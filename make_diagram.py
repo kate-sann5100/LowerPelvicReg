@@ -77,8 +77,8 @@ def warp_ddf(moving, fixed, warped, aug_fixed):
     """
     # for k, v in aug_fixed.items():
     #     print(k)
-    augmentation = aug_fixed["affine_ddf"]
     ddf = warped["ddf"]
+    augmentation = aug_fixed["affine_ddf"].to(ddf)
     aug_ddf = augmentation.to(ddf) + Warp()(ddf, augmentation.to(ddf))
     # plot_ddf(ddf, "make_diagram/ddf.png")
     plot_ddf(aug_ddf, "make_diagram/augmentation_ddf.png")
