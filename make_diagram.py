@@ -316,7 +316,7 @@ def slicer():
 
 
 if __name__ == '__main__':
-    crop_visulisation()
-    # main()
+    # crop_visulisation()
+    main()
     # ddf = fake_ddf()
     # plot_ddf(ddf, "make_diagram/fake_ddf.pdf")
