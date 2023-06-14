@@ -69,7 +69,7 @@ def regcut(moving, fixed, warped):
     :param ddf: (B, 3, ...)
     :return: augmented moving, augmented_warped, ddf, augmented ddf
     """
-    r_x, r_y, r_z = 100, 100, 20
+    r_x, r_y, r_z = 100, 100, 0
     r_w, r_h, r_d = 100, 100, 20
     x, y, z = np.meshgrid(
         np.arange(0, 256, 1), np.arange(0, 256, 1), np.arange(0, 40, 1)
@@ -236,7 +236,7 @@ def crop_visulisation():
             width, height = im.size
             print(width, height)
             im_cropped = im.crop((200, 250, 900, 950))
-            im_cropped.save(f"make_diagram/{img}_{v}_cropped.png")
+            im_cropped.save(f"make_diagram/cropped/{img}_{v}_cropped.png")
 
 
 def slicer():
