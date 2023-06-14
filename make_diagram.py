@@ -103,6 +103,7 @@ def regcut(moving, fixed, warped):
     plot_ddf(aug_ddf, "make_diagram/aug_ddf.png")
 
     # visualise t2w and seg
+    fixed_name = fixed["name"]
     vis = Visualisation(save_path="make_diagram")
     vis.vis(
         moving=aug_moving,
@@ -113,6 +114,7 @@ def regcut(moving, fixed, warped):
         "t2w": Warp(mode="bilinear")(moving["t2w"], ddf),
         "seg": Warp(mode="nearest")(moving["seg"], ddf)
     }
+    fixed["name"] = fixed_name
     vis.vis(
         moving=moving,
         fixed=fixed,
