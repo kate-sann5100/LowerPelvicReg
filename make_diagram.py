@@ -1,5 +1,6 @@
 import os
 
+from PIL import Image
 from mpl_toolkits.mplot3d import axes3d
 from matplotlib import pyplot as plt
 import numpy as np
@@ -98,8 +99,8 @@ def regcut(moving, fixed, warped):
         "seg": Warp(mode="nearest")(aug_moving["seg"], aug_ddf)
     }
     # visualise ddf
-    plot_ddf(ddf, "make_diagram/ddf.pdf")
-    plot_ddf(aug_ddf, "make_diagram/aug_ddf.pdf")
+    plot_ddf(ddf, "make_diagram/ddf.png")
+    plot_ddf(aug_ddf, "make_diagram/aug_ddf.png")
 
     # visualise t2w and seg
     # vis = Visualisation(save_path="make_diagram")
@@ -225,7 +226,30 @@ def register(args, moving, fixed, vis):
                 # )
 
 
+def crop_visulisation():
+    for img in ["moving", "fixed", "warp", "aug_moving", "aug_warp"]:
+        for v in ["volumn", "t2w", "seg"]:
+            im = Image.open(f"make_diagram/{img}_{v}.png")
+            width, height = im.size
+            print(width, height)
+            im_cropped = im.crop((200, 250, 900, 950))
+            im_cropped.save(f"make_diagram/{img}_{v}_cropped.png")
+
+
+def slicer():
+    layoutManager = slicer.app.layoutManager()
+    threeDWidget = layoutManager.threeDWidget(0)
+    threeDView = threeDWidget.threeDView()
+    threeDView.resetFocalPoint()
+
+    layoutManager = slicer.app.layoutManager()
+    threeDWidget = layoutManager.threeDWidget(0)
+    threeDView = threeDWidget.threeDView()
+    threeDView.yaw()
+
+
 if __name__ == '__main__':
+    # crop_visulisation()
     main()
     # ddf = fake_ddf()
     # plot_ddf(ddf, "make_diagram/fake_ddf.pdf")
