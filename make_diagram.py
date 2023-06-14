@@ -81,7 +81,8 @@ def warp_ddf(moving, fixed, warped, aug_fixed):
     augmentation = aug_fixed["affine_ddf"].to(ddf)
     aug_ddf = augmentation.to(ddf) + Warp()(ddf, augmentation.to(ddf))
     # plot_ddf(ddf, "make_diagram/ddf.png")
-    plot_ddf(aug_ddf, "make_diagram/augmentation_ddf.png")
+    plot_ddf(augmentation, "make_diagram/augmentation.png")
+    plot_ddf(aug_ddf, "make_diagram/warped_ddf.png")
 
     aug_fixed["seg"] = Warp(mode="bilinear")(fixed["seg"], augmentation),
     aug_fixed["name"] = [f"aug_{n}" for n in aug_fixed["name"]]
