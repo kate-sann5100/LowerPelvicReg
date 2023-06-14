@@ -92,6 +92,8 @@ def regcut(moving, fixed, warped):
     }
     # augment ddf
     ddf = warped["ddf"]
+    print(1 - augmentation_mask)
+    exit()
     aug_ddf = ddf * (1 - augmentation_mask)
     # augment warp
     aug_warp = {
@@ -103,12 +105,12 @@ def regcut(moving, fixed, warped):
     plot_ddf(aug_ddf, "make_diagram/aug_ddf.png")
 
     # visualise t2w and seg
-    # vis = Visualisation(save_path="make_diagram")
-    # vis.vis(
-    #     moving=aug_moving,
-    #     fixed=fixed,
-    #     pred=aug_warp,
-    # )
+    vis = Visualisation(save_path="make_diagram")
+    vis.vis(
+        moving=aug_moving,
+        fixed=fixed,
+        pred=aug_warp,
+    )
 
 
 def plot_ddf(ddf, name):
