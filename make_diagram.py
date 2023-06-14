@@ -12,6 +12,7 @@ from torch.backends import cudnn
 from torch.cuda import device_count
 from torch.optim import Adam
 from torch.utils.data import DataLoader
+import torch.nn.functional as F
 
 from data.dataset import SemiDataset
 from model.registration_model import Registration
@@ -97,16 +98,16 @@ def regcut(moving, fixed, warped):
         "seg": Warp(mode="nearest")(aug_moving["seg"], aug_ddf)
     }
     # visualise ddf
-    # plot_ddf(ddf, "make_diagram/ddf.pdf")
-    # plot_ddf(aug_ddf, "make_diagram/aug_ddf.pdf")
+    plot_ddf(ddf, "make_diagram/ddf.pdf")
+    plot_ddf(aug_ddf, "make_diagram/aug_ddf.pdf")
 
     # visualise t2w and seg
-    vis = Visualisation(save_path="make_diagram")
-    vis.vis(
-        moving=aug_moving,
-        fixed=fixed,
-        pred=aug_warp,
-    )
+    # vis = Visualisation(save_path="make_diagram")
+    # vis.vis(
+    #     moving=aug_moving,
+    #     fixed=fixed,
+    #     pred=aug_warp,
+    # )
 
 
 def plot_ddf(ddf, name):
@@ -117,13 +118,13 @@ def plot_ddf(ddf, name):
     """
     fig = plt.figure()
     ax = fig.gca(projection='3d')
+    shape = (32, 32, 5)
     x, y, z = np.meshgrid(
-        np.arange(0, 256, 1), np.arange(0, 256, 1), np.arange(0, 40, 1)
+        np.arange(0, shape[0], 1), np.arange(0, shape[1], 1), np.arange(0, shape[2], 1)
     )
+    ddf = F.interpolate(ddf, mode="bilinear", size=shape)
     ddf = np.asarray(ddf.cpu())[0]
     u, v, w = np.asarray(ddf)[0], np.asarray(ddf)[1], np.asarray(ddf)[2]
-    print(x.shape, y.shape, z.shape)
-    print(u.shape, v.shape, w.shape)
     ax.quiver(x, y, z, u, v, w, length=0.5, color='black')
     plt.savefig(name)
 
