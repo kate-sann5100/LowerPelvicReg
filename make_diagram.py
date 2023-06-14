@@ -109,6 +109,15 @@ def regcut(moving, fixed, warped):
         fixed=fixed,
         pred=aug_warp,
     )
+    warp = {
+        "t2w": Warp(mode="bilinear")(moving["t2w"], ddf),
+        "seg": Warp(mode="nearest")(moving["seg"], ddf)
+    }
+    vis.vis(
+        moving=moving,
+        fixed=fixed,
+        pred=warp,
+    )
 
 
 def plot_ddf(ddf, name):
@@ -249,7 +258,7 @@ def slicer():
 
 
 if __name__ == '__main__':
-    # crop_visulisation()
-    main()
+    crop_visulisation()
+    # main()
     # ddf = fake_ddf()
     # plot_ddf(ddf, "make_diagram/fake_ddf.pdf")
