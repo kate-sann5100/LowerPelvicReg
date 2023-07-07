@@ -174,6 +174,7 @@ class Cut(nn.Module):
         cut_ratio is a tuple of (low, high)
         :return: mask of shape (1, W, H, D)
         """
+        print([*self.cut_ratio, self.spatial_size])
         w, h, d = np.random.uniform(*self.cut_ratio, self.spatial_size)
         x, y, z = np.random.uniform(
             low=0,
