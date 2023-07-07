@@ -85,7 +85,7 @@ def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
     print("ddf transformed")
     # warp augmented pair
     aug_warped_t2w = Warp()(aug_moving_batch["t2w"].to(aug_ddf), aug_ddf)  # (B, 1, W, H, D)
-    error = torch.unique((aug_warped_t2w - aug_fixed_batch["t2w"]) / aug_fixed_batch["t2w"])
+    error = torch.unique((aug_warped_t2w - aug_fixed_batch["t2w"].to(aug_warped_t2w)) / aug_fixed_batch["t2w"].to(aug_warped_t2w))
     print(error)
     # max_error = max(error)
     # print(max_error)
