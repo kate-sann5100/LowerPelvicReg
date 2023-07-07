@@ -74,7 +74,7 @@ def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
     moving["t2w"] = moving_batch["t2w"][0]
     fixed["t2w"] = fixed_batch["t2w"][0]
     aug_fixed = rand_affine(fixed)
-    aug_moving = cut(moving, fixed)
+    aug_moving = cut(moving, aug_fixed)
     aug_moving_batch, aug_fixed_batch = aug_moving.copy(), aug_fixed.copy()
     aug_moving_batch["t2w"] = aug_moving["t2w"].unsqueeze(0)  # (B, 1, W, H, D)
     aug_moving_batch["cut_mask"] = aug_moving["cut_mask"].unsqueeze(0)  # (B, 1, W, H, D)
