@@ -45,6 +45,7 @@ def main():
         test_aug(moving_batch=ul_moving,
                  ddf=ddf,
                  aug_multiplier=1.0, cut_ratio=(0.5, 0.5), args=args)
+        exit()
 
 
 def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):

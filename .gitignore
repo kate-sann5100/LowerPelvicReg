@@ -18,3 +18,4 @@ model/__pycache__/
 niftyreg_result/
 
 make_diagram/
+test_aug/
