@@ -76,11 +76,13 @@ def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
     aug_moving_batch["cut_mask"] = aug_moving["cut_mask"].unsqueeze(0)  # (B, 1, W, H, D)
     aug_fixed_batch["t2w"] = aug_fixed["t2w"].unsqueeze(0)  # (B, 1, W, H, D)
     aug_fixed_batch["affine_ddf"] = aug_fixed["affine_ddf"].unsqueeze(0)  # (B, 3, W, H, D)
+    print("augmented")
     # transform ddf
     affine_ddf = aug_fixed_batch["affine_ddf"]  # (B, 3, W, H, D)
     cut_mask = aug_moving_batch["cut_mask"]  # (B, 1, W, H, D)
     aug_ddf = affine_ddf.to(ddf) + Warp()(ddf, affine_ddf.to(ddf))  # (B, 3, W, H, D)
     aug_ddf = (1 - cut_mask.to(ddf)) * aug_ddf  # (B, 3, W, H, D)
+    print("ddf transformed")
     # warp augmented pair
     aug_warped_t2w = Warp()(aug_moving_batch["t2w"], aug_ddf)  # (B, 1, W, H, D)
     error = torch.unique((aug_warped_t2w - aug_fixed_batch["t2w"]) / aug_fixed_batch["t2w"])
