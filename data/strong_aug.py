@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from monai.networks.blocks import Warp
 from torch import nn
 from monai.transforms import RandomizableTransform, Affine, RandAffineGrid, Resample, create_grid
 from monai.utils import GridSampleMode, GridSamplePadMode
@@ -143,8 +144,8 @@ class RandAffine(RandomizableTransform):
                 grid[i] += (dim-1) / 2
             ddf = grid - self.reference_grid
             new_img["affine_ddf"] = ddf
-            warp_out = Warp(padding_mode="zeros")(img[None, ...], ddf[None, ...])[0]
-            assert torch.equal(warp_out, out)
+            warp_out = Warp(padding_mode="zeros")(img["t2w"][None, ...], ddf[None, ...])[0]
+            assert torch.equal(warp_out, new_img["t2w"])
             return new_img
 
 
