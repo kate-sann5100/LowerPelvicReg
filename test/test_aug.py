@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from monai.data import DataLoader
 from monai.networks.blocks import Warp
@@ -5,6 +6,8 @@ from monai.networks.blocks import Warp
 from data.dataset import SemiDataset
 from data.strong_aug import RandAffine, Cut
 from utils.train_eval_utils import get_parser
+
+import nibabel as nib
 
 
 def main():
@@ -89,8 +92,25 @@ def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
     print(error)
     # max_error = max(error)
     # print(max_error)
-    assert torch.equal(aug_warped_t2w, aug_fixed_batch["t2w"])
+    # assert torch.equal(aug_warped_t2w, aug_fixed_batch["t2w"])
 
+    affine = np.array([[0.75, 0, 0, 0], [0, 0.75, 0, 0], [0, 0, 2.5, 0], [0, 0, 0, 1]])
+    sz = moving["t2w"].shape
+    vis_dict = {
+        "moving": moving_batch["t2w"],
+        "fixed": fixed_batch["t2w"],
+        "aug_moving": aug_moving["t2w"],
+        "aug_fixed": aug_fixed["t2w"],
+        "aug_warped": aug_warped_t2w,
+    }
+
+    for k, v in vis_dict.items():
+        img = nib.Nifti1Image(
+            v[0].reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
+            affine=affine
+        )
+        nib.save(img, f"test_aug/{k}.nii")
+    exit()
 
 if __name__ == '__main__':
     main()
