@@ -100,8 +100,8 @@ def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
     vis_dict = {
         "moving": moving_batch["t2w"],
         "fixed": fixed_batch["t2w"],
-        "aug_moving": aug_moving["t2w"],
-        "aug_fixed": aug_fixed["t2w"],
+        "aug_moving": aug_moving_batch["t2w"],
+        "aug_fixed": aug_fixed_batch["t2w"],
         "aug_warped": aug_warped_t2w,
     }
 
