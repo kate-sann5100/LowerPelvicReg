@@ -110,7 +110,6 @@ def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
             affine=affine
         )
         nib.save(img, f"test_aug/{k}.nii")
-    exit()
 
 if __name__ == '__main__':
     main()
