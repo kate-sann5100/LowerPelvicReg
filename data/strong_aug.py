@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch import nn
 from monai.transforms import RandomizableTransform, Affine, RandAffineGrid, Resample, create_grid
 from monai.utils import GridSampleMode, GridSamplePadMode
 
@@ -7,8 +8,6 @@ from monai.utils import GridSampleMode, GridSamplePadMode
 class RandAffine(RandomizableTransform):
     """
     Random affine transform.
-    A tutorial is available: https://github.com/Project-MONAI/tutorials/blob/0.6.0/modules/transforms_demo_2d.ipynb.
-
     """
 
     # backend = Affine.backend
@@ -129,6 +128,7 @@ class RandAffine(RandomizableTransform):
             -"seg": None
             -"ins": int
             -"name": str
+            -"affine_ddf": (3, W, H, D)
         """
         with torch.no_grad():
             self.randomize()
@@ -146,3 +146,62 @@ class RandAffine(RandomizableTransform):
             # warp_out = Warp(padding_mode="zeros")(img[None, ...], ddf[None, ...])[0]
             # assert torch.equal(warp_out, out)
             return new_img
+
+
+class Cut(nn.Module):
+    """
+    Random rectangular cut.
+    """
+
+    # backend = Affine.backend
+
+    def __init__(
+        self,
+        args,
+        prob=1.0,
+    ) -> None:
+        """
+        Args:
+            prob: probability of returning a randomized affine grid.
+                defaults to 0.1, with 10% chance returns a randomized grid.
+        """
+        super(Cut, self).__init__()
+        self.spatial_size = args.size
+        self.cut_ratio = args.cut_ratio
+
+    def generate_mask(self):
+        """
+        cut_ratio is a tuple of (low, high)
+        :return: mask of shape (1, W, H, D)
+        """
+        w, h, d = np.random.uniform(*self.cut_ratio, self.spatial_size)
+        x, y, z = np.random.uniform(
+            low=0,
+            high=np.array(self.spatial_size) - np.array([w, h, d]),
+            size=3
+        )
+        mask = torch.zeros(1, *self.spatial_size)
+        mask[:, x:x+w, y:y+h, z:z+d] = 1 - mask[:, x:x+w, y:y+h, z:z+d]
+        return mask
+
+    def forward(self, moving, fixed):
+        """
+        Mix moving and fixed image guided by randomly generated rectangular mask
+        Args:
+            moving: dict with keys
+            -"t2w": (1, W, H, D)
+            -"seg": None
+            -"ins": int
+            -"name": str
+            -"cut_mask": (1, W, H, D)
+            fixed: dict with keys
+            -"t2w": (1, W, H, D)
+            -"seg": None
+            -"ins": int
+            -"name": str
+        """
+        mask = self.generate_mask()  # (1, W, H, D)
+        new_moving = moving.copy()
+        new_moving["t2w"] = mask * fixed["t2w"] + (1 - mask) * moving["t2w"]
+        new_moving["cut_mask"] = mask
+        return new_moving

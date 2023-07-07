@@ -23,10 +23,12 @@ def generate_pair(size=None, moving=None, affine=False):
     ddf: (2, W, H)
     """
     warp = Warp(mode="bilinear", padding_mode="zeros")
+
     if moving is None:
         moving = torch.rand(size)  # (...)
     else:
         size = moving.shape
+
     if affine:
         fixed_dict = augment(moving)
         fixed = fixed_dict["t2w"][0]

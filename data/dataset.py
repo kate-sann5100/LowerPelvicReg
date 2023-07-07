@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 
 from data.dataset_utils import get_institution_patient_dict, get_transform, sample_pair, get_img, sample_patch, \
     get_patch
-from data.strong_aug import RandAffine
+from data.strong_aug import RandAffine, Cut
 
 
 class RegDataset(Dataset):
@@ -157,7 +157,8 @@ class SemiDataset(Dataset):
             resolution=args.resolution
         )
 
-        self.strong_aug = RandAffine(aug_multiplier=args.aug_multiplier)
+        self.rand_affine = RandAffine(aug_multiplier=args.aug_multiplier)
+        self.cut = Cut(args)
 
     def __len__(self):
         return len(self.img_list) if self.mode == "train" else len(self.val_pair)
@@ -177,6 +178,18 @@ class SemiDataset(Dataset):
         -"affine_ddf": (3, W, H, D)
         -"ins": int
         -"name": str
+        aug_moving with keys:
+        -"t2w": (1, W, H, D)
+        -"seg": (1, W, H, D) or key not exist
+        -"ins": int
+        -"name": str
+        -"cut_mask": (1, W, H, D)
+        aug_fixed with keys:
+        -"t2w": (1, W, H, D)
+        -"seg": (1, W, H, D) or key not exist
+        -"ins": int
+        -"name": str
+        -"affine_ddf": (3, W, H, D)
         """
         if self.mode == "train":
             moving = idx
@@ -192,5 +205,6 @@ class SemiDataset(Dataset):
         else:
             del moving["seg"]
             del fixed["seg"]
-            aug_fixed = self.strong_aug(fixed)
-            return moving, fixed, aug_fixed
+            aug_fixed = self.rand_affine(fixed)
+            aug_moving = self.cut(moving, fixed)
+            return moving, fixed, aug_moving, aug_fixed

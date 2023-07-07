@@ -299,8 +299,8 @@ def register(args, moving, fixed, vis):
 
 
 def crop_visulisation():
-    for img in ["moving", "fixed", "warp", "aug_moving", "aug_warp"]:
-        for v in ["volumn", "t2w", "seg"]:
+    for img in ["moving", "fixed", "warp", "aug_moving", "aug_warp", "affine_aug_fixed", "affine_aug_warp"]:
+        for v in ["t2w", "seg"]:
             im = Image.open(f"make_diagram/{img}_{v}.png")
             width, height = im.size
             print(width, height)
@@ -321,7 +321,7 @@ def slicer():
 
 
 if __name__ == '__main__':
-    # crop_visulisation()
-    main()
+    crop_visulisation()
+    # main()
     # ddf = fake_ddf()
     # plot_ddf(ddf, "make_diagram/fake_ddf.pdf")

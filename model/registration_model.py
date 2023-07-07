@@ -303,12 +303,19 @@ class ConsistencyLoss(nn.Module):
         self.warp = Warp()
         self.loss_fn = MSELoss()
 
-    def forward(self, ddf, aug_ddf, affine_ddf):
+    def forward(self, student_aug_ddf, teacher_ddf, affine_ddf, cut_mask):
         """
-        :param ddf: (B, 3, W, H, D)
-        :param aug_ddf: (B, 3, W, H, D)
+        transform teacher-predicted ddf to teacher-predicted augmented ddf
+        compute distance between student- and teacher-predicted augmented ddf
+        :param student_aug_ddf: (B, 3, W, H, D)
+        :param teacher_ddf: (B, 3, W, H, D)
         :param affine_ddf: (B, 3, W, H, D)
+        :param cut_mask: (B, 1, W, H, D)
         :return:
         """
-        pred_aug_ddf = affine_ddf.to(ddf) + self.warp(ddf, affine_ddf.to(ddf))
-        return self.loss_fn(aug_ddf, pred_aug_ddf)
+        # transform teacher-predicted ddf to teacher-predicted augmented ddf
+        teacher_aug_ddf = affine_ddf.to(teacher_ddf) + self.warp(teacher_ddf, affine_ddf.to(teacher_ddf))
+        teacher_aug_ddf = (1 - cut_mask.to(teacher_ddf)) * teacher_aug_ddf
+        # TODO: when no augmentation
+        # assert torch.equal(teacher_aug_ddf, teacher_ddf)
+        return self.loss_fn(student_aug_ddf, teacher_aug_ddf)

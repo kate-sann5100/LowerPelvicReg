@@ -50,16 +50,15 @@ def train_worker(args):
     print(f"{device_count()} gpus")
     print(f"labelled dataset of size {len(l_loader)}")
 
-    if args.label_ratio < 1:
-        ul_dataset = SemiDataset(args=args, mode="train", label=False)
-        ul_loader = DataLoader(
-            ul_dataset,
-            batch_size=device_count(),
-            shuffle=True,
-            drop_last=True,
-            persistent_workers=False,
-        )
-        print(f"unlabelled dataset of size {len(ul_loader)}")
+    ul_dataset = SemiDataset(args=args, mode="train", label=False)
+    ul_loader = DataLoader(
+        ul_dataset,
+        batch_size=device_count(),
+        shuffle=True,
+        drop_last=True,
+        persistent_workers=False,
+    )
+    print(f"unlabelled dataset of size {len(ul_loader)}")
 
     # initialise validation dataloader
     val_dataset = SemiDataset(args=args, mode="val", label=True)
@@ -68,14 +67,10 @@ def train_worker(args):
 
     # if over-fit, use the first validation pair for both training and validation
     if args.overfit:
-        for moving, fixed in val_loader:
-            l_overfit_moving, l_overfit_fixed = moving, fixed
-            ul_overfit_moving, ul_overfit_fixed, aug_overfit_fixed = moving.copy(), fixed.copy(), fixed.copy()
-            del ul_overfit_moving["seg"]
-            del ul_overfit_fixed["seg"]
-            del aug_overfit_fixed["seg"]
-            aug_overfit_fixed["affine_ddf"] = torch.zeros((1, 3, *args.size), dtype=torch.float)
-            break
+        dataloader = iter(zip(cycle(l_loader), ul_loader))
+        for l, ul in dataloader:
+            l_overfit_moving, l_overfit_fixed = l
+            ul_overfit_moving, ul_overfit_fixed, aug_overfit_moving, aug_overfit_fixed = ul
     else:
         l_overfit_moving, l_overfit_fixed, ul_overfit_moving, ul_overfit_fixed = None, None, None, None
 
@@ -134,7 +129,7 @@ def train_worker(args):
     student_dice, teacher_dice, hausdorff_result_dict = validation(
         args, student, teacher, val_loader,
         writer=writer, step=step_count, vis=None, test=False,
-        # overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
+        overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
     )
 
     for epoch in range(start_epoch, num_epochs):
@@ -154,10 +149,11 @@ def train_worker(args):
 
             # load and cuda data
             l_moving, l_fixed = l
-            ul_moving, ul_fixed, aug_fixed = ul
+            ul_moving, ul_fixed, aug_moving, aug_fixed = ul
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
-                ul_moving, ul_fixed, aug_fixed = ul_overfit_moving, ul_overfit_fixed, aug_overfit_fixed
+                ul_moving, ul_fixed, aug_moving, aug_fixed = \
+                    ul_overfit_moving, ul_overfit_fixed, aug_overfit_moving, aug_overfit_fixed
             cuda_batch(l_moving)
             cuda_batch(l_fixed)
 
@@ -187,7 +183,7 @@ def train_worker(args):
                     ]
                     ul_t_pred = torch.stack(ul_t_pred, dim=-1)
                     ul_t_pred = torch.mean(ul_t_pred, dim=-1)
-                ul_s_pred = student(ul_moving, aug_fixed, semi_supervision=True, semi_mode="train")
+                ul_s_pred = student(aug_moving, aug_fixed, semi_supervision=True, semi_mode="train")
                 ul_loss = consistency_loss(
                     ddf=ul_t_pred, aug_ddf=ul_s_pred, affine_ddf=aug_fixed["affine_ddf"]
                 )
