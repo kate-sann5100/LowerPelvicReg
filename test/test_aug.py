@@ -103,6 +103,7 @@ def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
         "aug_moving": aug_moving_batch["t2w"],
         "aug_fixed": aug_fixed_batch["t2w"],
         "aug_warped": aug_warped_t2w,
+        "cut_mask": aug_moving_batch["cut_mask"]
     }
 
     for k, v in vis_dict.items():
