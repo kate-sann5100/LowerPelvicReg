@@ -175,7 +175,7 @@ class Cut(nn.Module):
         :return: mask of shape (1, W, H, D)
         """
         print([*self.cut_ratio, self.spatial_size])
-        w, h, d = np.random.uniform(*self.cut_ratio, self.spatial_size)
+        w, h, d = np.random.uniform(*self.cut_ratio, 3) * np.array(self.spatial_size)
         x, y, z = np.random.uniform(
             low=0,
             high=np.array(self.spatial_size) - np.array([w, h, d]),
