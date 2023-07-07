@@ -81,7 +81,7 @@ def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
     affine_ddf = aug_fixed_batch["affine_ddf"]  # (B, 3, W, H, D)
     cut_mask = aug_moving_batch["cut_mask"]  # (B, 1, W, H, D)
     aug_ddf = affine_ddf.to(ddf.cuda()) + Warp()(ddf.cuda(), affine_ddf.to(ddf.cuda()))  # (B, 3, W, H, D)
-    aug_ddf = (1 - cut_mask.to(ddf)) * aug_ddf  # (B, 3, W, H, D)
+    aug_ddf = (1 - cut_mask.to(aug_ddf)) * aug_ddf  # (B, 3, W, H, D)
     print("ddf transformed")
     # warp augmented pair
     aug_warped_t2w = Warp()(aug_moving_batch["t2w"], aug_ddf)  # (B, 1, W, H, D)
