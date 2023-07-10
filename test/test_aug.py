@@ -31,24 +31,27 @@ def main():
     print(f"unlabelled dataset of size {len(ul_loader)}")
 
     for i, (ul_moving, ul_fixed, aug_moving, aug_fixed) in enumerate(ul_loader):
-        ddf = torch.zeros(size=(1, 3, *args.size))
-        # print(f"sampled ddf, sampled aug")
-        # test_aug(moving_batch=ul_moving,
-        #          ddf=ddf,
-        #          aug_multiplier=1.0, cut_ratio=(0.5, 0.5), args=args)
+        ddf = aug_fixed["affine_ddf"]
+        print(f"sampled ddf, sampled aug")
+        test_aug(moving_batch=ul_moving,
+                 ddf=ddf,
+                 aug_multiplier=1.0, cut_ratio=(0.5, 0.5), args=args,
+                 name="sampled ddf, sampled aug")
         print(f"sampled ddf, zero aug")
         test_aug(moving_batch=ul_moving,
                  ddf=ddf,
-                 aug_multiplier=0, cut_ratio=(0, 0), args=args)
+                 aug_multiplier=0, cut_ratio=(0, 0), args=args,
+                 name="sampled ddf, zero aug")
         print(f"zero ddf, sampled aug")
         ddf = torch.zeros(size=(1, 3, *args.size))
         test_aug(moving_batch=ul_moving,
                  ddf=ddf,
-                 aug_multiplier=1.0, cut_ratio=(0.5, 0.5), args=args)
+                 aug_multiplier=1.0, cut_ratio=(0.5, 0.5), args=args,
+                 name="zero ddf, sampled aug")
         exit()
 
 
-def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
+def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args, name):
     """
     :param moving_batch:
         -"t2w": (B, 1, W, H, D)
@@ -57,6 +60,7 @@ def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
     :param ddf: (B, 3, W, H, D)
     :param aug_multiplier: how big the augmentation is, when set to zero, no affine augmentation
     :param cut_ratio: tuple of (low, high)
+    :param name: str, name to save visualisation
     :return:
     """
     # generate fixed
@@ -111,7 +115,7 @@ def test_aug(moving_batch, ddf, aug_multiplier, cut_ratio, args):
             v[0].reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
             affine=affine
         )
-        nib.save(img, f"test_aug/{k}.nii")
+        nib.save(img, f"test_aug/{name}_{k}.nii")
 
 if __name__ == '__main__':
     main()
