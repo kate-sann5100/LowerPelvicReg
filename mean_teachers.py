@@ -96,7 +96,7 @@ def train_worker(args):
         # load student warm up weight
         student_ckpt = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
         student.load_state_dict(student_ckpt["model"],  strict=True)
-        optimiser.load_state_dict(student_ckpt["optimiser"])
+        # optimiser.load_state_dict(student_ckpt["optimiser"])
         start_epoch = student_ckpt["epoch"]
         step_count = student_ckpt["step_count"]
         print(f"loaded weights from {warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
