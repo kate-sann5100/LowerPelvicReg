@@ -65,14 +65,15 @@ def train_worker(args):
     val_loader = DataLoader(val_dataset, batch_size=1)
     print(f"validation dataset of size {len(val_loader)}")
 
-    # if over-fit, use the first validation pair for both training and validation
+    # if over-fit, use the first training pair for both training and validation
+    l_overfit_moving, l_overfit_fixed = None, None
+    ul_overfit_moving, ul_overfit_fixed = None, None
+    aug_overfit_moving, aug_overfit_fixed = None, None
     if args.overfit:
         dataloader = iter(zip(cycle(l_loader), ul_loader))
         for l, ul in dataloader:
             l_overfit_moving, l_overfit_fixed = l
             ul_overfit_moving, ul_overfit_fixed, aug_overfit_moving, aug_overfit_fixed = ul
-    else:
-        l_overfit_moving, l_overfit_fixed, ul_overfit_moving, ul_overfit_fixed = None, None, None, None
 
     # initialise models
     student = torch.nn.DataParallel(
@@ -82,19 +83,24 @@ def train_worker(args):
         teacher_id: torch.nn.DataParallel(Registration(args).cuda())
         for teacher_id in range(args.num_teacher)
     }
+    optimiser = Adam(student.parameters(), lr=args.lr)
 
-    # warm up student and teacher models
+    # load weight
     start_epoch, step_count = 0, 0
     if not args.overfit:
         warm_up_save_dir = get_save_dir(args, warm_up=True)
+        # if warm up weight is not available, run warm up
         if not os.path.exists(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth"):
             print(f"did not found {warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
             warm_up(args, student, teacher, l_loader, val_loader, warm_up_save_dir)
+        # load student warm up weight
         student_ckpt = torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
         student.load_state_dict(student_ckpt["model"],  strict=True)
+        optimiser.load_state_dict(student_ckpt["optimiser"])
         start_epoch = student_ckpt["epoch"]
         step_count = student_ckpt["step_count"]
         print(f"loaded weights from {warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")
+        # load teacher warm up weight
         for t_id, t_model in teacher.items():
             if args.same_init:
                 weight_path = f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth"
@@ -114,11 +120,6 @@ def train_worker(args):
     if args.label_ratio == 1:
         exit()
 
-    # initialise student optimiser
-    optimiser = Adam(student.parameters(), lr=args.lr)
-    # optimiser.load_state_dict(
-    #     torch.load(f"{warm_up_save_dir}/student_{args.warm_up_epoch}_ckpt.pth")["optimiser"]
-    # )
     writer = SummaryWriter(log_dir=save_dir)
 
     num_epochs = 5000
@@ -126,7 +127,7 @@ def train_worker(args):
     consistency_loss = ConsistencyLoss()
     l_loss_meter = LossMeter(args, writer=writer)
     ul_loss_meter = SemiLossMeter(args, writer=writer)
-    student_dice, teacher_dice, hausdorff_result_dict = validation(
+    _ = validation(
         args, student, teacher, val_loader,
         writer=writer, step=step_count, vis=None, test=False,
         overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
@@ -152,8 +153,8 @@ def train_worker(args):
             ul_moving, ul_fixed, aug_moving, aug_fixed = ul
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
-                ul_moving, ul_fixed, aug_moving, aug_fixed = \
-                    ul_overfit_moving, ul_overfit_fixed, aug_overfit_moving, aug_overfit_fixed
+                ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
+                ug_moving, aug_fixed = aug_overfit_moving, aug_overfit_fixed
             cuda_batch(l_moving)
             cuda_batch(l_fixed)
 
@@ -177,15 +178,16 @@ def train_worker(args):
                 with torch.no_grad():
                     # TODO: not support multi-gpu
                     # TODO: divide ul and l to separate gpu
-                    ul_t_pred = [
-                        v(ul_moving, ul_fixed, semi_supervision=True, semi_mode="train")
+                    ul_t_ddf = [
+                        v(ul_moving, ul_fixed, semi_supervision=True)
                         for _, v in teacher.items()
                     ]
-                    ul_t_pred = torch.stack(ul_t_pred, dim=-1)
-                    ul_t_pred = torch.mean(ul_t_pred, dim=-1)
-                ul_s_pred = student(aug_moving, aug_fixed, semi_supervision=True, semi_mode="train")
+                    ul_t_ddf = torch.stack(ul_t_ddf, dim=-1)
+                    ul_t_ddf = torch.mean(ul_t_ddf, dim=-1)
+                ul_s_ddf = student(aug_moving, aug_fixed, semi_supervision=True)
                 ul_loss = consistency_loss(
-                    ddf=ul_t_pred, aug_ddf=ul_s_pred, affine_ddf=aug_fixed["affine_ddf"]
+                    ddf=ul_t_ddf, aug_ddf=ul_s_ddf,
+                    affine_ddf=aug_fixed["affine_ddf"], cut_mask=aug_moving["cut_mask"]
                 )
                 ul_loss_meter.update({"semi": torch.mean(ul_loss)})
                 optimiser.zero_grad()
@@ -204,9 +206,9 @@ def train_worker(args):
             if args.overfit:
                 break
 
+        l_loss_meter.get_average(step_count)
         if args.semi_supervision:
             ul_loss_meter.get_average(step_count)
-        l_loss_meter.get_average(step_count)
 
         # update ckpt based on validation performance
         ckpt = {
@@ -249,7 +251,7 @@ def update_teacher(teacher, student, args):
 
 def validation(args, student, teacher, loader,
                writer=None, step=None, vis=None, test=False,
-               overfit_moving=None, overfit_fixed=None):
+               overfit_moving=None, overfit_fixed=None, labelled_only=False):
 
     # initialise meters
     student_dice_meter = DiceMeter(writer, test=test, tag="student")
@@ -271,37 +273,39 @@ def validation(args, student, teacher, loader,
             # student prediction
             student.eval()
             student_binary = student(moving_batch=moving, fixed_batch=fixed, semi_supervision=False)
+            student_binary["seg"] = torch.argmax(student_binary["seg"], dim=1, keepdim=True)  # (B, 1, ...)
             student_dice_meter.update(
                 student_binary["seg"], fixed["seg"],
                 name=moving["name"], fixed_ins=fixed["ins"]
             )
 
             # teacher prediction
-            for t_id, t_model in teacher.items():
-                t_model.eval()
-            teacher_pred = {
-                t_id: t_model(moving_batch=moving, fixed_batch=fixed, semi_supervision=True, semi_mode="eval")
-                for t_id, t_model in teacher.items()
-            }  # (B, 1, ...), (B, 9, ...)
-            if args.num_teacher > 1:
-                teacher_pred["total"] = {
-                    k: torch.mean(  # "t2w", "seg"
-                        torch.stack(
-                            [teacher_pred[t_id][k] for t_id in teacher_pred.keys()],
+            if not labelled_only:
+                for t_id, t_model in teacher.items():
+                    t_model.eval()
+                teacher_pred = {
+                    t_id: t_model(moving_batch=moving, fixed_batch=fixed,semi_supervision=False)
+                    for t_id, t_model in teacher.items()
+                }  # (B, 1, ...), (B, 9, ...)
+                if args.num_teacher > 1:
+                    teacher_pred["total"] = {
+                        k: torch.mean(  # "t2w", "seg"
+                            torch.stack(
+                                [teacher_pred[t_id][k] for t_id in teacher_pred.keys()],
+                                dim=-1
+                            ),  # (B, 1, ..., num_teacher), (B, 9, ..., num_teacher)
                             dim=-1
-                        ),  # (B, 1, ..., num_teacher), (B, 9, ..., num_teacher)
-                        dim=-1
-                    )  # (B, 1, ...), (B, 9, ...)
-                    for k in ["seg", "t2w"]
-                }
-            else:
-                teacher_pred["total"] = teacher_pred[0]
-            for t_id, t_pred in teacher_pred.items():
-                t_pred["seg"] = torch.argmax(t_pred["seg"], dim=1, keepdim=True)  # (B, 1, ...)
-                teacher_dice_meter[t_id].update(
-                    t_pred["seg"], fixed["seg"],
-                    name=moving["name"], fixed_ins=fixed["ins"]
-                )
+                        )  # (B, 1, ...), (B, 9, ...)
+                        for k in ["seg", "t2w"]
+                    }
+                else:
+                    teacher_pred["total"] = teacher_pred[0]
+                for t_id, t_pred in teacher_pred.items():
+                    t_pred["seg"] = torch.argmax(t_pred["seg"], dim=1, keepdim=True)  # (B, 1, ...)
+                    teacher_dice_meter[t_id].update(
+                        t_pred["seg"], fixed["seg"],
+                        name=moving["name"], fixed_ins=fixed["ins"]
+                    )
 
             if test:
                 # resample to resolution = (1, 1, 1)
@@ -331,6 +335,8 @@ def validation(args, student, teacher, loader,
                 break
 
         student_dice = student_dice_meter.get_average(step)  # (dice, dict)
+        if labelled_only:
+            return student_dice
         teacher_dice = {
             t_id: t_meter.get_average(step)
             for t_id, t_meter in teacher_dice_meter.items()
@@ -340,7 +346,7 @@ def validation(args, student, teacher, loader,
         else:
             hausdorff_result_dict = None
 
-    return student_dice, teacher_dice, hausdorff_result_dict
+        return student_dice, teacher_dice, hausdorff_result_dict
 
 
 def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
@@ -357,21 +363,98 @@ def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
     optimiser.step()
 
 
-def warm_up(args, student, teacher, l_loader, val_loader, save_dir,
-            start_epoch=0, step_count=0):
+def labelled_only(args, student, teacher, l_loader, val_loader, save_dir,
+                  start_epoch=0, step_count=0):
     writer = SummaryWriter(log_dir=save_dir)
     s_optimiser = Adam(student.parameters(), lr=args.lr)
-    t_optimiser = {
-        t_id: Adam(t_model.parameters(), lr=args.lr)
-        for t_id, t_model in teacher.items()
-    }
 
+    overfit_moving, overfit_fixed, epoch_period = None, None, None
     if args.overfit:
         for moving, fixed in val_loader:
             overfit_moving, overfit_fixed = moving, fixed
             break
+
+    s_best_metric = None
+    s_l_loss_meter = LossMeter(args, writer=writer, tag="student")
+    print(f"warming up with dataset of size {len(l_loader)}")
+
+    end_epoch = 5000 if labelled_only else args.warm_up_epoch
+    save_epoch = 100
+    validation_step = 500
+    for epoch in range(start_epoch, end_epoch):
+        print(f"-----------epoch: {epoch}----------")
+
+        if epoch % save_epoch == 0:
+            s_best_metric = 0
+            epoch_period = (epoch // save_epoch + 1) * save_epoch
+
+        # train
+        student.train()
+        training_start = time.time()
+
+        for step, (fixed, moving) in enumerate(l_loader):
+            reset_peak_memory_stats()
+            step_count += 1
+            if args.overfit:
+                moving, fixed = overfit_moving, overfit_fixed
+            cuda_batch(moving)
+            cuda_batch(fixed)
+            warm_up_step(student, moving, fixed, s_optimiser, s_l_loss_meter)
+            writer.add_scalar(
+                tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
+            )
+
+            if step_count % validation_step == 1:
+                # validate current weight
+                print("validating...")
+                validation_start = time.time()
+                student_dice = validation(
+                    args, student, teacher, val_loader,
+                    writer=writer, step=step_count, vis=None, test=False,
+                    overfit_moving=overfit_moving, overfit_fixed=overfit_fixed, labelled_only=True
+                )
+                print(f"warm up validation takes {time.time() - validation_start} seconds")
+
+                student.train()
+
+                # update ckpt_old for each model separately based on validation performance
+                if student_dice[0] > s_best_metric:
+                    torch.save(
+                        {
+                            "epoch": epoch,
+                            "step_count": step_count,
+                            "model": student.state_dict(),
+                        },
+                        f'{save_dir}/student_{epoch_period}_ckpt.pth'
+                    )
+
+            if args.overfit:
+                break
+
+        # log loss
+        s_l_loss_meter.get_average(step_count)
+        if epoch == 0:
+            print(f"labelled only training epoch takes {time.time() - training_start} seconds")
+
+
+def warm_up(args, student, teacher, l_loader, val_loader, save_dir,
+            start_epoch=0, step_count=0, labelled_only=False):
+
+    writer = SummaryWriter(log_dir=save_dir)
+    s_optimiser = Adam(student.parameters(), lr=args.lr)
+    if labelled_only:
+        t_optimiser = None
     else:
-        overfit_moving, overfit_fixed = None, None
+        t_optimiser = {
+            t_id: Adam(t_model.parameters(), lr=args.lr)
+            for t_id, t_model in teacher.items()
+        }
+
+    overfit_moving, overfit_fixed = None, None
+    if args.overfit:
+        for moving, fixed in val_loader:
+            overfit_moving, overfit_fixed = moving, fixed
+            break
 
     s_best_metric, t_best_metric, epoch_decade = None, None, None
     t_best_metric = {t_id: 0 for t_id in teacher.keys()}
@@ -382,20 +465,20 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir,
     }
     print(f"warming up with dataset of size {len(l_loader)}")
 
-    end_epoch = 5000 if args.labelled_only else args.warm_up_epoch
+    end_epoch = 5000 if labelled_only else args.warm_up_epoch
+    save_epoch = 100
+    validation_step = 500
     for epoch in range(start_epoch, end_epoch):
         print(f"-----------epoch: {epoch}----------")
-        # save best metric per 10 epochs
-        if epoch % 100 == 0:
-            s_best_metric = 0
-            t_best_metric = {t_id: 0 for t_id in teacher.keys()}
-            epoch_decade = (epoch // 100 + 1) * 100
 
         # train
         student.train()
+        if not labelled_only:
+            for k in teacher.keys():
+                teacher[k].train()
+
         training_start = time.time()
-        for k in teacher.keys():
-            teacher[k].train()
+
         for step, (fixed, moving) in enumerate(l_loader):
             reset_peak_memory_stats()
             step_count += 1
@@ -410,7 +493,7 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir,
                 tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
             )
 
-            if step_count % 500 == 1:
+            if step_count % validation_step == 1:
                 # validate current weight
                 print("validating...")
                 validation_start = time.time()
@@ -455,8 +538,6 @@ def warm_up(args, student, teacher, l_loader, val_loader, save_dir,
             t_l_loss_meter[t_id].get_average(step_count)
         if epoch == 0:
             print(f"warm up training epoch takes {time.time() - training_start} seconds")
-
-
 
 
 if __name__ == '__main__':
