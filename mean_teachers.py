@@ -127,11 +127,11 @@ def train_worker(args):
     consistency_loss = ConsistencyLoss()
     l_loss_meter = LossMeter(args, writer=writer)
     ul_loss_meter = SemiLossMeter(args, writer=writer)
-    _ = validation(
-        args, student, teacher, val_loader,
-        writer=writer, step=step_count, vis=None, test=False,
-        overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
-    )
+    # _ = validation(
+    #     args, student, teacher, val_loader,
+    #     writer=writer, step=step_count, vis=None, test=False,
+    #     overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
+    # )
 
     for epoch in range(start_epoch, num_epochs):
         print(f"-----------epoch: {epoch}----------")
@@ -186,7 +186,7 @@ def train_worker(args):
                     ul_t_ddf = torch.mean(ul_t_ddf, dim=-1)
                 ul_s_ddf = student(aug_moving, aug_fixed, semi_supervision=True)
                 ul_loss = consistency_loss(
-                    ddf=ul_t_ddf, aug_ddf=ul_s_ddf,
+                    student_aug_ddf=ul_s_ddf, teacher_ddf=ul_t_ddf,
                     affine_ddf=aug_fixed["affine_ddf"], cut_mask=aug_moving["cut_mask"]
                 )
                 ul_loss_meter.update({"semi": torch.mean(ul_loss)})
