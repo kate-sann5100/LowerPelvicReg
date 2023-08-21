@@ -78,9 +78,8 @@ class Registration(nn.Module):
         decoded = self.model.bottom_block(encoded)
         if self.transformer:
             b, c, w, h, d = decoded.shape
-            decoded = decoded.reshape(b, c, -1).permute(0, 2, 1)
-            decoded = self.vit_block(decoded)  # (B, C, W*H*D)
-            print(decoded.shape)
+            decoded = decoded.reshape(b, c, -1).permute(0, 2, 1)  # (B, W*H*D, C)
+            decoded = self.vit_block(decoded).permute(0, 2, 1)  # (B, C, W*H*D)
             decoded = decoded.reshape(b, c, w, h, d)
             decoded = self.conv_block(decoded)
 
