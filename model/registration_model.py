@@ -76,6 +76,8 @@ class Registration(nn.Module):
             skips.append(skip)
         decoded = self.model.bottom_block(encoded)
         if self.transformer:
+            print(decoded.shape)
+            exit()
             b, w, h, d, c = decoded.shape
             decoded = decoded.reshape(b, -1, c)
             decoded = self.vit_block(decoded)  # (B, W*H*D, C)
