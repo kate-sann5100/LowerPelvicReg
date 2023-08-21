@@ -38,7 +38,7 @@ class Registration(nn.Module):
             attention_dropout=0.0
         ) if args.transformer else None
         self.conv_block = get_conv_block(
-            spatial_dims=self.spatial_dims,
+            spatial_dims=3,
             in_channels=32 * (2 ** 3),
             out_channels=32 * (2 ** 3),
             kernel_size=3
