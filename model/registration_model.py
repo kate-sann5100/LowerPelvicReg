@@ -74,13 +74,8 @@ class Registration(nn.Module):
             skip = encode_conv(encoded)
             encoded = encode_pool(skip)
             skips.append(skip)
-        for skip in skips:
-            print(skip.shape)
-        print("-------------")
         decoded = self.model.bottom_block(encoded)
         if self.transformer:
-            print(decoded.shape)
-            exit()
             b, c, w, h, d = decoded.shape
             decoded = decoded.reshape(b, c, -1)
             decoded = self.vit_block(decoded)  # (B, C, W*H*D)
