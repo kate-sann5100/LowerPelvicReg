@@ -81,10 +81,10 @@ class Registration(nn.Module):
         if self.transformer:
             print(decoded.shape)
             exit()
-            b, w, h, d, c = decoded.shape
-            decoded = decoded.reshape(b, -1, c)
-            decoded = self.vit_block(decoded)  # (B, W*H*D, C)
-            decoded = decoded.reshape(b, w, h, d, c)
+            b, c, w, h, d = decoded.shape
+            decoded = decoded.reshape(b, c, -1)
+            decoded = self.vit_block(decoded)  # (B, C, W*H*D)
+            decoded = decoded.reshape(b, c, w, h, d)
             decoded = self.conv_block(decoded)
 
         outs = [decoded]
