@@ -19,3 +19,7 @@ niftyreg_result/
 
 make_diagram/
 test_aug/
+
+data/count_ins.py
+
+data/institution.txt

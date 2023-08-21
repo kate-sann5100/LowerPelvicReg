@@ -206,7 +206,5 @@ class SemiDataset(Dataset):
             del moving["seg"]
             del fixed["seg"]
             aug_fixed = self.rand_affine(fixed)
-            print("affine done")
             aug_moving = self.cut(moving, aug_fixed)
-            print("cut done")
             return moving, fixed, aug_moving, aug_fixed

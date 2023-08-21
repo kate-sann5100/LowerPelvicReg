@@ -17,6 +17,7 @@ def get_parser():
     parser.add_argument('--overfit', action='store_true')
     parser.add_argument('--multi_head', action='store_true')
     parser.add_argument('--reg', action='store_true')
+    parser.add_argument('--transformer', action='store_true')
     parser.add_argument('--supervised', action='store_true')
 
     parser.add_argument('--overwrite', action='store_true')
@@ -38,6 +39,7 @@ def get_parser():
         cfg.input = "mask"
     cfg.overfit = args.overfit
     cfg.multi_head = args.multi_head
+    cfg.transformer = args.transformer
     cfg.reg = args.reg
     cfg.semi_supervision = not args.supervised
     cfg.overwrite = args.overwrite
@@ -61,16 +63,16 @@ def set_seed(manual_seed):
 
 
 def get_save_dir(args, warm_up=False):
-    save_dir = f"ckpt/{args.input}"
-    if args.lr != 1e-4:
+    save_dir = f"new_ckpt/{args.input}"
+    if args.lr != 1e-5:
         save_dir += f"_lr{args.lr}"
-    if len(args.organ_list) == 8:
-        organ_list = "all"
-    else:
-        organ_list = "&".join(args.organ_list)
-    save_dir += f"_{organ_list}"
-    if args.multi_head:
-        save_dir += "_multihead"
+    # if len(args.organ_list) == 8:
+    #     organ_list = "all"
+    # else:
+    #     organ_list = "&".join(args.organ_list)
+    # save_dir += f"_{organ_list}"
+    if args.transformer:
+        save_dir += "_vit"
     if args.reg:
         save_dir += "_reg"
     if warm_up:

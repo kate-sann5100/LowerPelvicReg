@@ -1,6 +1,8 @@
-from typing import Tuple, Union, List, Optional
+from functools import partial
+from typing import Tuple, Union, List, Optional, Callable
 
 import torch
+from torchvision.models.vision_transformer import EncoderBlock
 import numpy as np
 from monai.losses import DiceLoss, BendingEnergyLoss
 from monai.networks import one_hot
@@ -9,7 +11,6 @@ from monai.networks.blocks.regunet_block import get_conv_block, get_deconv_block
 from monai.networks.nets import LocalNet, RegUNet
 from torch import nn
 from torch.nn import functional as F, MSELoss
-
 
 
 class Registration(nn.Module):
@@ -28,6 +29,21 @@ class Registration(nn.Module):
             out_activation=None,
             out_kernel_initializer="zeros"
         )
+
+        self.transformer = args.transformer
+        self.vit_block = EncoderBlock(
+            num_heads=8,
+            hidden_dim=32 * (2 ** 3),
+            mlp_dim=32 * (2 ** 3),
+            dropout=0.0,
+            attention_dropout=0.0
+        ) if args.transformer else None
+        self.conv_block = get_conv_block(
+            spatial_dims=self.spatial_dims,
+            in_channels=32 * (2 ** 3),
+            out_channels=32 * (2 ** 3),
+            kernel_size=3
+        ) if args.transformer else None
 
         # self.img_loss = GlobalMutualInformationLoss()
         self.img_loss = nn.MSELoss()
@@ -60,6 +76,12 @@ class Registration(nn.Module):
             encoded = encode_pool(skip)
             skips.append(skip)
         decoded = self.model.bottom_block(encoded)
+        if self.transformer is not None:
+            b, w, h, d, c = decoded.shape
+            decoded = decoded.reshape(b, -1, c)
+            decoded = self.vit_block(decoded)  # (B, W*H*D, C)
+            decoded = decoded.reshape(b, w, h, d, c)
+            decoded = self.conv_block(decoded)
 
         outs = [decoded]
 

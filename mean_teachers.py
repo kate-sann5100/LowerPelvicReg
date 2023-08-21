@@ -224,6 +224,7 @@ def train_worker(args):
             writer=writer, step=step_count, vis=None, test=False,
             overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
         )
+        torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
         val_metric = student_dice[0]
         for k, v in teacher_dice.items():
             val_metric = max(val_metric, v[0])

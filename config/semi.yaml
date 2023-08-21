@@ -9,6 +9,7 @@ DATA:
 
 MODEL:
   input: "img"
+  transformer: False
   multi_head: False
   reg: False
   keep_rate: 0.997
