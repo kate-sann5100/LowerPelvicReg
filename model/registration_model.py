@@ -2,6 +2,7 @@ from functools import partial
 from typing import Tuple, Union, List, Optional, Callable
 
 import torch
+from torchvision.models import vision_transformer
 import numpy as np
 from monai.losses import DiceLoss, BendingEnergyLoss
 from monai.networks import one_hot
@@ -77,7 +78,7 @@ class Registration(nn.Module):
         decoded = self.model.bottom_block(encoded)
         if self.transformer:
             b, c, w, h, d = decoded.shape
-            decoded = decoded.reshape(b, c, -1)
+            decoded = decoded.reshape(b, c, -1).permute(0, 2, 1)
             decoded = self.vit_block(decoded)  # (B, C, W*H*D)
             decoded = decoded.reshape(b, c, w, h, d)
             decoded = self.conv_block(decoded)
