@@ -9,5 +9,5 @@ DATA:
 
 MODEL:
   input: "img"
-  multi_head: False
+  transformer: False
   reg: False

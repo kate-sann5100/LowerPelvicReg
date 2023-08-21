@@ -5,7 +5,7 @@ DATA:
   size: [ 256, 256, 40 ]
   organ_list: ["BladderMask", "BoneMask", "ObdInternMask", "TZ", "CG", "RectumMask", "SV", "NVB"]
   semi_supervision: True
-  label_ratio: 0.20
+  label_ratio: 1.0
 
 MODEL:
   input: "img"
