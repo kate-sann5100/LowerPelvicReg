@@ -247,8 +247,8 @@ def validation(args, student, teacher, loader,
         t_id: DiceMeter(writer, test=test, tag=f"t_{t_id}")
         for t_id in teacher.keys()
     } if teacher is not None else None
-    print(teacher)
-    teacher_dice_meter["total"] = DiceMeter(writer, test=test, tag=f"t_total") if teacher is not None else None
+    if teacher is not None:
+        teacher_dice_meter["total"] = DiceMeter(writer, test=test, tag=f"t_total")
     hausdorff_meter = HausdorffMeter(writer, test=test)
 
     with torch.no_grad():
