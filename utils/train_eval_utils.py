@@ -111,3 +111,26 @@ def overwrite_save_dir(args, save_dir):
             shutil.rmtree(save_dir)
         else:
             raise ValueError(f"already exists: {save_dir}")
+
+
+def load_warm_up_ckpt(warm_up_save_dir, args):
+    last_ckpt_path = f"{warm_up_save_dir}/last_ckpt.pth"
+    if os.path.exists(last_ckpt_path):
+        print(f"loading weights from {last_ckpt_path}h")
+        last_ckpt = torch.load(last_ckpt_path)
+        return last_ckpt
+    else:
+        return None
+
+
+def load_weight(student, teacher, ckpt, same_init=False):
+    student.load_state_dict(ckpt["student"], strict=True)
+    for t_id, t_model in teacher.items():
+        t_model.load_state_dict(
+            ckpt["student"] if same_init else ckpt["teacher"][t_id],
+            strict=True
+        )
+        t_model.eval()
+    epoch = ckpt["epoch"]
+    step_count = ckpt["step_count"]
+    return epoch, step_count
