@@ -64,6 +64,8 @@ def set_seed(manual_seed):
 
 def get_save_dir(args, warm_up=False):
     save_dir = f"new_ckpt/{args.input}"
+    if args.size[0] != 256:
+        save_dir += f"{args.size[0]}*{args.size[1]}*{args.size[2]}"
     if args.lr != 5e-5:
         save_dir += f"_lr{args.lr}"
     # if len(args.organ_list) == 8:
