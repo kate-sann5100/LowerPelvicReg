@@ -73,6 +73,7 @@ class Registration(nn.Module):
         encoded = x
         for encode_conv, encode_pool in zip(self.model.encode_convs, self.model.encode_pools):
             skip = encode_conv(encoded)
+            print(skip.shape)
             encoded = encode_pool(skip)
             skips.append(skip)
         decoded = self.model.bottom_block(encoded)
