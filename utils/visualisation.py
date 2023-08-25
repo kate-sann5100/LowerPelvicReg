@@ -21,6 +21,8 @@ class Visualisation:
         sz = moving["t2w"].shape
 
         # warped_t2w, warped_seg
+        print([k for k in moving.keys()])
+        print([k for k in fixed.keys()])
 
         vis_dict = {
             "moving_t2w": moving["t2w"],
