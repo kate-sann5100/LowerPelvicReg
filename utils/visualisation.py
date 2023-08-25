@@ -26,10 +26,11 @@ class Visualisation:
 
         vis_dict = {
             "moving_t2w": moving["t2w"],
-            "moving_seg": moving["seg"],
             "fixed_t2w": fixed["t2w"],
-            "fixed_seg": fixed["seg"],
         }
+        if "seg" in moving.keys():
+            vis_dict["moving_seg"] = moving["seg"]
+            vis_dict["fixed_seg"] = fixed["seg"]
         if pred is not None:
             vis_dict["warped_t2w"] = pred["t2w"]
             vis_dict["warped_seg"] = pred["seg"]
