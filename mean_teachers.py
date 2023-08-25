@@ -91,12 +91,10 @@ def train_worker(args):
     start_epoch, step_count = 0, 0
     if not args.overfit:
         warm_up_save_dir = get_save_dir(args, warm_up=True)
-        print(warm_up_save_dir)
-        exit()
         # if warm up weight is not available, run warm up
         warm_up_ckpt = load_warm_up_ckpt(warm_up_save_dir, args)
         if warm_up_ckpt is None or warm_up_ckpt["epoch"] < args.warm_up_epoch - 1:
-            labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_up_ckpt,
+            labelled_only(args, student, teacher, l_loader, val_loader, warm_up_save_dir, warm_up_ckpt,
                           end_epoch=args.warm_up_epoch, train_teacher=False, save_period=0)
         else:
             start_epoch, step_count = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
