@@ -31,6 +31,8 @@ class Visualisation:
         if "seg" in moving.keys():
             vis_dict["moving_seg"] = moving["seg"]
             vis_dict["fixed_seg"] = fixed["seg"]
+        if "cut_mask" in moving.keys():
+            vis_dict["moving_cutmask"] = moving["cut_mask"]
         if pred is not None:
             vis_dict["warped_t2w"] = pred["t2w"]
             vis_dict["warped_seg"] = pred["seg"]
