@@ -157,7 +157,7 @@ def train_worker(args):
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
                 ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
-                ug_moving, aug_fixed = aug_overfit_moving, aug_overfit_fixed
+                aug_moving, aug_fixed = aug_overfit_moving, aug_overfit_fixed
 
             step_count += 1
             cuda_batch(l_moving)
