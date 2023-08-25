@@ -143,7 +143,6 @@ def train_worker(args):
             t_model.eval()
         for step, (l, ul) in enumerate(dataloader):
             reset_peak_memory_stats()
-            step_count += 1
 
             # load and cuda data
             l_moving, l_fixed = l
@@ -154,10 +153,13 @@ def train_worker(args):
                 debug_vis.vis(ul_moving, ul_fixed, prefix="unlabelled")
                 debug_vis.vis(aug_moving, aug_fixed, prefix="aug_unlabelled")
                 exit()
+
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
                 ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
                 ug_moving, aug_fixed = aug_overfit_moving, aug_overfit_fixed
+
+            step_count += 1
             cuda_batch(l_moving)
             cuda_batch(l_fixed)
 
