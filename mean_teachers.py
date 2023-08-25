@@ -93,7 +93,7 @@ def train_worker(args):
     optimiser = Adam(student.parameters(), lr=args.lr)
 
     # load weight
-    start_epoch, step_count = 0, 0
+    start_epoch, start_step, step_count = 0, 0, 0
     print("load warmup weight")
     if not args.overfit:
         warm_up_save_dir = get_save_dir(args, warm_up=True)
