@@ -80,6 +80,7 @@ def train_worker(args):
         for l, ul in dataloader:
             l_overfit_moving, l_overfit_fixed = l
             ul_overfit_moving, ul_overfit_fixed, aug_overfit_moving, aug_overfit_fixed = ul
+            break
 
     # initialise models
     student = torch.nn.DataParallel(
