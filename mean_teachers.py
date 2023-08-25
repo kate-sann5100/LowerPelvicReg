@@ -100,7 +100,8 @@ def train_worker(args):
             labelled_only(args, student, teacher, l_loader, val_loader, warm_up_save_dir, warm_up_ckpt, debug_vis,
                           end_epoch=args.warm_up_epoch, train_teacher=False, save_period=0)
         else:
-            start_epoch, step_count = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
+            start_epoch, start_step = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
+            step_count = start_step
 
         if args.labelled_only:
             labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
@@ -141,7 +142,8 @@ def train_worker(args):
             # load and cuda data
             l_moving, l_fixed = l
             ul_moving, ul_fixed, aug_moving, aug_fixed = ul
-            if step == 0:
+            print(f"step_count={step_count}, start_step={start_step}")
+            if step_count == start_step:
                 debug_vis.vis(l_moving, l_fixed, prefix="labelled")
                 debug_vis.vis(ul_moving, ul_fixed, prefix="unlabelled")
                 debug_vis.vis(aug_moving, aug_fixed, prefix="aug_unlabelled")
