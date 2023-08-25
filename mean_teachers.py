@@ -97,14 +97,14 @@ def train_worker(args):
         # if warm up weight is not available, run warm up
         warm_up_ckpt = load_warm_up_ckpt(warm_up_save_dir, args)
         if warm_up_ckpt is None or warm_up_ckpt["epoch"] < args.warm_up_epoch - 1:
-            labelled_only(args, student, teacher, l_loader, val_loader, warm_up_save_dir, warm_up_ckpt,
+            labelled_only(args, student, teacher, l_loader, val_loader, warm_up_save_dir, warm_up_ckpt, debug_vis,
                           end_epoch=args.warm_up_epoch, train_teacher=False, save_period=0)
         else:
             start_epoch, step_count = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
 
         if args.labelled_only:
             labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
-            labelled_only(args, student, teacher, l_loader, val_loader, labelled_only_save_dir, warm_up_ckpt,
+            labelled_only(args, student, teacher, l_loader, val_loader, labelled_only_save_dir, warm_up_ckpt, debug_vis,
                           end_epoch=5000, train_teacher=False, save_period=100)
 
     if args.label_ratio == 1:
