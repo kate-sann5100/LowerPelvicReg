@@ -92,6 +92,7 @@ def train_worker(args):
 
     # load weight
     start_epoch, step_count = 0, 0
+    print("here")
     if not args.overfit:
         warm_up_save_dir = get_save_dir(args, warm_up=True)
         # if warm up weight is not available, run warm up
@@ -107,6 +108,8 @@ def train_worker(args):
             labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
             labelled_only(args, student, teacher, l_loader, val_loader, labelled_only_save_dir, warm_up_ckpt, debug_vis,
                           end_epoch=5000, train_teacher=False, save_period=100)
+
+    print("here")
 
     if args.label_ratio == 1:
         exit()
