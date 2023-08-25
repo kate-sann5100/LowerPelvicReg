@@ -74,6 +74,7 @@ def train_worker(args):
     l_overfit_moving, l_overfit_fixed = None, None
     ul_overfit_moving, ul_overfit_fixed = None, None
     aug_overfit_moving, aug_overfit_fixed = None, None
+    print("load overfit pair")
     if args.overfit:
         dataloader = iter(zip(cycle(l_loader), ul_loader))
         for l, ul in dataloader:
@@ -92,7 +93,7 @@ def train_worker(args):
 
     # load weight
     start_epoch, step_count = 0, 0
-    print("here")
+    print("load warmup weight")
     if not args.overfit:
         warm_up_save_dir = get_save_dir(args, warm_up=True)
         # if warm up weight is not available, run warm up
@@ -109,7 +110,7 @@ def train_worker(args):
             labelled_only(args, student, teacher, l_loader, val_loader, labelled_only_save_dir, warm_up_ckpt, debug_vis,
                           end_epoch=5000, train_teacher=False, save_period=100)
 
-    print("here")
+    print("weight loaded")
 
     if args.label_ratio == 1:
         exit()
@@ -126,7 +127,7 @@ def train_worker(args):
     #     writer=writer, step=step_count, vis=None, test=False,
     #     overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
     # )
-    print("here")
+    print("start training")
 
     for epoch in range(start_epoch, num_epochs):
         print(f"-----------epoch: {epoch}----------")
