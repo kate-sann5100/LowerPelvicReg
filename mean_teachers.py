@@ -145,6 +145,7 @@ def train_worker(args):
                 debug_vis.vis(l_moving, l_fixed, prefix="labelled")
                 debug_vis.vis(ul_moving, ul_fixed, prefix="unlabelled")
                 debug_vis.vis(aug_moving, aug_fixed, prefix="aug_unlabelled")
+                exit()
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
                 ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
@@ -448,7 +449,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
 
     if warm_up_ckpt is not None:
         start_epoch, step_count = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
-        # s_optimiser.load_state_dict(warm_up_ckpt["s_optimiser"])
+        s_optimiser.load_state_dict(warm_up_ckpt["s_optimiser"])
         if train_teacher:
             for t_id, to in t_optimiser.items():
                 to.load_state_dict(warm_up_ckpt["t_optimiser"][t_id])
@@ -482,7 +483,6 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
         for step, (fixed, moving) in enumerate(l_loader):
             if step == 0:
                 debug_vis.vis(moving, fixed, prefix="warmup")
-                exit()
             reset_peak_memory_stats()
             step_count += 1
             if args.overfit:

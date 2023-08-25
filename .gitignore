@@ -5,6 +5,10 @@ ckpt/
 
 ckpt_old/
 
+new_ckpt/
+
+debug_vis/
+
 nifty_temp/
 
 data/__pycache__/
