@@ -123,6 +123,7 @@ def train_worker(args):
     #     writer=writer, step=step_count, vis=None, test=False,
     #     overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
     # )
+    print("here")
 
     for epoch in range(start_epoch, num_epochs):
         print(f"-----------epoch: {epoch}----------")
