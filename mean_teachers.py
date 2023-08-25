@@ -449,8 +449,9 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
     if warm_up_ckpt is not None:
         start_epoch, step_count = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
         # s_optimiser.load_state_dict(warm_up_ckpt["s_optimiser"])
-        for t_id, to in t_optimiser.items():
-            to.load_state_dict(warm_up_ckpt["t_optimiser"][t_id])
+        if train_teacher:
+            for t_id, to in t_optimiser.items():
+                to.load_state_dict(warm_up_ckpt["t_optimiser"][t_id])
 
     overfit_moving, overfit_fixed = None, None
     if args.overfit:
