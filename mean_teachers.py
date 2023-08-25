@@ -91,6 +91,8 @@ def train_worker(args):
     start_epoch, step_count = 0, 0
     if not args.overfit:
         warm_up_save_dir = get_save_dir(args, warm_up=True)
+        print(warm_up_save_dir)
+        exit()
         # if warm up weight is not available, run warm up
         warm_up_ckpt = load_warm_up_ckpt(warm_up_save_dir, args)
         if warm_up_ckpt is None or warm_up_ckpt["epoch"] < args.warm_up_epoch - 1:

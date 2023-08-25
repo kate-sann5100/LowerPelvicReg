@@ -157,7 +157,10 @@ class SemiDataset(Dataset):
             resolution=args.resolution
         )
 
-        self.rand_affine = RandAffine(aug_multiplier=args.aug_multiplier)
+        self.rand_affine = RandAffine(
+            aug_multiplier=args.aug_multiplier,
+            spatial_size=args.size,
+        )
         self.cut = Cut(args)
 
     def __len__(self):
