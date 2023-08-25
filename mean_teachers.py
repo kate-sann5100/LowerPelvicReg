@@ -19,6 +19,7 @@ from utils.train_eval_utils import cuda_batch, set_seed, get_save_dir, overwrite
 
 
 # TODO: test augmentation
+from utils.visualisation import Visualisation
 
 
 def main():
@@ -66,6 +67,8 @@ def train_worker(args):
     val_dataset = SemiDataset(args=args, mode="val", label=True)
     val_loader = DataLoader(val_dataset, batch_size=1)
     print(f"validation dataset of size {len(val_loader)}")
+
+    debug_vis = Visualisation(f"debug_vis")
 
     # if over-fit, use the first training pair for both training and validation
     l_overfit_moving, l_overfit_fixed = None, None
@@ -138,6 +141,10 @@ def train_worker(args):
             # load and cuda data
             l_moving, l_fixed = l
             ul_moving, ul_fixed, aug_moving, aug_fixed = ul
+            if step == 0:
+                debug_vis.vis(l_moving, l_fixed, prefix="labelled")
+                debug_vis.vis(ul_moving, ul_fixed, prefix="unlabelled")
+                debug_vis.vis(aug_moving, aug_fixed, prefix="aug_unlabelled")
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed
                 ul_moving, ul_fixed = ul_overfit_moving, ul_overfit_fixed
@@ -428,7 +435,7 @@ def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
 #             print(f"labelled only training epoch takes {time.time() - training_start} seconds")
 
 
-def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_up_ckpt,
+def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_up_ckpt, debug_vis,
                   start_epoch=0, end_epoch=5000, step_count=0,
                   train_teacher=False, save_period=0):
 
@@ -472,6 +479,9 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
         training_start = time.time()
 
         for step, (fixed, moving) in enumerate(l_loader):
+            if step == 0:
+                debug_vis.vis(moving, fixed, prefix="warmup")
+                exit()
             reset_peak_memory_stats()
             step_count += 1
             if args.overfit:
