@@ -152,7 +152,6 @@ def train_worker(args):
                 debug_vis.vis(l_moving, l_fixed, prefix="labelled")
                 debug_vis.vis(ul_moving, ul_fixed, prefix="unlabelled")
                 debug_vis.vis(aug_moving, aug_fixed, prefix="aug_unlabelled")
-                exit()
 
             if args.overfit:
                 l_moving, l_fixed = l_overfit_moving, l_overfit_fixed

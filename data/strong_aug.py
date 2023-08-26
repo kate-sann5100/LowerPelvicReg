@@ -204,7 +204,6 @@ class Cut(nn.Module):
             -"name": str
         """
         mask = self.generate_mask()  # (1, W, H, D)
-        print(torch.unique(mask))
         new_moving = moving.copy()
         new_moving["t2w"] = mask * fixed["t2w"] + (1 - mask) * moving["t2w"]
         new_moving["cut_mask"] = mask
