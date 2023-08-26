@@ -479,6 +479,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
     print(f"warming up with dataset of size {len(l_loader)}")
 
     validation_step = 500
+    print(f"data loader of size {len(l_loader)}")
     for epoch in range(start_epoch, end_epoch):
         print(f"-----------epoch: {epoch}----------")
 
@@ -539,6 +540,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
             if args.overfit:
                 break
 
+        print(f"epoch{epoch}: step_count={step_count}")
         # log loss
         s_l_loss_meter.get_average(step_count)
         if train_teacher:
