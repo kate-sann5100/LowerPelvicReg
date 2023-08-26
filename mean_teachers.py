@@ -165,7 +165,7 @@ def train_worker(args):
             # backprop on labelled data
             for k, v in l_moving.items():
                 print(k)
-                if "meta" not in k:
+                if "meta" not in k and "transform" not in k:
                     print(f"{k}:{v[:1]}")
             single_l_moving = {k: v[:1] for k, v in l_moving.items() if "meta" not in k}
             single_l_fixed = {k: v[:1] for k, v in l_fixed.items()}
