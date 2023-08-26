@@ -163,7 +163,11 @@ def train_worker(args):
             cuda_batch(l_fixed)
 
             # backprop on labelled data
+            single_loss_dict = student(l_moving[:1], l_fixed[:1], semi_supervision=False)
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
+            print(single_loss_dict)
+            print(l_loss_dict)
+            exit()
             l_loss = 0
             for k, v in l_loss_dict.items():
                 l_loss_dict[k] = torch.mean(v)
