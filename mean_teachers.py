@@ -451,7 +451,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                   train_teacher=False, save_period=0):
 
     writer = SummaryWriter(log_dir=save_dir)
-    # s_optimiser = Adam(student.parameters(), lr=args.lr)
+    s_optimiser = Adam(student.parameters(), lr=args.lr)
     t_optimiser = {
         t_id: Adam(t_model.parameters(), lr=args.lr)
         for t_id, t_model in teacher.items()
@@ -459,7 +459,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
 
     if warm_up_ckpt is not None:
         start_epoch, step_count = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
-        s_optimiser.load_state_dict(warm_up_ckpt["s_optimiser"])
+        # s_optimiser.load_state_dict(warm_up_ckpt["s_optimiser"])
         if train_teacher:
             for t_id, to in t_optimiser.items():
                 to.load_state_dict(warm_up_ckpt["t_optimiser"][t_id])
