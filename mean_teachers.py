@@ -492,24 +492,11 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
         training_start = time.time()
 
         for step, (fixed, moving) in enumerate(l_loader):
-            if step == 0:
+            if step_count == 0:
                 debug_vis.vis(moving, fixed, prefix="warmup")
-            reset_peak_memory_stats()
-            step_count += 1
-            if args.overfit:
-                moving, fixed = overfit_moving, overfit_fixed
-            cuda_batch(moving)
-            cuda_batch(fixed)
-            warm_up_step(student, moving, fixed, s_optimiser, s_l_loss_meter)
-            if train_teacher:
-                for t_id in teacher.keys():
-                    warm_up_step(teacher[t_id], moving, fixed, t_optimiser[t_id], t_l_loss_meter[t_id])
-            writer.add_scalar(
-                tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
-            )
-
-            if step_count % validation_step == 1:
+            if step_count % validation_step == 0:
                 # validate current weight
+                print(f"step count before validation:{step_count}")
                 print("validating...")
                 validation_start = time.time()
                 student_dice, teacher_dice, hausdorff_result_dict = validation(
@@ -518,6 +505,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                     overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
                 )
                 print(f"labelled only validation takes {time.time() - validation_start} seconds")
+                print(f"step count after validation:{step_count}")
 
                 student.train()
                 if train_teacher:
@@ -539,6 +527,20 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                     torch.save(ckpt, f'{save_dir}/{step_count}_ckpt.pth')
             if args.overfit:
                 break
+
+            reset_peak_memory_stats()
+            step_count += 1
+            if args.overfit:
+                moving, fixed = overfit_moving, overfit_fixed
+            cuda_batch(moving)
+            cuda_batch(fixed)
+            warm_up_step(student, moving, fixed, s_optimiser, s_l_loss_meter)
+            if train_teacher:
+                for t_id in teacher.keys():
+                    warm_up_step(teacher[t_id], moving, fixed, t_optimiser[t_id], t_l_loss_meter[t_id])
+            writer.add_scalar(
+                tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
+            )
 
         print(f"epoch{epoch}: step_count={step_count}")
         # log loss
