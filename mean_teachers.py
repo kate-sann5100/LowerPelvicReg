@@ -163,8 +163,6 @@ def train_worker(args):
             cuda_batch(l_fixed)
 
             # backprop on labelled data
-            print([k for k in l_moving.keys()])
-            exit()
             single_l_moving = {
                 "t2w": torch.stack([l_moving["t2w"][0], torch.zeros_like(l_moving["t2w"][0])], dim=0),
                 "seg": torch.stack([l_moving["seg"][0], torch.zeros_like(l_moving["seg"][0])], dim=0),
