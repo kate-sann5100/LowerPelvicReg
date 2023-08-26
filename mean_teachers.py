@@ -521,6 +521,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                     "teacher": {t_id: t.state_dict() for t_id, t in teacher.items()} if train_teacher else None,
                     "t_optimiser": {t_id: to.state_dict() for t_id, to in t_optimiser.items()} if train_teacher else None,
                 }
+                print(f"saved epoch={epoch}, step_count={step_count}")
                 torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
                 # update ckpt_old for each model separately based on validation performance
                 if student_dice[0] > s_best_metric:
