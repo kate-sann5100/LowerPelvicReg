@@ -171,11 +171,19 @@ def train_worker(args):
                 "t2w": torch.stack([l_fixed["t2w"][0], torch.zeros_like(l_fixed["t2w"][0])], dim=0),
                 "seg": torch.stack([l_fixed["seg"][0], torch.zeros_like(l_fixed["seg"][0])], dim=0),
             }
-            # single_l_moving = {k: v[:1] for k, v in l_moving.items() if "meta" not in k and "transform" not in k}
-            # single_l_fixed = {k: v[:1] for k, v in l_fixed.items() if "meta" not in k and "transform" not in k}
             single_loss_dict = student(single_l_moving, single_l_fixed, semi_supervision=False)
-            l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
             print(single_loss_dict)
+            single_l_moving = {
+                "t2w": torch.stack([l_moving["t2w"][1], torch.zeros_like(l_moving["t2w"][0])], dim=0),
+                "seg": torch.stack([l_moving["seg"][1], torch.zeros_like(l_moving["seg"][0])], dim=0),
+            }
+            single_l_fixed = {
+                "t2w": torch.stack([l_fixed["t2w"][1], torch.zeros_like(l_fixed["t2w"][0])], dim=0),
+                "seg": torch.stack([l_fixed["seg"][1], torch.zeros_like(l_fixed["seg"][0])], dim=0),
+            }
+            single_loss_dict = student(single_l_moving, single_l_fixed, semi_supervision=False)
+            print(single_loss_dict)
+            l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
             print(l_loss_dict)
             exit()
             l_loss = 0
