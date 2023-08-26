@@ -163,12 +163,8 @@ def train_worker(args):
             cuda_batch(l_fixed)
 
             # backprop on labelled data
-            for k, v in l_moving.items():
-                print(k)
-                if "meta" not in k and "transform" not in k:
-                    print(f"{k}:{v[:1]}")
-            single_l_moving = {k: v[:1] for k, v in l_moving.items() if "meta" not in k}
-            single_l_fixed = {k: v[:1] for k, v in l_fixed.items()}
+            single_l_moving = {k: v[:1] for k, v in l_moving.items() if "meta" not in k and "transform" not in k}
+            single_l_fixed = {k: v[:1] for k, v in l_fixed.items() if "meta" not in k and "transform" not in k}
             single_loss_dict = student(single_l_moving, single_l_fixed, semi_supervision=False)
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
             print(single_loss_dict)
