@@ -163,7 +163,9 @@ def train_worker(args):
             cuda_batch(l_fixed)
 
             # backprop on labelled data
-            single_l_moving = {k:v[:1] for k, v in l_moving.items()}
+            for k, v in l_moving.items():
+                print(f"{k}:{v[:1]}")
+            single_l_moving = {k: v[:1] for k, v in l_moving.items()}
             single_l_fixed = {k: v[:1] for k, v in l_fixed.items()}
             single_loss_dict = student(single_l_moving, single_l_fixed, semi_supervision=False)
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
