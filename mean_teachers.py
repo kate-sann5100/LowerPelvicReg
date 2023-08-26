@@ -459,6 +459,8 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
 
     if warm_up_ckpt is not None:
         start_epoch, step_count = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
+        print(f"loading weights......")
+        print(f"start_epoch={start_epoch}, step_count={step_count}")
         # s_optimiser.load_state_dict(warm_up_ckpt["s_optimiser"])
         if train_teacher:
             for t_id, to in t_optimiser.items():
@@ -548,8 +550,17 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
         if train_teacher:
             for t_id in t_l_loss_meter.keys():
                 t_l_loss_meter[t_id].get_average(step_count)
-        if epoch == 0:
-            print(f"warm up training epoch takes {time.time() - training_start} seconds")
+        print(f"warm up training epoch takes {time.time() - training_start} seconds")
+
+    ckpt = {
+        "epoch": epoch,
+        "step_count": step_count,
+        "student": student.state_dict(),
+        "s_optimiser": s_optimiser.state_dict(),
+        "teacher": {t_id: t.state_dict() for t_id, t in teacher.items()} if train_teacher else None,
+        "t_optimiser": {t_id: to.state_dict() for t_id, to in t_optimiser.items()} if train_teacher else None,
+    }
+    torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
 
 
 
