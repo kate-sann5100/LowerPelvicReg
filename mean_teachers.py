@@ -451,7 +451,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                   train_teacher=False, save_period=0):
 
     writer = SummaryWriter(log_dir=save_dir)
-    s_optimiser = Adam(student.parameters(), lr=args.lr)
+    # s_optimiser = Adam(student.parameters(), lr=args.lr)
     t_optimiser = {
         t_id: Adam(t_model.parameters(), lr=args.lr)
         for t_id, t_model in teacher.items()
