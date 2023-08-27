@@ -194,7 +194,6 @@ def train_worker(args):
                     ]
                     single_t_ddf = torch.stack(single_t_ddf, dim=-1)
                     single_t_ddf = torch.mean(single_t_ddf, dim=-1)
-                    print(single_t_ddf)
 
                     ul_t_ddf = [
                         v(ul_moving, ul_fixed, semi_supervision=True)
@@ -202,6 +201,8 @@ def train_worker(args):
                     ]
                     ul_t_ddf = torch.stack(ul_t_ddf, dim=-1)
                     ul_t_ddf = torch.mean(ul_t_ddf, dim=-1)
+                    print(torch.equal(single_t_ddf[0], ul_t_ddf[1]))
+                    exit()
                 ul_s_ddf = student(aug_moving, aug_fixed, semi_supervision=True)
                 ul_loss = consistency_loss(
                     student_aug_ddf=ul_s_ddf, teacher_ddf=ul_t_ddf,
