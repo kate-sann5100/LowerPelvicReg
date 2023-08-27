@@ -163,29 +163,7 @@ def train_worker(args):
             cuda_batch(l_fixed)
 
             # backprop on labelled data
-            single_l_moving = {
-                "t2w": torch.stack([l_moving["t2w"][0], torch.zeros_like(l_moving["t2w"][0])], dim=0),
-                "seg": torch.stack([l_moving["seg"][0], torch.zeros_like(l_moving["seg"][0])], dim=0),
-            }
-            single_l_fixed = {
-                "t2w": torch.stack([l_fixed["t2w"][0], torch.zeros_like(l_fixed["t2w"][0])], dim=0),
-                "seg": torch.stack([l_fixed["seg"][0], torch.zeros_like(l_fixed["seg"][0])], dim=0),
-            }
-            single_loss_dict = student(single_l_moving, single_l_fixed, semi_supervision=False)
-            print(single_loss_dict)
-            single_l_moving = {
-                "t2w": torch.stack([l_moving["t2w"][1], torch.zeros_like(l_moving["t2w"][0])], dim=0),
-                "seg": torch.stack([l_moving["seg"][1], torch.zeros_like(l_moving["seg"][0])], dim=0),
-            }
-            single_l_fixed = {
-                "t2w": torch.stack([l_fixed["t2w"][1], torch.zeros_like(l_fixed["t2w"][0])], dim=0),
-                "seg": torch.stack([l_fixed["seg"][1], torch.zeros_like(l_fixed["seg"][0])], dim=0),
-            }
-            single_loss_dict = student(single_l_moving, single_l_fixed, semi_supervision=False)
-            print(single_loss_dict)
             l_loss_dict = student(l_moving, l_fixed, semi_supervision=False)
-            print(l_loss_dict)
-            exit()
             l_loss = 0
             for k, v in l_loss_dict.items():
                 l_loss_dict[k] = torch.mean(v)
@@ -204,6 +182,20 @@ def train_worker(args):
                 with torch.no_grad():
                     # TODO: not support multi-gpu
                     # TODO: divide ul and l to separate gpu
+                    single_ul_moving = {
+                        "t2w": torch.stack([ul_moving["t2w"][1], torch.zeros_like(ul_moving["t2w"][0])], dim=0),
+                    }
+                    single_ul_fixed = {
+                        "t2w": torch.stack([ul_fixed["t2w"][1], torch.zeros_like(ul_fixed["t2w"][0])], dim=0),
+                    }
+                    single_t_ddf = [
+                        v(single_ul_moving, single_ul_fixed, semi_supervision=True)
+                        for _, v in teacher.items()
+                    ]
+                    single_t_ddf = torch.stack(single_t_ddf, dim=-1)
+                    single_t_ddf = torch.mean(single_t_ddf, dim=-1)
+                    print(single_t_ddf)
+
                     ul_t_ddf = [
                         v(ul_moving, ul_fixed, semi_supervision=True)
                         for _, v in teacher.items()
