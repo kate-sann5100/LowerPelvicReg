@@ -7,7 +7,7 @@ class Visualisation:
 
     def __init__(self, save_path):
         self.save_path = save_path
-        print(save_path)
+        print(f"visualisation will be saved in {save_path}")
         if not os.path.exists(save_path):
             os.mkdir(save_path)
 

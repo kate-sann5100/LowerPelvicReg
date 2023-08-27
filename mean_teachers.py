@@ -76,7 +76,7 @@ def train_worker(args):
     ul_overfit_moving, ul_overfit_fixed = None, None
     aug_overfit_moving, aug_overfit_fixed = None, None
     print("load overfit pair")
-    if args.overfit:
+    if args.overfit and args.label_only < 1.0:
         dataloader = iter(zip(cycle(l_loader), ul_loader))
         for l, ul in dataloader:
             l_overfit_moving, l_overfit_fixed = l
@@ -382,80 +382,6 @@ def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
     l_loss = l_loss
     l_loss.backward()
     optimiser.step()
-
-
-# def labelled_only(args, student, teacher, l_loader, val_loader, save_dir,
-#                   start_epoch=0, step_count=0):
-#     writer = SummaryWriter(log_dir=save_dir)
-#     s_optimiser = Adam(student.parameters(), lr=args.lr)
-#
-#     overfit_moving, overfit_fixed, epoch_period = None, None, None
-#     if args.overfit:
-#         for moving, fixed in val_loader:
-#             overfit_moving, overfit_fixed = moving, fixed
-#             break
-#
-#     s_best_metric = None
-#     s_l_loss_meter = LossMeter(args, writer=writer, tag="student")
-#     print(f"warming up with dataset of size {len(l_loader)}")
-#
-#     end_epoch = 5000 if labelled_only else args.warm_up_epoch
-#     save_epoch = 100
-#     validation_step = 500
-#     for epoch in range(start_epoch, end_epoch):
-#         print(f"-----------epoch: {epoch}----------")
-#
-#         if epoch % save_epoch == 0:
-#             s_best_metric = 0
-#             epoch_period = (epoch // save_epoch + 1) * save_epoch
-#
-#         # train
-#         student.train()
-#         training_start = time.time()
-#
-#         for step, (fixed, moving) in enumerate(l_loader):
-#             reset_peak_memory_stats()
-#             step_count += 1
-#             if args.overfit:
-#                 moving, fixed = overfit_moving, overfit_fixed
-#             cuda_batch(moving)
-#             cuda_batch(fixed)
-#             warm_up_step(student, moving, fixed, s_optimiser, s_l_loss_meter)
-#             writer.add_scalar(
-#                 tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
-#             )
-#
-#             if step_count % validation_step == 1:
-#                 # validate current weight
-#                 print("validating...")
-#                 validation_start = time.time()
-#                 student_dice = validation(
-#                     args, student, teacher, val_loader,
-#                     writer=writer, step=step_count, vis=None, test=False,
-#                     overfit_moving=overfit_moving, overfit_fixed=overfit_fixed, labelled_only=True
-#                 )
-#                 print(f"warm up validation takes {time.time() - validation_start} seconds")
-#
-#                 student.train()
-#
-#                 # update ckpt_old for each model separately based on validation performance
-#                 if student_dice[0] > s_best_metric:
-#                     torch.save(
-#                         {
-#                             "epoch": epoch,
-#                             "step_count": step_count,
-#                             "model": student.state_dict(),
-#                         },
-#                         f'{save_dir}/student_{epoch_period}_ckpt.pth'
-#                     )
-#
-#             if args.overfit:
-#                 break
-#
-#         # log loss
-#         s_l_loss_meter.get_average(step_count)
-#         if epoch == 0:
-#             print(f"labelled only training epoch takes {time.time() - training_start} seconds")
 
 
 def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_up_ckpt, debug_vis,
