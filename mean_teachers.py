@@ -377,6 +377,7 @@ def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
         l_loss_dict[k] = torch.mean(v)
         if k in ["label", "reg"]:
             l_loss = l_loss + torch.mean(v)
+    print(l_loss_dict)
     l_loss_meter.update(l_loss_dict)
     optimiser.zero_grad()
     l_loss = l_loss
@@ -436,7 +437,6 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                 debug_vis.vis(moving, fixed, prefix="warmup")
             if step_count % validation_step == 0:
                 # validate current weight
-                print(f"step count before validation:{step_count}")
                 print("validating...")
                 validation_start = time.time()
                 student_dice, teacher_dice, hausdorff_result_dict = validation(
@@ -445,7 +445,6 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                     overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
                 )
                 print(f"labelled only validation takes {time.time() - validation_start} seconds")
-                print(f"step count after validation:{step_count}")
 
                 student.train()
                 if train_teacher:
