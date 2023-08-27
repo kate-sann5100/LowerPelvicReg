@@ -76,7 +76,7 @@ def train_worker(args):
     ul_overfit_moving, ul_overfit_fixed = None, None
     aug_overfit_moving, aug_overfit_fixed = None, None
     print("load overfit pair")
-    if args.overfit and args.label_only < 1.0:
+    if args.overfit and args.label_ratio < 1.0:
         dataloader = iter(zip(cycle(l_loader), ul_loader))
         for l, ul in dataloader:
             l_overfit_moving, l_overfit_fixed = l
