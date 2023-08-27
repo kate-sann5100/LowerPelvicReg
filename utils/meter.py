@@ -36,6 +36,8 @@ class LossMeter:
             self.sum_dict[k] += loss_dict[k]
 
     def get_average(self, step):
+        print(self.sum_dict)
+        print(self.count)
         for k, v in self.sum_dict.items():
             self.writer.add_scalar(
                 tag=k if self.tag is None else f"{self.tag}_{k}",
