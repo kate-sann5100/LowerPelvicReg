@@ -183,10 +183,10 @@ def train_worker(args):
                     # TODO: not support multi-gpu
                     # TODO: divide ul and l to separate gpu
                     single_ul_moving = {
-                        "t2w": torch.stack([ul_moving["t2w"][1], torch.zeros_like(ul_moving["t2w"][0])], dim=0),
+                        "t2w": torch.stack([ul_moving["t2w"][0], torch.zeros_like(ul_moving["t2w"][0])], dim=0),
                     }
                     single_ul_fixed = {
-                        "t2w": torch.stack([ul_fixed["t2w"][1], torch.zeros_like(ul_fixed["t2w"][0])], dim=0),
+                        "t2w": torch.stack([ul_fixed["t2w"][0], torch.zeros_like(ul_fixed["t2w"][0])], dim=0),
                     }
                     single_t_ddf = [
                         v(single_ul_moving, single_ul_fixed, semi_supervision=True)
