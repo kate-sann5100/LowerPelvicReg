@@ -53,15 +53,16 @@ def train_worker(args):
     print(f"{device_count()} gpus")
     print(f"labelled dataset of size {len(l_loader)}")
 
-    ul_dataset = SemiDataset(args=args, mode="train", label=False)
-    ul_loader = DataLoader(
-        ul_dataset,
-        batch_size=device_count(),
-        shuffle=True,
-        drop_last=True,
-        persistent_workers=False,
-    )
-    print(f"unlabelled dataset of size {len(ul_loader)}")
+    if args.label_ratio < 1.0:
+        ul_dataset = SemiDataset(args=args, mode="train", label=False)
+        ul_loader = DataLoader(
+            ul_dataset,
+            batch_size=device_count(),
+            shuffle=True,
+            drop_last=True,
+            persistent_workers=False,
+        )
+        print(f"unlabelled dataset of size {len(ul_loader)}")
 
     # initialise validation dataloader
     val_dataset = SemiDataset(args=args, mode="val", label=True)
