@@ -465,8 +465,6 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                     torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
                 if save_period != 0 and step_count % save_period == 1:
                     torch.save(ckpt, f'{save_dir}/{step_count}_ckpt.pth')
-            if args.overfit:
-                break
 
             reset_peak_memory_stats()
             step_count += 1
