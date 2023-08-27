@@ -118,7 +118,7 @@ def overwrite_save_dir(args, save_dir):
 def load_warm_up_ckpt(warm_up_save_dir, args):
     last_ckpt_path = f"{warm_up_save_dir}/last_ckpt.pth"
     if os.path.exists(last_ckpt_path):
-        print(f"loading weights from {last_ckpt_path}h")
+        print(f"loading weights from {last_ckpt_path}")
         last_ckpt = torch.load(last_ckpt_path)
         return last_ckpt
     else:

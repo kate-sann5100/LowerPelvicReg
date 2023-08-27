@@ -96,21 +96,20 @@ def train_worker(args):
     # load weight
     start_epoch, start_step, step_count = 0, 0, 0
     print("load warmup weight")
-    if not args.overfit:
-        warm_up_save_dir = get_save_dir(args, warm_up=True)
-        # if warm up weight is not available, run warm up
-        warm_up_ckpt = load_warm_up_ckpt(warm_up_save_dir, args)
-        if warm_up_ckpt is None or warm_up_ckpt["epoch"] < args.warm_up_epoch - 1:
-            labelled_only(args, student, teacher, l_loader, val_loader, warm_up_save_dir, warm_up_ckpt, debug_vis,
-                          end_epoch=args.warm_up_epoch, train_teacher=False, save_period=0)
-        else:
-            start_epoch, start_step = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
-            step_count = start_step
+    warm_up_save_dir = get_save_dir(args, warm_up=True)
+    # if warm up weight is not available, run warm up
+    warm_up_ckpt = load_warm_up_ckpt(warm_up_save_dir, args)
+    if warm_up_ckpt is None or warm_up_ckpt["epoch"] < args.warm_up_epoch - 1:
+        labelled_only(args, student, teacher, l_loader, val_loader, warm_up_save_dir, warm_up_ckpt, debug_vis,
+                      end_epoch=args.warm_up_epoch, train_teacher=False, save_period=0)
+    else:
+        start_epoch, start_step = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
+        step_count = start_step
 
-        if args.labelled_only:
-            labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
-            labelled_only(args, student, teacher, l_loader, val_loader, labelled_only_save_dir, warm_up_ckpt, debug_vis,
-                          end_epoch=5000, train_teacher=False, save_period=100)
+    if args.labelled_only:
+        labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
+        labelled_only(args, student, teacher, l_loader, val_loader, labelled_only_save_dir, warm_up_ckpt, debug_vis,
+                      end_epoch=5000, train_teacher=False, save_period=100)
 
     print("weight loaded")
 
@@ -557,6 +556,8 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
             writer.add_scalar(
                 tag="peak_memory", scalar_value=max_memory_allocated(), global_step=step_count
             )
+            if args.overfit:
+                break
 
         print(f"epoch{epoch}: step_count={step_count}")
         # log loss
