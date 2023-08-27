@@ -377,7 +377,6 @@ def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
         l_loss_dict[k] = torch.mean(v)
         if k in ["label", "reg"]:
             l_loss = l_loss + torch.mean(v)
-    print(l_loss_dict)
     l_loss_meter.update(l_loss_dict)
     optimiser.zero_grad()
     l_loss = l_loss

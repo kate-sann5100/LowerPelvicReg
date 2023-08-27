@@ -147,6 +147,7 @@ class Registration(nn.Module):
             x = torch.cat([moving_batch["t2w"], fixed_batch["t2w"]], dim=1)
         else:
             x = torch.cat([moving_batch["seg"], fixed_batch["seg"]], dim=1)
+        print(f"x of shape {x.shape} entering localnet")
         ddf = self.forward_localnet(x)  # (B, 3, H, W, D)
 
         if semi_supervision:
