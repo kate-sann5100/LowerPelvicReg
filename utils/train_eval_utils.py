@@ -26,7 +26,7 @@ def get_parser():
     parser.add_argument('--config', type=str, default='config/basic.yaml')
     parser.add_argument('--manual_seed', default=321, dest='manual_seed')
 
-    parser.add_argument('--label_ratio',type=float, default=0.1)
+    parser.add_argument('--label_ratio', type=float, default=0.1)
     parser.add_argument('--aug_multiplier', type=float, default=1.0)
     parser.add_argument('--diff_init', action='store_true')
     parser.add_argument('--labelled_only', action='store_true')
