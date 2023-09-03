@@ -119,7 +119,7 @@ def train_worker(args):
         labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
         _ = labelled_only(args, student, teacher, l_loader, val_loader,
                           save_dir=labelled_only_save_dir, warm_up_ckpt=warm_up_ckpt, debug_vis=debug_vis,
-                          end_epoch=5000, train_teacher=False, save_period=100)
+                          end_epoch=5000, train_teacher=False, save_period=5000)
 
     print("weight loaded")
 
@@ -428,7 +428,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
     } if train_teacher else None
     print(f"warming up with dataset of size {len(l_loader)}")
 
-    validation_step = 500
+    validation_step = 1 if args.overfit else 500
     print(f"data loader of size {len(l_loader)}")
     for epoch in range(start_epoch, end_epoch):
         print(f"-----------epoch: {epoch}----------")
