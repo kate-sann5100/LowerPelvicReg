@@ -100,6 +100,13 @@ def train_worker(args):
     # if warm up weight is not available, run warm up
     warm_up_ckpt = load_warm_up_ckpt(warm_up_save_dir, args)
     if warm_up_ckpt is None or warm_up_ckpt["epoch"] < args.warm_up_epoch - 1:
+        if warm_up_ckpt is None:
+            print(f"warm up ckpt not found, start warm up")
+        else:
+            warm_up_epoch = warm_up_ckpt["epoch"]
+            warm_up_step = warm_up_ckpt["step_count"]
+            print(f"warm up epoch={warm_up_epoch}, warm up step={warm_up_step}, continue warm up")
+        exit()
         start_epoch, start_step = labelled_only(
             args, student, teacher, l_loader, val_loader,
             warm_up_save_dir, warm_up_ckpt, debug_vis,
