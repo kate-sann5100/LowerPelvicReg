@@ -106,23 +106,20 @@ def train_worker(args):
             warm_up_epoch = warm_up_ckpt["epoch"]
             warm_up_step = warm_up_ckpt["step_count"]
             print(f"warm up epoch={warm_up_epoch}, warm up step={warm_up_step}, continue warm up")
-        exit()
         start_epoch, start_step = labelled_only(
             args, student, teacher, l_loader, val_loader,
-            warm_up_save_dir, warm_up_ckpt, debug_vis,
+            save_dir=warm_up_save_dir, warm_up_ckpt=warm_up_ckpt, debug_vis=debug_vis,
             end_epoch=args.warm_up_epoch, train_teacher=False, save_period=0
         )
     else:
         start_epoch, start_step = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
         step_count = start_step
 
-    print(step_count, start_step)
-    exit()
-
     if args.labelled_only:
         labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
-        labelled_only(args, student, teacher, l_loader, val_loader, labelled_only_save_dir, warm_up_ckpt, debug_vis,
-                      end_epoch=5000, train_teacher=False, save_period=100)
+        _ = labelled_only(args, student, teacher, l_loader, val_loader,
+                          save_dir=labelled_only_save_dir, warm_up_ckpt=warm_up_ckpt, debug_vis=debug_vis,
+                          end_epoch=5000, train_teacher=False, save_period=100)
 
     print("weight loaded")
 
