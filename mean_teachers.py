@@ -98,7 +98,7 @@ def train_worker(args):
     print("load warmup weight")
     warm_up_save_dir = get_save_dir(args, warm_up=True)
     # if warm up weight is not available, run warm up
-    warm_up_ckpt = load_warm_up_ckpt(warm_up_save_dir, args)
+    warm_up_ckpt = load_warm_up_ckpt(warm_up_save_dir[:-8] if args.overfit else warm_up_save_dir, args)
     if warm_up_ckpt is None or warm_up_ckpt["epoch"] < args.warm_up_epoch - 1:
         if warm_up_ckpt is None:
             print(f"warm up ckpt not found, start warm up")
