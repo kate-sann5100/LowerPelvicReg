@@ -100,11 +100,17 @@ def train_worker(args):
     # if warm up weight is not available, run warm up
     warm_up_ckpt = load_warm_up_ckpt(warm_up_save_dir, args)
     if warm_up_ckpt is None or warm_up_ckpt["epoch"] < args.warm_up_epoch - 1:
-        labelled_only(args, student, teacher, l_loader, val_loader, warm_up_save_dir, warm_up_ckpt, debug_vis,
-                      end_epoch=args.warm_up_epoch, train_teacher=False, save_period=0)
+        start_epoch, start_step = labelled_only(
+            args, student, teacher, l_loader, val_loader,
+            warm_up_save_dir, warm_up_ckpt, debug_vis,
+            end_epoch=args.warm_up_epoch, train_teacher=False, save_period=0
+        )
     else:
         start_epoch, start_step = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
         step_count = start_step
+
+    print(step_count, start_step)
+    exit()
 
     if args.labelled_only:
         labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
@@ -499,7 +505,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
     }
     torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
 
-
+    return epoch, step_count
 
 
 

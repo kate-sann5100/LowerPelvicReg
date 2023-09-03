@@ -135,6 +135,4 @@ def load_weight(student, teacher, ckpt, same_init=False):
         t_model.eval()
     epoch = ckpt["epoch"]
     step_count = ckpt["step_count"]
-    print(step_count)
-    exit()
     return epoch, step_count
