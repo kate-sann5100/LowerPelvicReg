@@ -447,6 +447,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
             if step_count % validation_step == 0:
                 # validate current weight
                 print("validating...")
+                print(save_dir)
                 validation_start = time.time()
                 student_dice, teacher_dice, hausdorff_result_dict = validation(
                     args, student, teacher if train_teacher else None, val_loader,
