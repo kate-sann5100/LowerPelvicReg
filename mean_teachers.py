@@ -157,7 +157,7 @@ def train_worker(args):
             # load and cuda data
             l_moving, l_fixed = l
             ul_moving, ul_fixed, aug_moving, aug_fixed = ul
-            print(f"step_count={step_count}, start_step={start_step}")
+            # print(f"step_count={step_count}, start_step={start_step}")
             if step_count == start_step:
                 debug_vis.vis(l_moving, l_fixed, prefix="labelled")
                 debug_vis.vis(ul_moving, ul_fixed, prefix="unlabelled")
