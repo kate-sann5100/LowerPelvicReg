@@ -21,4 +21,4 @@ MODEL:
   same_init: True
   strong_aug: False
   aug_multiplier: 1.0
-  cut_ratio: [0.2, 0.5]
+  cut_ratio: [0.0, 0.0] #[0.2, 0.5]
