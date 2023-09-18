@@ -116,7 +116,7 @@ def overwrite_save_dir(args, save_dir):
 
 
 def load_warm_up_ckpt(warm_up_save_dir, args):
-    if args.warmup_epoch == 900:
+    if args.warm_up_epoch == 900:
         last_ckpt_path = f"{warm_up_save_dir}/last_ckpt.pth"
         if os.path.exists(last_ckpt_path):
             print(f"loading weights from {last_ckpt_path}")
@@ -126,7 +126,7 @@ def load_warm_up_ckpt(warm_up_save_dir, args):
             return None
     else:
         warm_up_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
-        ckpt = f"{warm_up_save_dir}/{args.warmup_epoch}_ckpy.pth"
+        ckpt = f"{warm_up_save_dir}/{args.warm_up_epoch}_ckpy.pth"
         return torch.load(ckpt)
 
 
