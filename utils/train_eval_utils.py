@@ -116,13 +116,18 @@ def overwrite_save_dir(args, save_dir):
 
 
 def load_warm_up_ckpt(warm_up_save_dir, args):
-    last_ckpt_path = f"{warm_up_save_dir}/last_ckpt.pth"
-    if os.path.exists(last_ckpt_path):
-        print(f"loading weights from {last_ckpt_path}")
-        last_ckpt = torch.load(last_ckpt_path)
-        return last_ckpt
+    if args.warmup_epoch == 900:
+        last_ckpt_path = f"{warm_up_save_dir}/last_ckpt.pth"
+        if os.path.exists(last_ckpt_path):
+            print(f"loading weights from {last_ckpt_path}")
+            last_ckpt = torch.load(last_ckpt_path)
+            return last_ckpt
+        else:
+            return None
     else:
-        return None
+        warm_up_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
+        ckpt = f"{warm_up_save_dir}/{args.warmup_epoch}_ckpy.pth"
+        return torch.load(ckpt)
 
 
 def load_weight(student, teacher, ckpt, same_init=False):
