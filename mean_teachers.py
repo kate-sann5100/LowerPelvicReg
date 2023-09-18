@@ -280,6 +280,7 @@ def update_teacher(teacher, student, args):
 def validation(args, student, teacher, loader,
                writer=None, step=None, vis=None, test=False,
                overfit_moving=None, overfit_fixed=None, labelled_only=False):
+    print(writer.log_dir)
 
     # initialise meters
     student_dice_meter = DiceMeter(writer, test=test, tag="student")
@@ -419,6 +420,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
         for moving, fixed in val_loader:
             overfit_moving, overfit_fixed = moving, fixed
             break
+        step_count = save_period + 1
 
     s_best_metric = 0
     s_l_loss_meter = LossMeter(args, writer=writer, tag="student")
@@ -473,8 +475,10 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                 # update ckpt_old for each model separately based on validation performance
                 if student_dice[0] > s_best_metric:
                     torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
+                print(step_count, step_count % save_period)
                 if save_period != 0 and step_count % save_period == 1:
                     torch.save(ckpt, f'{save_dir}/{step_count}_ckpt.pth')
+                    print(f"saving {save_dir}/{step_count}_ckpt.pth...")
 
             reset_peak_memory_stats()
             step_count += 1
