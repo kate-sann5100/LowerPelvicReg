@@ -138,7 +138,7 @@ def train_worker(args):
     #     writer=writer, step=step_count, vis=None, test=False,
     #     overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
     # )
-    print("start training")
+    print(f"start training {save_dir}")
 
     for epoch in range(start_epoch, num_epochs):
         print(f"-----------epoch: {epoch}----------")
@@ -428,7 +428,10 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
         t_id: LossMeter(args, writer, tag=f"t{t_id}")
         for t_id in teacher.keys()
     } if train_teacher else None
-    print(f"warming up with dataset of size {len(l_loader)}")
+    if args.labelled_only:
+        print(f"labelled only training with dataset of size {len(l_loader)}")
+    else:
+        print(f"warming up with dataset of size {len(l_loader)}")
 
     validation_step = 1 if args.overfit else 500
     print(f"data loader of size {len(l_loader)}")

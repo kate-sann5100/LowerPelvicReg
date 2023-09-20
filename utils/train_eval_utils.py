@@ -92,7 +92,6 @@ def get_save_dir(args, warm_up=False):
         save_dir += f"_{args.num_teacher}teacher"
     if args.overfit:
         save_dir += "_overfit"
-    print(save_dir)
     return save_dir
 
 
