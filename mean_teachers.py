@@ -475,7 +475,6 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                 # update ckpt_old for each model separately based on validation performance
                 if student_dice[0] > s_best_metric:
                     torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
-                print(step_count, step_count % save_period)
                 if save_period != 0 and step_count % save_period == 1:
                     torch.save(ckpt, f'{save_dir}/{step_count}_ckpt.pth')
                     print(f"saving {save_dir}/{step_count}_ckpt.pth...")
