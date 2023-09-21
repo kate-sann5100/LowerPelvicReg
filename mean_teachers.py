@@ -108,7 +108,7 @@ def train_worker(args):
             print(f"warm up epoch={warm_up_epoch}, warm up step={warm_up_step}, continue warm up")
         start_epoch, start_step = labelled_only(
             args, student, teacher, l_loader, val_loader,
-            save_dir=warm_up_save_dir, warm_up_ckpt=warm_up_ckpt, debug_vis=debug_vis,
+            save_dir=warm_up_save_dir, last_ckpt=warm_up_ckpt, debug_vis=debug_vis,
             end_epoch=args.warm_up_epoch, train_teacher=False, save_period=0
         )
     else:
@@ -117,8 +117,13 @@ def train_worker(args):
 
     if args.labelled_only:
         labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
+        last_ckpt_path = f"{labelled_only_save_dir}/last_ckpt.pth"
+        if os.path.exists(last_ckpt_path):
+            last_ckpt = torch.load(last_ckpt_path)
+        else:
+            last_ckpt = warm_up_ckpt
         _ = labelled_only(args, student, teacher, l_loader, val_loader,
-                          save_dir=labelled_only_save_dir, warm_up_ckpt=warm_up_ckpt, debug_vis=debug_vis,
+                          save_dir=labelled_only_save_dir, last_ckpt=last_ckpt, debug_vis=debug_vis,
                           end_epoch=5000, train_teacher=False, save_period=5000)
 
     print("weight loaded")
@@ -395,7 +400,7 @@ def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
     optimiser.step()
 
 
-def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_up_ckpt, debug_vis,
+def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_ckpt, debug_vis,
                   start_epoch=0, end_epoch=5000, step_count=0,
                   train_teacher=False, save_period=0):
 
@@ -406,14 +411,14 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
         for t_id, t_model in teacher.items()
     } if train_teacher else None
 
-    if warm_up_ckpt is not None:
-        start_epoch, step_count = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
+    if last_ckpt is not None:
+        start_epoch, step_count = load_weight(student, teacher, last_ckpt, same_init=args.same_init)
         print(f"loading weights......")
         print(f"start_epoch={start_epoch}, step_count={step_count}")
-        # s_optimiser.load_state_dict(warm_up_ckpt["s_optimiser"])
+        s_optimiser.load_state_dict(last_ckpt["s_optimiser"])
         if train_teacher:
             for t_id, to in t_optimiser.items():
-                to.load_state_dict(warm_up_ckpt["t_optimiser"][t_id])
+                to.load_state_dict(last_ckpt["t_optimiser"][t_id])
 
     overfit_moving, overfit_fixed = None, None
     if args.overfit:
@@ -452,7 +457,6 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
             if step_count % validation_step == 0:
                 # validate current weight
                 print("validating...")
-                print(save_dir)
                 validation_start = time.time()
                 student_dice, teacher_dice, hausdorff_result_dict = validation(
                     args, student, teacher if train_teacher else None, val_loader,
@@ -478,9 +482,18 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, warm_u
                 # update ckpt_old for each model separately based on validation performance
                 if student_dice[0] > s_best_metric:
                     torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
-                if save_period != 0 and step_count % save_period == 1:
-                    torch.save(ckpt, f'{save_dir}/{step_count}_ckpt.pth')
-                    print(f"saving {save_dir}/{step_count}_ckpt.pth...")
+            if save_period != 0 and step_count % save_period == 1:
+                ckpt = {
+                    "epoch": epoch,
+                    "step_count": step_count,
+                    "student": student.state_dict(),
+                    "s_optimiser": s_optimiser.state_dict(),
+                    "teacher": {t_id: t.state_dict() for t_id, t in teacher.items()} if train_teacher else None,
+                    "t_optimiser": {t_id: to.state_dict() for t_id, to in
+                                    t_optimiser.items()} if train_teacher else None,
+                }
+                torch.save(ckpt, f'{save_dir}/{step_count}_ckpt.pth')
+                print(f"saving {save_dir}/{step_count}_ckpt.pth...")
 
             reset_peak_memory_stats()
             step_count += 1
