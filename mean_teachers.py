@@ -122,9 +122,10 @@ def train_worker(args):
             last_ckpt = torch.load(last_ckpt_path)
         else:
             last_ckpt = warm_up_ckpt
-        _ = labelled_only(args, student, teacher, l_loader, val_loader,
-                          save_dir=labelled_only_save_dir, last_ckpt=last_ckpt, debug_vis=debug_vis,
-                          end_epoch=5000, train_teacher=False, save_period=5000)
+        start_epoch, start_step = labelled_only(
+            args, student, teacher, l_loader, val_loader,
+            save_dir=labelled_only_save_dir, last_ckpt=last_ckpt, debug_vis=debug_vis,
+            end_epoch=5000, train_teacher=False, save_period=5000)
 
     print("weight loaded")
 
