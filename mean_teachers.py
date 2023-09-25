@@ -314,6 +314,7 @@ def validation(args, student, teacher, loader,
                 student_binary["seg"], fixed["seg"],
                 name=moving["name"], fixed_ins=fixed["ins"]
             )
+            print(f"student sum: {student_dice_meter.sum}")
 
             # teacher prediction
             if teacher is not None:
@@ -342,6 +343,8 @@ def validation(args, student, teacher, loader,
                         t_pred["seg"], fixed["seg"],
                         name=moving["name"], fixed_ins=fixed["ins"]
                     )
+                print(f"teacher sum: {teacher_dice_meter[0].sum}")
+                exit()
 
             if test:
                 # resample to resolution = (1, 1, 1)

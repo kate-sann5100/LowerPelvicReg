@@ -137,10 +137,6 @@ def load_warm_up_ckpt(warm_up_save_dir, args):
 
 def load_weight(student, teacher, ckpt, same_init=False):
     student.load_state_dict(ckpt["student"], strict=True)
-    for k, v in ckpt.items():
-        print(k)
-    print(ckpt["teacher"])
-    exit()
     for t_id, t_model in teacher.items():
         t_model.load_state_dict(
             ckpt["student"] if same_init else ckpt["teacher"][t_id],
