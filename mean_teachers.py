@@ -38,7 +38,6 @@ def main():
 def train_worker(args):
     set_seed(args.manual_seed)
     save_dir = get_save_dir(args)
-    print(save_dir)
     overwrite_save_dir(args, save_dir)
 
     # initialise training dataloaders
@@ -53,6 +52,7 @@ def train_worker(args):
     print(f"{device_count()} gpus")
     print(f"labelled dataset of size {len(l_loader)}")
 
+    print(f"----------dataset info start----------")
     if args.label_ratio < 1.0:
         ul_dataset = SemiDataset(args=args, mode="train", label=False)
         ul_loader = DataLoader(
@@ -68,6 +68,7 @@ def train_worker(args):
     val_dataset = SemiDataset(args=args, mode="val", label=True)
     val_loader = DataLoader(val_dataset, batch_size=1)
     print(f"validation dataset of size {len(val_loader)}")
+    print(f"----------dataset info end----------")
 
     debug_vis = Visualisation(f"debug_vis")
 
@@ -75,8 +76,8 @@ def train_worker(args):
     l_overfit_moving, l_overfit_fixed = None, None
     ul_overfit_moving, ul_overfit_fixed = None, None
     aug_overfit_moving, aug_overfit_fixed = None, None
-    print("load overfit pair")
     if args.overfit and args.label_ratio < 1.0:
+        print("loading overfit pair...")
         dataloader = iter(zip(cycle(l_loader), ul_loader))
         for l, ul in dataloader:
             l_overfit_moving, l_overfit_fixed = l
@@ -95,7 +96,8 @@ def train_worker(args):
 
     # load weight
     start_epoch, start_step, step_count = 0, 0, 0
-    print("load warmup weight")
+    print(f"----------start warmup----------")
+    print("loading warmup weight...")
     warm_up_save_dir = get_save_dir(args, warm_up=True)
     # if warm up weight is not available, run warm up
     warm_up_ckpt = load_warm_up_ckpt(warm_up_save_dir[:-8] if args.overfit else warm_up_save_dir, args)
@@ -105,7 +107,7 @@ def train_worker(args):
         else:
             warm_up_epoch = warm_up_ckpt["epoch"]
             warm_up_step = warm_up_ckpt["step_count"]
-            print(f"warm up epoch={warm_up_epoch}, warm up step={warm_up_step}, continue warm up")
+            print(f"warm up epoch={warm_up_epoch}, warm up step={warm_up_step}, continuing warm up")
         start_epoch, start_step = labelled_only(
             args, student, teacher, l_loader, val_loader,
             save_dir=warm_up_save_dir, last_ckpt=warm_up_ckpt, debug_vis=debug_vis,
@@ -114,8 +116,10 @@ def train_worker(args):
     else:
         start_epoch, start_step = load_weight(student, teacher, warm_up_ckpt, same_init=args.same_init)
         step_count = start_step
+    print(f"----------warmup finished----------")
 
     if args.labelled_only:
+        print(f"----------start labelled only training----------")
         labelled_only_save_dir = warm_up_save_dir.replace("warmup", "labeledonly")
         last_ckpt_path = f"{labelled_only_save_dir}/last_ckpt.pth"
         if os.path.exists(last_ckpt_path):
@@ -126,6 +130,7 @@ def train_worker(args):
             args, student, teacher, l_loader, val_loader,
             save_dir=labelled_only_save_dir, last_ckpt=last_ckpt, debug_vis=debug_vis,
             end_epoch=5000, train_teacher=False, save_period=5000)
+        print(f"----------labelled only training finished----------")
 
     print("weight loaded")
 
@@ -134,7 +139,7 @@ def train_worker(args):
 
     writer = SummaryWriter(log_dir=save_dir)
 
-    num_epochs = 5000
+    num_epochs = 10000
     best_metric = 0
     consistency_loss = ConsistencyLoss()
     l_loss_meter = LossMeter(args, writer=writer)
@@ -147,7 +152,7 @@ def train_worker(args):
     print(f"start training {save_dir}")
 
     for epoch in range(start_epoch, num_epochs):
-        print(f"-----------epoch: {epoch}----------")
+        print(f"----------epoch: {epoch}----------")
 
         # zip labeled and unlabeled datasets
         dataloader = iter(zip(cycle(l_loader), ul_loader))
@@ -251,13 +256,14 @@ def train_worker(args):
             "teacher": {k: v.state_dict() for k, v in teacher.items()},
             "optimiser": optimiser.state_dict(),
         }
-        print("validating...")
+        print(f"at epoch={epoch}, step={step_count}, saving ckpt to {save_dir}")
+        torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
+        print(f"at step_count={step_count}, start validating...")
         student_dice, teacher_dice, hausdorff_result_dict = validation(
             args, student, teacher, val_loader,
             writer=writer, step=step_count, vis=None, test=False,
             overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
         )
-        torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
         val_metric = student_dice[0]
         # for k, v in teacher_dice.items():
         #     val_metric = max(val_metric, v[0])
@@ -286,7 +292,7 @@ def update_teacher(teacher, student, args):
 def validation(args, student, teacher, loader,
                writer=None, step=None, vis=None, test=False,
                overfit_moving=None, overfit_fixed=None, labelled_only=False):
-    print(writer.log_dir)
+    print(f"writing to {writer.log_dir}")
 
     # initialise meters
     student_dice_meter = DiceMeter(writer, test=test, tag="student")
@@ -314,7 +320,6 @@ def validation(args, student, teacher, loader,
                 student_binary["seg"], fixed["seg"],
                 name=moving["name"], fixed_ins=fixed["ins"]
             )
-            print(f"student sum: {student_dice_meter.sum}")
 
             # teacher prediction
             if teacher is not None:
@@ -343,8 +348,6 @@ def validation(args, student, teacher, loader,
                         t_pred["seg"], fixed["seg"],
                         name=moving["name"], fixed_ins=fixed["ins"]
                     )
-                print(f"teacher sum: {teacher_dice_meter[0].sum}")
-                exit()
 
             if test:
                 # resample to resolution = (1, 1, 1)
@@ -416,9 +419,9 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_c
     } if train_teacher else None
 
     if last_ckpt is not None:
+        print(f"last ckpt founded")
         start_epoch, step_count = load_weight(student, teacher, last_ckpt, same_init=args.same_init)
-        print(f"loading weights......")
-        print(f"start_epoch={start_epoch}, step_count={step_count}")
+        print(f"loading weights from {last_ckpt}......")
         s_optimiser.load_state_dict(last_ckpt["s_optimiser"])
         if train_teacher:
             for t_id, to in t_optimiser.items():
@@ -443,7 +446,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_c
         print(f"warming up with dataset of size {len(l_loader)}")
 
     validation_step = 1 if args.overfit else 500
-    print(f"data loader of size {len(l_loader)}")
+    print(f"start_epoch={start_epoch}, step_count={step_count}")
     for epoch in range(start_epoch, end_epoch):
         print(f"-----------epoch: {epoch}----------")
 
@@ -460,14 +463,14 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_c
                 debug_vis.vis(moving, fixed, prefix="warmup")
             if step_count % validation_step == 0:
                 # validate current weight
-                print("validating...")
+                print(f"at step_count={step_count}, start validating...")
                 validation_start = time.time()
                 student_dice, teacher_dice, hausdorff_result_dict = validation(
                     args, student, teacher if train_teacher else None, val_loader,
                     writer=writer, step=step_count, vis=None, test=False,
                     overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
                 )
-                print(f"labelled only validation takes {time.time() - validation_start} seconds")
+                print(f"validation takes {time.time() - validation_start} seconds")
 
                 student.train()
                 if train_teacher:
@@ -481,7 +484,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_c
                     "teacher": {t_id: t.state_dict() for t_id, t in teacher.items()} if train_teacher else None,
                     "t_optimiser": {t_id: to.state_dict() for t_id, to in t_optimiser.items()} if train_teacher else None,
                 }
-                print(f"saved epoch={epoch}, step_count={step_count}")
+                print(f"at epoch={epoch}, step_count={step_count}, saving ckpt to {save_dir}")
                 torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
                 # update ckpt_old for each model separately based on validation performance
                 if student_dice[0] > s_best_metric:
@@ -497,7 +500,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_c
                                     t_optimiser.items()} if train_teacher else None,
                 }
                 torch.save(ckpt, f'{save_dir}/{step_count}_ckpt.pth')
-                print(f"saving {save_dir}/{step_count}_ckpt.pth...")
+                print(f"at epoch={epoch}, step_count={step_count}, saving {save_dir}/{step_count}_ckpt.pth...")
 
             reset_peak_memory_stats()
             step_count += 1
@@ -515,13 +518,13 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_c
             if args.overfit:
                 break
 
-        print(f"epoch{epoch}: step_count={step_count}")
+        print(f"step_count={step_count}")
         # log loss
         s_l_loss_meter.get_average(step_count)
         if train_teacher:
             for t_id in t_l_loss_meter.keys():
                 t_l_loss_meter[t_id].get_average(step_count)
-        print(f"warm up training epoch takes {time.time() - training_start} seconds")
+        print(f"this epoch takes {time.time() - training_start} seconds")
 
     ckpt = {
         "epoch": epoch,
