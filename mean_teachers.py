@@ -259,9 +259,9 @@ def train_worker(args):
         )
         torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
         val_metric = student_dice[0]
-        for k, v in teacher_dice.items():
-            val_metric = max(val_metric, v[0])
-        val_metric = teacher_dice["total"][0]
+        # for k, v in teacher_dice.items():
+        #     val_metric = max(val_metric, v[0])
+        # val_metric = teacher_dice["total"][0]
         if val_metric > best_metric:
             best_metric = val_metric
             torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
