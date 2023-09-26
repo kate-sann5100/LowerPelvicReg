@@ -50,9 +50,9 @@ def get_parser():
     cfg.same_init = not args.diff_init
     cfg.aug_multiplier = args.aug_multiplier
     cfg.labelled_only = args.labelled_only
-    print(f"----------config----------")
+    print(f"----------config start----------")
     print(cfg)
-    print(f"----------config----------")
+    print(f"----------config end----------")
     return cfg
 
 
