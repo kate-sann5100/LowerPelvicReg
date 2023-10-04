@@ -3,6 +3,7 @@ import torch
 import nibabel as nib
 from monai.metrics import DiceMetric
 from monai.networks import one_hot
+from monai.networks.blocks import Warp
 from torch.backends import cudnn
 from torch.cuda import device_count
 from torch.utils.data import DataLoader
@@ -84,6 +85,20 @@ def initialise_atlas(dataloader, args):
     return atlas
 
 
+def warp(moving, ddf, t2w=False):
+    """
+    :param moving: (B, 1, W, H, D)
+    :param ddf: (B, 3, W, H, D)
+    :param t2w: if input is t2w, warp with "bilinear"
+    :return:
+    """
+    pred = Warp(mode="bilinear")(
+        moving if t2w else one_hot(moving, num_classes=9),
+        ddf
+    )
+    return pred  # (B, 1, ...) if t2w else (B, 9, ...)
+
+
 def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
     """
     :param atlas:
@@ -110,9 +125,9 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
             ddf = model(moving_batch=batch_atlas, fixed_batch=img, semi_supervision=True)  # (B, 3, W, H, D)
             all_ddf[step * batch_size: step * batch_size + len(img)] = ddf
     var_ddf, avg_ddf = torch.var_mean(all_ddf, dim=0)   # (1, 3, W, H, D)
-    atlas["t2w"] = model.warp(atlas["t2w"], avg_ddf, t2w=True)
+    atlas["t2w"] = Warp(mode="bilinear").to(avg_ddf)(atlas["t2w"], avg_ddf)
     atlas["seg"] = torch.argmax(
-        model.warp(atlas["seg"], ddf, t2w=False),
+        Warp(mode="bilinear").to(avg_ddf)(one_hot(atlas["seg"], num_classes=9), avg_ddf),
         dim=1, keepdim=True)
     return atlas, avg_ddf, var_ddf
 
