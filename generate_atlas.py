@@ -66,6 +66,8 @@ def initialise_atlas(dataloader, args):
     for step, img in enumerate(dataloader):
         cuda_batch(img)
         seg = one_hot(img["seg"], num_classes=9)  # (1, 9, W, H, D)
+        if step == 0:
+            seg_sum = seg_sum.to(seg)
         seg_sum += seg
         seg_count += 1
     seg_avg = seg_sum / seg_count  # (1, 9, W, H, D)
