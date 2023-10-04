@@ -211,3 +211,46 @@ class SemiDataset(Dataset):
             aug_fixed = self.rand_affine(fixed)
             aug_moving = self.cut(moving, aug_fixed)
             return moving, fixed, aug_moving, aug_fixed
+
+
+class AtlasDataset(Dataset):
+
+    def __init__(self, args):
+        super(AtlasDataset, self).__init__()
+        self.args = args
+        self.seg_path, self.image_path = f"{args.data_path}/data", f"{args.data_path}/data"
+
+        institution_patient_dict = get_institution_patient_dict(
+            data_path=args.data_path,
+            mode=mode,
+        )
+
+        self.img_list = []
+        for ins, patient_list in institution_patient_dict.items():
+            if mode == "train":
+                label_num = int(len(patient_list) * args.label_ratio)
+                patient_list = patient_list[:label_num] if label else patient_list[label_num:]
+            self.img_list.extend([(p, ins) for p in patient_list])
+
+        self.transform = get_transform(
+            augmentation=False,
+            size=[args.size[0], args.size[1], 76],
+            resolution=args.resolution
+        )
+
+    def __len__(self):
+        return len(self.img_list)
+
+    def __getitem__(self, idx):
+        """
+        :param idx:
+        :return:
+        img with keys:
+        -"t2w": (1, W, H, D)
+        -"seg": (1, W, H, D)
+        -"ins": int
+        -"name": str
+        """
+        img = self.img_list[idx]
+        img = get_img(img, self.transform, self.image_path, self.seg_path, self.args)
+        return img
