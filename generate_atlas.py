@@ -49,8 +49,10 @@ def main():
         persistent_workers=False,
     )
     atlas = initialise_atlas(init_dataloader, args)
+    print(f"atlas initialised...")
     ckpt = {}
     for iter in range(10):
+        print(f"iter{iter}...")
         atlas, avg_ddf, var_ddf = update_atlas(
             atlas, update_dataloader, model, device_count() * args.batch_size, len(dataset), args
         )
