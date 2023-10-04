@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import torch
 import nibabel as nib
@@ -20,6 +22,10 @@ def main():
     set_seed(args.manual_seed)
     save_dir = "atlas/upper_bound"
     vis_path = "atlas/upper_bound/vis"
+    if not os.path.exists(save_dir):
+        os.mkdir(save_dir)
+    if not os.path.exists(vis_path):
+        os.mkdir(vis_path)
     model = torch.nn.DataParallel(
         Registration(args).cuda()
     )
