@@ -122,3 +122,7 @@ def visualise_atlas(atlas, iteration, vis_path):
             affine=affine
         )
         nib.save(img, f"{vis_path}/{iteration}_{k}.nii")
+
+
+if __name__ == '__main__':
+    main()
