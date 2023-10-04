@@ -75,9 +75,9 @@ def initialise_atlas(dataloader, args):
     for img in dataloader:
         cuda_batch(img)
         one_hot_seg = one_hot(img["seg"], num_classes=9)  # (1, 9, W, H, D)
-        mean_dice = DiceMetric(include_background=False, reduction="mean")(one_hot_seg, seg_avg)
-        print(mean_dice)
-        exit()
+        mean_dice = torch.mean(
+            DiceMetric(include_background=False, reduction="mean")(one_hot_seg, seg_avg)
+        )
         if mean_dice > best_metric:
             atlas = img.copy()
             best_metric = mean_dice
