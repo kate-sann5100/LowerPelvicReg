@@ -128,9 +128,9 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
     # print(f"all_ddf of shape{all_ddf.shape}")
     # print(f"var_ddf of shape{var_ddf.shape}")
     # print(f"avg_ddf of shape{avg_ddf.shape}")
-    atlas["t2w"] = Warp(mode="bilinear").to(avg_ddf)(atlas["t2w"], avg_ddf)
+    atlas["t2w"] = Warp(mode="bilinear").to(atlas["t2w"])(atlas["t2w"], avg_ddf.to(atlas["t2w"]))
     atlas["seg"] = torch.argmax(
-        Warp(mode="bilinear").to(avg_ddf)(one_hot(atlas["seg"], num_classes=9), avg_ddf),
+        Warp(mode="bilinear").to(atlas["seg"])(one_hot(atlas["seg"], num_classes=9), avg_ddf.to(atlas["seg"])),
         dim=1, keepdim=True)
     return atlas, avg_ddf, var_ddf
 
