@@ -124,11 +124,10 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
             cuda_batch(batch_atlas)
             ddf = model(moving_batch=batch_atlas, fixed_batch=img, semi_supervision=True)  # (B, 3, W, H, D)
             all_ddf[step * batch_size: step * batch_size + len(img)] = ddf
-    print(f"all_ddf of shape{all_ddf.shape}")
-    var_ddf, avg_ddf = torch.var_mean(all_ddf, dim=0)   # (1, 3, W, H, D)
-    print(f"var_ddf of shape{var_ddf.shape}")
-    print(f"avg_ddf of shape{avg_ddf.shape}")
-    exit()
+    var_ddf, avg_ddf = torch.var_mean(all_ddf, dim=0, keepdim=True)   # (1, 3, W, H, D)
+    # print(f"all_ddf of shape{all_ddf.shape}")
+    # print(f"var_ddf of shape{var_ddf.shape}")
+    # print(f"avg_ddf of shape{avg_ddf.shape}")
     atlas["t2w"] = Warp(mode="bilinear").to(avg_ddf)(atlas["t2w"], avg_ddf)
     atlas["seg"] = torch.argmax(
         Warp(mode="bilinear").to(avg_ddf)(one_hot(atlas["seg"], num_classes=9), avg_ddf),
