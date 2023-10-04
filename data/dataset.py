@@ -222,14 +222,11 @@ class AtlasDataset(Dataset):
 
         institution_patient_dict = get_institution_patient_dict(
             data_path=args.data_path,
-            mode=mode,
+            mode="test",
         )
 
         self.img_list = []
         for ins, patient_list in institution_patient_dict.items():
-            if mode == "train":
-                label_num = int(len(patient_list) * args.label_ratio)
-                patient_list = patient_list[:label_num] if label else patient_list[label_num:]
             self.img_list.extend([(p, ins) for p in patient_list])
 
         self.transform = get_transform(
