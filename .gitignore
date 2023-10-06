@@ -27,3 +27,5 @@ test_aug/
 data/count_ins.py
 
 data/institution.txt
+
+atlas/upper_bound/vis/

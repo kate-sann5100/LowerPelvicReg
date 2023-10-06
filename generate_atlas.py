@@ -53,12 +53,10 @@ def main():
     ckpt = {}
     for iter in range(10):
         print(f"iter{iter}...")
-        atlas, avg_ddf, var_ddf = update_atlas(
+        atlas = update_atlas(
             atlas, update_dataloader, model, device_count() * args.batch_size, len(dataset), args
         )
-        ckpt[f"atlas_iter{iter}"] = atlas
-        ckpt[f"avg_ddf_iter{iter}"] = avg_ddf
-        ckpt[f"var_ddf_iter{iter}"] = var_ddf
+        ckpt[f"iter{iter}"] = atlas
         visualise_atlas(atlas, iter, vis_path)
     torch.save(ckpt, f"{save_dir}/ckpt.pth")
 
@@ -119,8 +117,8 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
     :param args:
     :return:
     """
-    ddf_size = args.size
-    all_ddf = torch.zeros(num_samples, 3, *ddf_size)
+    all_t2w = torch.zeros(num_samples, 1, *args.size)
+    all_seg = torch.zeros(num_samples, 9, *args.size)
     cuda_batch(atlas)
     with torch.no_grad():
         for step, img in enumerate(dataloader):
@@ -130,20 +128,18 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
                 "seg": atlas["seg"].expand(len(img["t2w"]), 1, *args.size),
             }
             cuda_batch(batch_atlas)
-            ddf = model(moving_batch=batch_atlas, fixed_batch=img, semi_supervision=True)  # (B, 3, W, H, D)
-            all_ddf[step * batch_size: step * batch_size + len(img)] = ddf
-    var_ddf, avg_ddf = torch.var_mean(all_ddf, dim=0, keepdim=True)   # (1, 3, W, H, D)
-    # print(f"all_ddf of shape{all_ddf.shape}")
-    # print(f"var_ddf of shape{var_ddf.shape}")
-    # print(f"avg_ddf of shape{avg_ddf.shape}")
-    atlas["t2w"] = Warp(mode="bilinear").to(atlas["t2w"])(atlas["t2w"], avg_ddf.to(atlas["t2w"]))
-    atlas["seg"] = torch.argmax(
-        Warp(mode="bilinear").to(atlas["t2w"])(
-            one_hot(atlas["seg"], num_classes=9).to(atlas["t2w"]), avg_ddf.to(atlas["t2w"])
-        ),
-        dim=1, keepdim=True
-    )
-    return atlas, avg_ddf, var_ddf
+            binary = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=False)
+            all_t2w[step*batch_size: step*batch_size+len(img["t2w"])] = binary["t2w"]  # (B, 1, W, H, D)
+            all_seg[step*batch_size: step*batch_size+len(img["t2w"])] = binary["seg"]  # (B, 9, W, H, D)
+    var_t2w, avg_t2w = torch.var_mean(all_t2w, dim=0, keepdim=True)   # (1, 3, W, H, D)
+    var_seg, avg_seg = torch.var_mean(all_seg, dim=0, keepdim=True)  # (1, 9, W, H, D)
+    atlas = {
+        "t2w": avg_t2w,
+        "seg": avg_seg,
+        "var_t2w": var_t2w,
+        "var_seg": var_seg
+    }
+    return atlas
 
 
 def visualise_atlas(atlas, iteration, vis_path):
