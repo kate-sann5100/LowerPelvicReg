@@ -120,6 +120,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
     all_t2w = torch.zeros(num_samples, 1, *args.size)
     all_seg = torch.zeros(num_samples, 9, *args.size)
     cuda_batch(atlas)
+    model.eval()
     with torch.no_grad():
         for step, img in enumerate(dataloader):
             cuda_batch(img)
