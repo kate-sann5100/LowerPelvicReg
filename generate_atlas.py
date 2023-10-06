@@ -134,7 +134,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
             print(torch.unique(torch.sum(binary["seg"], dim=1)))
             all_t2w[step*batch_size: step*batch_size+len(img["t2w"])] = binary["t2w"]  # (B, 1, W, H, D)
             all_seg[step*batch_size: step*batch_size+len(img["t2w"])] = binary["seg"]  # (B, 9, W, H, D)
-    print(torch.unique(torch.sum(all_seg / num_samples, dim=1)))
+    print(torch.unique(torch.sum(all_seg, dim=1)))
     exit()
     var_t2w, avg_t2w = torch.var_mean(all_t2w, dim=0, keepdim=True)   # (1, 3, W, H, D)
     var_seg, avg_seg = torch.var_mean(all_seg, dim=0, keepdim=True)  # (1, 9, W, H, D)
