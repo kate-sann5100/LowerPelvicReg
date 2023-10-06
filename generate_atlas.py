@@ -11,6 +11,7 @@ from torch.cuda import device_count
 from torch.utils.data import DataLoader
 
 from data.dataset import AtlasDataset
+from data.dataset_utils import organ_list
 from model.registration_model import Registration
 from utils.train_eval_utils import cuda_batch, get_parser, set_seed
 
@@ -132,6 +133,8 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
             binary = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=False)
             all_t2w[step*batch_size: step*batch_size+len(img["t2w"])] = binary["t2w"]  # (B, 1, W, H, D)
             all_seg[step*batch_size: step*batch_size+len(img["t2w"])] = binary["seg"]  # (B, 9, W, H, D)
+    print(torch.unique(torch.sum(all_seg / num_samples, dim=1)))
+    exit()
     var_t2w, avg_t2w = torch.var_mean(all_t2w, dim=0, keepdim=True)   # (1, 3, W, H, D)
     var_seg, avg_seg = torch.var_mean(all_seg, dim=0, keepdim=True)  # (1, 9, W, H, D)
     atlas = {
@@ -146,12 +149,27 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
 def visualise_atlas(atlas, iteration, vis_path):
     affine = np.array([[0.75, 0, 0, 0], [0, 0.75, 0, 0], [0, 0, 2.5, 0], [0, 0, 0, 1]])
     sz = atlas["t2w"].shape
-    for k in ["t2w", "seg"]:
+
+    img = nib.Nifti1Image(
+        atlas["t2w"].reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
+        affine=affine
+    )
+    nib.save(img, f"{vis_path}/{iteration}_t2w.nii")
+
+    seg_binary = torch.argmax(atlas["seg"], dim=1, keepdim=True)
+    img = nib.Nifti1Image(
+        seg_binary.reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
+        affine=affine
+    )
+    nib.save(img, f"{vis_path}/{iteration}_seg.nii")
+
+    for cls in range(1, 9):
+        cls_logit = atlas["seg"][:, cls, ...]  # (B, 1, W, H, D)
         img = nib.Nifti1Image(
-            atlas[k].reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
+            cls_logit.reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
             affine=affine
         )
-        nib.save(img, f"{vis_path}/{iteration}_{k}.nii")
+        nib.save(img, f"{vis_path}/{iteration}_{organ_list[cls - 1]}.nii")
 
 
 if __name__ == '__main__':
