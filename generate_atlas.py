@@ -131,6 +131,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
             }
             cuda_batch(batch_atlas)
             binary = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=False)
+            print(torch.unique(torch.sum(binary["seg"], dim=1)))
             all_t2w[step*batch_size: step*batch_size+len(img["t2w"])] = binary["t2w"]  # (B, 1, W, H, D)
             all_seg[step*batch_size: step*batch_size+len(img["t2w"])] = binary["seg"]  # (B, 9, W, H, D)
     print(torch.unique(torch.sum(all_seg / num_samples, dim=1)))
