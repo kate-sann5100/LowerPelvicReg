@@ -38,7 +38,6 @@ def main():
 def train_worker(args):
     set_seed(args.manual_seed)
     save_dir = get_save_dir(args)
-    overwrite_save_dir(args, save_dir)
 
     # initialise training dataloaders
     l_dataset = SemiDataset(args=args, mode="train", label=True)
@@ -137,8 +136,8 @@ def train_worker(args):
     if args.label_ratio == 1:
         exit()
 
+    overwrite_save_dir(args, save_dir)
     writer = SummaryWriter(log_dir=save_dir)
-
     num_epochs = 10000
     best_metric = 0
     consistency_loss = ConsistencyLoss()
