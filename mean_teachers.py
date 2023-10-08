@@ -420,7 +420,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_c
     if last_ckpt is not None:
         print(f"last ckpt founded")
         start_epoch, step_count = load_weight(student, teacher, last_ckpt, same_init=args.same_init)
-        print(f"loading weights from {last_ckpt}......")
+        print(f"loading weights from last_ckpt......")
         s_optimiser.load_state_dict(last_ckpt["s_optimiser"])
         if train_teacher:
             for t_id, to in t_optimiser.items():
