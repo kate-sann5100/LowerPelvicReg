@@ -129,7 +129,7 @@ def train_worker(args):
         start_epoch, start_step = labelled_only(
             args, student, teacher, l_loader, val_loader,
             save_dir=labelled_only_save_dir, last_ckpt=last_ckpt, debug_vis=debug_vis,
-            end_epoch=5000, train_teacher=False, save_period=5000)
+            end_epoch=10000, train_teacher=False, save_period=5000)
         print(f"----------labelled only training finished----------")
 
     print("weight loaded")
