@@ -138,7 +138,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
     var_seg, avg_seg = torch.var_mean(all_seg, dim=0, keepdim=True)  # (1, 9, W, H, D)
     atlas = {
         "t2w": avg_t2w,
-        "seg": torch.argmax(avg_seg, dim=1, keepdim=True),
+        "seg": avg_seg,
         "var_t2w": var_t2w,
         "var_seg": var_seg
     }
