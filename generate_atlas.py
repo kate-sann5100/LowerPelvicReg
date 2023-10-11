@@ -127,7 +127,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
             cuda_batch(img)
             batch_atlas = {
                 "t2w": atlas["t2w"].expand(len(img["t2w"]), 1, *args.size),
-                "seg": atlas["seg"].expand(len(img["t2w"]), 1, *args.size),
+                # "seg": atlas["seg"].expand(len(img["t2w"]), 1, *args.size),
             }
             cuda_batch(batch_atlas)
             binary = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=False)
