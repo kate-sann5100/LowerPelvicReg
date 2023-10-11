@@ -131,7 +131,6 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
             }
             cuda_batch(batch_atlas)
             binary = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=False)
-            print(torch.unique(torch.sum(binary["seg"], dim=1)))
             all_t2w[step*batch_size: step*batch_size+len(img["t2w"])] = binary["t2w"]  # (B, 1, W, H, D)
             all_seg[step*batch_size: step*batch_size+len(img["t2w"])] = binary["seg"]  # (B, 9, W, H, D)
     all_t2w, all_seg = all_t2w.reshape(-1, 1, *args.size), all_seg.reshape(-1, 9, *args.size)
@@ -164,6 +163,7 @@ def visualise_atlas(atlas, iteration, vis_path):
     nib.save(img, f"{vis_path}/{iteration}_seg.nii")
 
     for cls in range(1, 9):
+        print(atlas["seg"].shape)
         cls_logit = atlas["seg"][:, cls, ...]  # (B, 1, W, H, D)
         img = nib.Nifti1Image(
             cls_logit.reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
