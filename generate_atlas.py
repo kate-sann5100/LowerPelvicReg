@@ -163,7 +163,6 @@ def visualise_atlas(atlas, iteration, vis_path):
     nib.save(img, f"{vis_path}/{iteration}_seg.nii")
 
     for cls in range(1, 9):
-        print(atlas["seg"].shape)
         cls_logit = atlas["seg"][:, cls, ...]  # (B, 1, W, H, D)
         img = nib.Nifti1Image(
             cls_logit.reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
