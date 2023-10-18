@@ -166,7 +166,7 @@ def visualise_atlas(atlas, iteration, vis_path):
     )
     nib.save(img, f"{vis_path}/{iteration}_seg.nii")
 
-    surface_ddf_var = atlas["var_ddf"] * (seg_binary > 0)
+    surface_ddf_var = atlas["var_ddf"].to(seg_binary) * (seg_binary > 0)
     img = nib.Nifti1Image(
         surface_ddf_var.reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
         affine=affine
