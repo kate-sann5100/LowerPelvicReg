@@ -118,6 +118,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
     :param args:
     :return:
     """
+    all_ddf = torch.zeros(num_samples, 3, *args.size)
     all_t2w = torch.zeros(num_samples, 1, *args.size)
     all_seg = torch.zeros(num_samples, 9, *args.size)
     cuda_batch(atlas)
@@ -130,17 +131,20 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
                 "seg": atlas["seg"],
             }
             cuda_batch(batch_atlas)
+            ddf = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=True)  # (B, 3, W, H, D)
+            all_ddf[step*batch_size: step*batch_size+len(img["t2w"])] = ddf  # (B, 3, W, H, D)
             binary = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=False)
             all_t2w[step*batch_size: step*batch_size+len(img["t2w"])] = binary["t2w"]  # (B, 1, W, H, D)
             all_seg[step*batch_size: step*batch_size+len(img["t2w"])] = binary["seg"]  # (B, 9, W, H, D)
-    all_t2w, all_seg = all_t2w.reshape(-1, 1, *args.size), all_seg.reshape(-1, 9, *args.size)
+    var_ddf, avg_ddf = torch.var_mean(ddf, dim=0, keepdim=True)  # (1, 3, W, H, D)
     var_t2w, avg_t2w = torch.var_mean(all_t2w, dim=0, keepdim=True)   # (1, 3, W, H, D)
     var_seg, avg_seg = torch.var_mean(all_seg, dim=0, keepdim=True)  # (1, 9, W, H, D)
     atlas = {
         "t2w": avg_t2w,
         "seg": avg_seg,
         "var_t2w": var_t2w,
-        "var_seg": var_seg
+        "var_seg": var_seg,
+        "var_ddf": var_ddf
     }
     return atlas
 
@@ -155,12 +159,19 @@ def visualise_atlas(atlas, iteration, vis_path):
     )
     nib.save(img, f"{vis_path}/{iteration}_t2w.nii")
 
-    seg_binary = torch.argmax(atlas["seg"], dim=1, keepdim=True)
+    seg_binary = torch.argmax(atlas["seg"], dim=1, keepdim=True)  # (1, 1, W, H, D)
     img = nib.Nifti1Image(
         seg_binary.reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
         affine=affine
     )
     nib.save(img, f"{vis_path}/{iteration}_seg.nii")
+
+    surface_ddf_var = atlas["var_ddf"] * (seg_binary > 0)
+    img = nib.Nifti1Image(
+        surface_ddf_var.reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
+        affine=affine
+    )
+    nib.save(img, f"{vis_path}/{iteration}_ddf_var.nii")
 
     for cls in range(1, 9):
         cls_logit = atlas["seg"][:, cls, ...]  # (B, 1, W, H, D)
