@@ -167,11 +167,12 @@ def visualise_atlas(atlas, iteration, vis_path):
     nib.save(img, f"{vis_path}/{iteration}_seg.nii")
 
     surface_ddf_var = atlas["var_ddf"].to(seg_binary) * (seg_binary > 0)
-    img = nib.Nifti1Image(
-        surface_ddf_var.reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
-        affine=affine
-    )
-    nib.save(img, f"{vis_path}/{iteration}_ddf_var.nii")
+    for i, dim in enumerate(["W", "H", "D"]):
+        img = nib.Nifti1Image(
+            surface_ddf_var[:, i].reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
+            affine=affine
+        )
+        nib.save(img, f"{vis_path}/{iteration}_ddf_var_{dim}.nii")
 
     for cls in range(1, 9):
         cls_logit = atlas["seg"][:, cls, ...]  # (B, 1, W, H, D)
