@@ -144,7 +144,8 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
         "seg": avg_seg,
         "var_t2w": var_t2w,
         "var_seg": var_seg,
-        "var_ddf": var_ddf
+        "var_ddf": var_ddf,
+        "all_ddf": all_ddf
     }
     return atlas
 
@@ -181,6 +182,14 @@ def visualise_atlas(atlas, iteration, vis_path):
             affine=affine
         )
         nib.save(img, f"{vis_path}/{iteration}_{organ_list[cls - 1]}.nii")
+
+
+def ddf_variance(ddf):
+    """
+    :param ddf: (B, 3, W, H, D)
+    :return:
+    """
+    # 
 
 
 if __name__ == '__main__':
