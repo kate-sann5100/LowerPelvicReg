@@ -52,7 +52,7 @@ def main():
     atlas = initialise_atlas(init_dataloader, args)
     print(f"atlas initialised...")
     ckpt = {}
-    for iter in range(10):
+    for iter in range(2):
         print(f"iter{iter}...")
         atlas = update_atlas(
             atlas, update_dataloader, model, device_count() * args.batch_size, len(dataset), args
@@ -132,6 +132,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
             }
             cuda_batch(batch_atlas)
             ddf = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=True)  # (B, 3, W, H, D)
+            log_ddf_variance(ddf, img["seg"])
             all_ddf[step*batch_size: step*batch_size+len(img["t2w"])] = ddf  # (B, 3, W, H, D)
             binary = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=False)
             all_t2w[step*batch_size: step*batch_size+len(img["t2w"])] = binary["t2w"]  # (B, 1, W, H, D)
@@ -184,12 +185,19 @@ def visualise_atlas(atlas, iteration, vis_path):
         nib.save(img, f"{vis_path}/{iteration}_{organ_list[cls - 1]}.nii")
 
 
-def ddf_variance(ddf):
+def log_ddf_variance(ddf, seg):
     """
     :param ddf: (B, 3, W, H, D)
+    :param seg: (B, 1, W, H, D)
     :return:
     """
-    # 
+    v, m = torch.var_mean(ddf, dim=[2, 3, 4])  # (B, 3)
+    for cls in range(1, 9):
+        masked_ddf = torch.masked_tensor(ddf, seg == cls)
+        v = torch.var(masked_ddf, dim=[2, 3, 4])
+        m = torch.mean(masked_ddf, dim=[2, 3, 4])
+        print("run success")
+        exit()
 
 
 if __name__ == '__main__':
