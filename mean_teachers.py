@@ -138,7 +138,7 @@ def train_worker(args):
 
     overwrite_save_dir(args, save_dir)
     writer = SummaryWriter(log_dir=save_dir)
-    num_epochs = 10000
+    num_epochs = 20000
     best_metric = 0
     consistency_loss = ConsistencyLoss()
     l_loss_meter = LossMeter(args, writer=writer)
