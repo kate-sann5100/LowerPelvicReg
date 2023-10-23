@@ -200,6 +200,7 @@ def log_ddf_variance(ddf, seg):
         var = torch.sum(var * var * mask, dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
 
         f_ddf, f_mask = ddf[0][:1], mask[0]  # (1, W, H, D), (1, W, H, D)
+        print(f_ddf[mask].shape)
         f_var, f_avg = torch.var_mean(f_ddf[mask])
         print(f"var={var}, avg={avg}")
         print(f"f_var={f_var}, v_avg={f_avg}")
