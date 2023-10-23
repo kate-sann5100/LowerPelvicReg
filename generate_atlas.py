@@ -193,7 +193,8 @@ def log_ddf_variance(ddf, seg):
     """
     v, m = torch.var_mean(ddf, dim=[2, 3, 4])  # (B, 3)
     for cls in range(1, 9):
-        masked_ddf = torch.masked_tensor(ddf, seg == cls)
+        # (
+        masked_ddf = torch.masked.masked_tensor(ddf, seg == cls)
         v = torch.var(masked_ddf, dim=[2, 3, 4])
         m = torch.mean(masked_ddf, dim=[2, 3, 4])
         print("run success")
