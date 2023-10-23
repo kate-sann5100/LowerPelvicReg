@@ -52,10 +52,10 @@ def main():
     atlas = initialise_atlas(init_dataloader, args)
     print(f"atlas initialised...")
     ckpt = {}
-    for iter in range(2):
+    for iter in range(1):
         print(f"iter{iter}...")
         atlas = update_atlas(
-            atlas, update_dataloader, model, device_count() * args.batch_size, len(dataset), args
+            atlas, update_dataloader, model, device_count() * args.batch_size, len(dataset), save_dir, args
         )
         ckpt[f"iter{iter}"] = atlas
         visualise_atlas(atlas, iter, vis_path)
@@ -106,7 +106,7 @@ def warp(moving, ddf, t2w=False):
     return pred  # (B, 1, ...) if t2w else (B, 9, ...)
 
 
-def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
+def update_atlas(atlas, dataloader, model, batch_size, num_samples, save_dir, args):
     """
     :param atlas:
         "t2w": (B, 1, ...)
@@ -115,6 +115,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
     :param model:
     :param batch_size:
     :param num_samples:
+    :param save_dir:
     :param args:
     :return:
     """
@@ -132,11 +133,20 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, args):
             }
             cuda_batch(batch_atlas)
             ddf = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=True)  # (B, 3, W, H, D)
-            log_ddf_variance(ddf, img["seg"])
             all_ddf[step*batch_size: step*batch_size+len(img["t2w"])] = ddf  # (B, 3, W, H, D)
             binary = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=False)
             all_t2w[step*batch_size: step*batch_size+len(img["t2w"])] = binary["t2w"]  # (B, 1, W, H, D)
             all_seg[step*batch_size: step*batch_size+len(img["t2w"])] = binary["seg"]  # (B, 9, W, H, D)
+
+            ddf_variance_log = log_ddf_variance(ddf, img, binary)
+            visualise_img(img, binary, vis_path=f"{save_dir}/vis_sample")
+
+    with open(f'{save_dir}/var_log.txt', 'w') as f:
+        for n in ddf_variance_log.keys():
+            f.write(f"{n} \n")
+            for k, v in ddf_variance_log[n].items():
+                f.write(f"{k}:{v} \n")
+
     var_ddf, avg_ddf = torch.var_mean(ddf, dim=0, keepdim=True)  # (1, 3, W, H, D)
     var_t2w, avg_t2w = torch.var_mean(all_t2w, dim=0, keepdim=True)   # (1, 3, W, H, D)
     var_seg, avg_seg = torch.var_mean(all_seg, dim=0, keepdim=True)  # (1, 9, W, H, D)
@@ -185,27 +195,75 @@ def visualise_atlas(atlas, iteration, vis_path):
         nib.save(img, f"{vis_path}/{iteration}_{organ_list[cls - 1]}.nii")
 
 
-def log_ddf_variance(ddf, seg):
+def log_ddf_variance(ddf, img, binary):
     """
     :param ddf: (B, 3, W, H, D)
-    :param seg: (B, 1, W, H, D)
+    :param img:
+        -"t2w": (B, 1, W, H, D)
+        -"seg": (B, 1, W, H, D)
+        -"ins": int
+        -"name": str
+    :param binary:
+        - "t2w": (B, 1, W, H, D)
+        - "seg": (B, 9, W, H, D)
+        - "ddf": (B, 3, W, H, D)
     :return:
     """
     var, avg = torch.var_mean(ddf, dim=[2, 3, 4])  # (B, 3)
+    result = {n: {"all_var": var[i], "all_avg": avg[i]}
+              for i, n in enumerate(img["name"])}
     for cls in range(1, 9):
-        mask = (seg == cls)  # (B, 1, W, H, D)
+        mask = (img["seg"] == cls)  # (B, 1, W, H, D)
         masked_ddf = ddf * mask  # (B, 3, W, H, D)
         avg = masked_ddf.sum(dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
         var = masked_ddf - avg.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)  # (B, 3, W, H, D)
         var = torch.sum(var * var * mask, dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
+        for i, n in enumerate(img["name"]):
+            result[n][f"{organ_list[cls-1]}_var"] = var[i]
+            result[n][f"{organ_list[cls-1]}_avg"] = avg[i]
+    return result
 
-        f_ddf, f_mask = ddf[0][:1], mask[0]  # (1, W, H, D), (1, W, H, D)
-        print(f_ddf[f_mask].shape)
-        f_var, f_avg = torch.var_mean(f_ddf[f_mask])
-        print(f"var={var}, avg={avg}")
-        print(f"f_var={f_var}, v_avg={f_avg}")
-        exit()
 
+def visualise_img(img, binary, vis_path):
+    """
+    :param img:
+        -"t2w": (B, 1, W, H, D)
+        -"seg": (B, 1, W, H, D)
+        -"ins": int
+        -"name": str
+    :param binary:
+        - "t2w": (B, 1, W, H, D)
+        - "seg": (B, 9, W, H, D)
+        - "ddf": (B, 3, W, H, D)
+    :param vis_path:
+    :return:
+    """
+    affine = np.array([[0.75, 0, 0, 0], [0, 0.75, 0, 0], [0, 0, 2.5, 0], [0, 0, 0, 1]])
+    sz = img["t2w"].shape
+    for i, n in enumerate(img["name"]):
+        img = nib.Nifti1Image(
+            img["t2w"][i].reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
+            affine=affine
+        )
+        nib.save(img, f"{vis_path}/{n}_t2w.nii")
+
+        img = nib.Nifti1Image(
+            img["seg"][i].reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
+            affine=affine
+        )
+        nib.save(img, f"{vis_path}/{n}_seg.nii")
+
+        img = nib.Nifti1Image(
+            binary["t2w"][i].reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
+            affine=affine
+        )
+        nib.save(img, f"{vis_path}/{n}_registerd_t2w.nii")
+
+        img = nib.Nifti1Image(
+            torch.argmax(binary["seg"][i], dim=0).reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
+            affine=affine
+        )
+        nib.save(img, f"{vis_path}/{n}_registerd_seg.nii")
 
 
 if __name__ == '__main__':
