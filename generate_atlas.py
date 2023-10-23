@@ -196,15 +196,15 @@ def log_ddf_variance(ddf, seg):
         mask = (seg == cls)  # (B, 1, W, H, D)
         masked_ddf = ddf * mask  # (B, 3, W, H, D)
         avg = masked_ddf.sum(dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
-        var = (masked_ddf - avg) * (masked_ddf - avg)  # (B, 3, W, H, D)
-        var = torch.sum(var * mask, dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
+        var = masked_ddf - avg.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)  # (B, 3, W, H, D)
+        var = torch.sum(var * var * mask, dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
 
         f_ddf, f_mask = ddf[0][:1], mask[0]  # (1, W, H, D), (1, W, H, D)
         f_var, f_avg = torch.var_mean(f_ddf[mask])
         print(f"var={var}, avg={avg}")
         print(f"f_var={f_var}, v_avg={f_avg}")
         exit()
-    
+
 
 if __name__ == '__main__':
     main()
