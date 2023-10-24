@@ -122,6 +122,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, save_dir, ar
     all_ddf = torch.zeros(num_samples, 3, *args.size)
     all_t2w = torch.zeros(num_samples, 1, *args.size)
     all_seg = torch.zeros(num_samples, 9, *args.size)
+    ddf_variance_log = {}
     cuda_batch(atlas)
     model.eval()
     with torch.no_grad():
@@ -138,7 +139,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, save_dir, ar
             all_t2w[step*batch_size: step*batch_size+len(img["t2w"])] = binary["t2w"]  # (B, 1, W, H, D)
             all_seg[step*batch_size: step*batch_size+len(img["t2w"])] = binary["seg"]  # (B, 9, W, H, D)
 
-            ddf_variance_log = log_ddf_variance(ddf, img, binary)
+            ddf_variance_log.update(log_ddf_variance(ddf, img, binary))
             visualise_img(img, binary, vis_path=f"{save_dir}/vis_sample")
 
     with open(f'{save_dir}/var_log.txt', 'w') as f:
@@ -211,7 +212,7 @@ def log_ddf_variance(ddf, img, binary):
     :return:
     """
     var, avg = torch.var_mean(ddf, dim=[2, 3, 4])  # (B, 3)
-    result = {n: {"all_var": var[i], "all_avg": avg[i]}
+    result = {n: {"all_var": var[i].cpu(), "all_avg": avg[i].cpu()}
               for i, n in enumerate(img["name"])}
     for cls in range(1, 9):
         mask = (img["seg"] == cls)  # (B, 1, W, H, D)
@@ -220,8 +221,8 @@ def log_ddf_variance(ddf, img, binary):
         var = masked_ddf - avg.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)  # (B, 3, W, H, D)
         var = torch.sum(var * var * mask, dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
         for i, n in enumerate(img["name"]):
-            result[n][f"{organ_list[cls-1]}_var"] = var[i]
-            result[n][f"{organ_list[cls-1]}_avg"] = avg[i]
+            result[n][f"{organ_list[cls-1]}_var"] = var[i].cpu()
+            result[n][f"{organ_list[cls-1]}_avg"] = avg[i].cpu()
     return result
 
 
