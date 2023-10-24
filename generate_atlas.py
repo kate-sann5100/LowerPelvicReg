@@ -274,7 +274,8 @@ def choose_sample(save_dir):
     bladder_w_var_list = [v["BladderMask_var"][0] for v in var_log.values()]
     print(torch.argmax(torch.tensor(bladder_w_avg_list)))
     print(torch.argmin(torch.tensor(bladder_w_avg_list)))
-
+    print(torch.argmax(torch.tensor(bladder_w_var_list)))
+    print(torch.argmin(torch.tensor(bladder_w_var_list)))
     max_bladder_w_avg = name_list[torch.amax(torch.tensor(bladder_w_avg_list))]
     min_bladder_w_avg = name_list[torch.amin(torch.tensor(bladder_w_avg_list))]
     max_bladder_w_var = name_list[torch.amax(torch.tensor(bladder_w_var_list))]
