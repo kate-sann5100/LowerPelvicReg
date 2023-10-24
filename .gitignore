@@ -11,6 +11,8 @@ debug_vis/
 
 nifty_temp/
 
+atlas/
+
 data/__pycache__/
 
 utils/__pycache__/

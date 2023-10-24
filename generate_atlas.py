@@ -146,6 +146,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, save_dir, ar
             f.write(f"{n} \n")
             for k, v in ddf_variance_log[n].items():
                 f.write(f"{k}:{v} \n")
+    torch.save(ddf_variance_log, f"{save_dir}/var_log.pth")
 
     var_ddf, avg_ddf = torch.var_mean(ddf, dim=0, keepdim=True)  # (1, 3, W, H, D)
     var_t2w, avg_t2w = torch.var_mean(all_t2w, dim=0, keepdim=True)   # (1, 3, W, H, D)
@@ -264,6 +265,10 @@ def visualise_img(img, binary, vis_path):
             affine=affine
         )
         nib.save(nib_img, f"{vis_path}/{n}_registerd_seg.nii")
+
+
+def choose_sample():
+
 
 
 if __name__ == '__main__':
