@@ -267,9 +267,5 @@ def visualise_img(img, binary, vis_path):
         nib.save(nib_img, f"{vis_path}/{n}_registerd_seg.nii")
 
 
-def choose_sample():
-
-
-
 if __name__ == '__main__':
     main()
