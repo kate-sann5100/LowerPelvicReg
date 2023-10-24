@@ -271,8 +271,8 @@ def visualise_img(img, binary, vis_path):
 def choose_sample(save_dir):
     var_log = torch.load(f"{save_dir}/var_log.pth")
     name_list = list(var_log.keys())
-    bladder_w_avg_list = [v["BladderMask_avg"][1] for v in var_log.values()]
-    bladder_w_var_list = [v["BladderMask_var"][1] for v in var_log.values()]
+    bladder_w_avg_list = [torch.mean(v["BladderMask_avg"] * v["BladderMask_avg"]) for v in var_log.values()]
+    bladder_w_var_list = [torch.mean(v["BladderMask_var"]) for v in var_log.values()]
     max_bladder_w_avg = name_list[torch.argmax(torch.tensor(bladder_w_avg_list))]
     min_bladder_w_avg = name_list[torch.argmin(torch.tensor(bladder_w_avg_list))]
     max_bladder_w_var = name_list[torch.argmax(torch.tensor(bladder_w_var_list))]
