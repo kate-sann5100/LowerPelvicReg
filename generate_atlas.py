@@ -9,6 +9,7 @@ from monai.networks.blocks import Warp
 from torch.backends import cudnn
 from torch.cuda import device_count
 from torch.utils.data import DataLoader
+from matplotlib import pyplot as plt
 
 from data.dataset import AtlasDataset
 from data.dataset_utils import organ_list
@@ -216,6 +217,7 @@ def log_ddf_variance(ddf, img, binary):
               for i, n in enumerate(img["name"])}
     for cls in range(1, 9):
         mask = (img["seg"] == cls)  # (B, 1, W, H, D)
+        volume = torch.sum(mask, dim=(1, 2, 3, 4))
         masked_ddf = ddf * mask  # (B, 3, W, H, D)
         avg = masked_ddf.sum(dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
         var = masked_ddf - avg.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)  # (B, 3, W, H, D)
@@ -223,6 +225,7 @@ def log_ddf_variance(ddf, img, binary):
         for i, n in enumerate(img["name"]):
             result[n][f"{organ_list[cls-1]}_var"] = var[i].cpu()
             result[n][f"{organ_list[cls-1]}_avg"] = avg[i].cpu()
+            result[n][f"{organ_list[cls-1]}_volume"] = volume[i].cpu()
     return result
 
 
@@ -273,18 +276,11 @@ def choose_sample(save_dir):
     name_list = list(var_log.keys())
     bladder_w_avg_list = [torch.mean(v["BladderMask_avg"] * v["BladderMask_avg"]) for v in var_log.values()]
     bladder_w_var_list = [torch.mean(v["BladderMask_var"]) for v in var_log.values()]
-    max_bladder_w_avg = name_list[torch.argmax(torch.tensor(bladder_w_avg_list))]
-    min_bladder_w_avg = name_list[torch.argmin(torch.tensor(bladder_w_avg_list))]
-    max_bladder_w_var = name_list[torch.argmax(torch.tensor(bladder_w_var_list))]
-    min_bladder_w_var_index = torch.topk(torch.tensor(bladder_w_var_list), 5)[1]
-    print(min_bladder_w_var_index)
-    min_bladder_w_var = name_list[min_bladder_w_var_index[1]]
-    print(f"max_bladder_w_avg: {max_bladder_w_avg}")
-    print(f"min_bladder_w_avg: {min_bladder_w_avg}")
-    print(f"max_bladder_w_var: {max_bladder_w_var}")
-    print(f"min_bladder_w_var: {min_bladder_w_var}")
+    bladder_volume_list = [torch.mean(v["BladderMask_vol"]) for v in var_log.values()]
+    plt.plot(bladder_volume_list, bladder_w_var_list)
+    plt.savefig(f"{save_dir}/vol_var.png")
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     choose_sample(save_dir="atlas/upper_bound")
