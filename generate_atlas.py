@@ -267,5 +267,21 @@ def visualise_img(img, binary, vis_path):
         nib.save(nib_img, f"{vis_path}/{n}_registerd_seg.nii")
 
 
+def choose_sample(save_dir):
+    var_log = torch.load(f"{save_dir}/var_log.pth")
+    name_list = list(var_log.keys())
+    bladder_w_avg_list = [v["BladderMask_avg"][0] for v in var_log.values()]
+    bladder_w_var_list = [v["BladderMask_var"][0] for v in var_log.values()]
+    max_bladder_w_avg = name_list[torch.amax(torch.tensor(bladder_w_avg_list))]
+    min_bladder_w_avg = name_list[torch.amin(torch.tensor(bladder_w_avg_list))]
+    max_bladder_w_var = name_list[torch.amax(torch.tensor(bladder_w_var_list))]
+    min_bladder_w_var = name_list[torch.amin(torch.tensor(bladder_w_var_list))]
+    print(f"max_bladder_w_avg: {max_bladder_w_avg}")
+    print(f"min_bladder_w_avg: {min_bladder_w_avg}")
+    print(f"max_bladder_w_var: {max_bladder_w_var}")
+    print(f"min_bladder_w_var: {min_bladder_w_var}")
+
+
 if __name__ == '__main__':
-    main()
+    # main()
+    choose_sample(save_dir="atlas/upper_bound")
