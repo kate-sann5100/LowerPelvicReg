@@ -277,7 +277,7 @@ def choose_sample(save_dir):
     bladder_w_avg_list = [torch.mean(v["BladderMask_avg"] * v["BladderMask_avg"]) for v in var_log.values()]
     bladder_w_var_list = [torch.mean(v["BladderMask_var"]) for v in var_log.values()]
     bladder_volume_list = [v["BladderMask_volume"] for v in var_log.values()]
-    plt.plot(bladder_volume_list, bladder_w_var_list)
+    plt.scatter(bladder_volume_list, bladder_w_var_list, "*")
     plt.savefig(f"{save_dir}/vol_var.png")
 
 
