@@ -291,5 +291,5 @@ def choose_sample(save_dir):
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     choose_sample(save_dir="atlas/upper_bound")
