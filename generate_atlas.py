@@ -283,7 +283,9 @@ def choose_sample(save_dir):
     max_bladder_w_avg = name_list[torch.argmax(torch.tensor(bladder_w_avg_list))]
     min_bladder_w_avg = name_list[torch.argmin(torch.tensor(bladder_w_avg_list))]
     max_bladder_w_var = name_list[torch.argmax(torch.tensor(bladder_w_var_list))]
-    min_bladder_w_var = name_list[torch.argmin(torch.tensor(bladder_w_var_list))]
+    min_bladder_w_var_index = torch.topk(torch.tensor(bladder_w_var_list), 5)[1]
+    print(min_bladder_w_var_index)
+    min_bladder_w_var = name_list[min_bladder_w_var_index[1]]
     print(f"max_bladder_w_avg: {max_bladder_w_avg}")
     print(f"min_bladder_w_avg: {min_bladder_w_avg}")
     print(f"max_bladder_w_var: {max_bladder_w_var}")
@@ -291,5 +293,5 @@ def choose_sample(save_dir):
 
 
 if __name__ == '__main__':
-    main()
+    # main()
     choose_sample(save_dir="atlas/upper_bound")
