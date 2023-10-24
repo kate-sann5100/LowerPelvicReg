@@ -276,11 +276,11 @@ def choose_sample(save_dir):
     name_list = list(var_log.keys())
     bladder_w_avg_list = [torch.mean(v["BladderMask_avg"] * v["BladderMask_avg"]) for v in var_log.values()]
     bladder_w_var_list = [torch.mean(v["BladderMask_var"]) for v in var_log.values()]
-    bladder_volume_list = [torch.mean(v["BladderMask_vol"]) for v in var_log.values()]
+    bladder_volume_list = [torch.mean(v["BladderMask_volume"]) for v in var_log.values()]
     plt.plot(bladder_volume_list, bladder_w_var_list)
     plt.savefig(f"{save_dir}/vol_var.png")
 
 
 if __name__ == '__main__':
-    main()
+    # main()
     choose_sample(save_dir="atlas/upper_bound")
