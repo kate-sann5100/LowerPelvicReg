@@ -9,6 +9,7 @@ from monai.networks.blocks import Warp
 from torch.backends import cudnn
 from torch.cuda import device_count
 from torch.utils.data import DataLoader
+from torch.nn import functional as F
 from matplotlib import pyplot as plt
 
 from data.dataset import AtlasDataset
@@ -246,6 +247,8 @@ def visualise_img(img, binary, vis_path):
     affine = np.array([[0.75, 0, 0, 0], [0, 0.75, 0, 0], [0, 0, 2.5, 0], [0, 0, 0, 1]])
     sz = img["t2w"].shape
     for i, n in enumerate(img["name"]):
+        plot_ddf(img["t2w"][i], f"{vis_path}/{n}_ddf.png")
+
         nib_img = nib.Nifti1Image(
             img["t2w"][i].reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
             affine=affine
@@ -281,6 +284,27 @@ def choose_sample(save_dir):
     plt.savefig(f"{save_dir}/vol_var.png")
 
 
+def plot_ddf(ddf, name):
+    """
+    :param ddf: (3, H, W, D)
+    :param name: str, name to save plot
+    :return:
+    """
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    shape = (32, 32, 5)
+    x, y, z = np.meshgrid(
+        np.arange(0, shape[0], 1), np.arange(0, shape[1], 1), np.arange(0, shape[2], 1)
+    )
+    ddf = F.interpolate(ddf, mode="trilinear", size=shape)
+    ddf = np.asarray(ddf.cpu())
+    u, v, w = np.asarray(ddf)[0], np.asarray(ddf)[1], np.asarray(ddf)[2]
+    u, v, w = u / shape[0], v / shape[1], w / shape[2]
+    ax.quiver(x, y, z, u, v, w, length=0.2, color='black')
+    plt.axis("off")
+    plt.savefig(name)
+
+
 if __name__ == '__main__':
-    # main()
-    choose_sample(save_dir="atlas/upper_bound")
+    main()
+    # choose_sample(save_dir="atlas/upper_bound")
