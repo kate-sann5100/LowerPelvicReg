@@ -247,7 +247,7 @@ def visualise_img(img, binary, vis_path):
     affine = np.array([[0.75, 0, 0, 0], [0, 0.75, 0, 0], [0, 0, 2.5, 0], [0, 0, 0, 1]])
     sz = img["t2w"].shape
     for i, n in enumerate(img["name"]):
-        plot_ddf(img["t2w"][i], f"{vis_path}/{n}_ddf.png")
+        plot_ddf(img["ddf"][i], f"{vis_path}/{n}_ddf.png")
 
         nib_img = nib.Nifti1Image(
             img["t2w"][i].reshape(*sz[-3:]).detach().cpu().numpy().astype(dtype=np.float32),
