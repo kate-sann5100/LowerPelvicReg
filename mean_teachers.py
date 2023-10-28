@@ -289,7 +289,8 @@ def update_teacher(teacher, student, args):
 def validation(args, student, teacher, loader,
                writer=None, step=None, vis=None, test=False,
                overfit_moving=None, overfit_fixed=None, labelled_only=False):
-    print(f"writing to {writer.log_dir}")
+    if writer is not None:
+        print(f"writing to {writer.log_dir}")
 
     # initialise meters
     student_dice_meter = DiceMeter(writer, test=test, tag="student")
