@@ -1,6 +1,9 @@
+import os
+
 from pylatex import Tabular, MultiRow, MultiColumn, Table
 
 from data.dataset_utils import organ_list
+from utils.train_eval_utils import get_save_dir
 
 labelled_ratio_list = [10, 20, 50, 100]
 
@@ -117,8 +120,11 @@ def add_exp_by_class(exp_list, metric_list, table):
                 table.add_hline()
 
 
-def get_result(exp):
-    
+def get_result(args):
+    result_dict_path = get_save_dir(args, warm_up=args.labelled_only)
+    result_dict_path = f"{result_dict_path}/"
+
+    if os.path.exists(result_dict_path)
     return {
         labelled_ratio: {
             metric: {cls: 0 for cls in organ_list + ["mean"]}

@@ -15,8 +15,7 @@ from data.dataset import SemiDataset
 from model.registration_model import Registration, ConsistencyLoss
 from utils.meter import LossMeter, SemiLossMeter, DiceMeter, HausdorffMeter
 from utils.train_eval_utils import cuda_batch, set_seed, get_save_dir, overwrite_save_dir, get_parser, \
-    load_warm_up_ckpt, load_weight
-
+    load_warm_up_ckpt, load_weight, save_result_dicts
 
 # TODO: test augmentation
 from utils.visualisation import Visualisation
@@ -569,7 +568,7 @@ def val_worker(args):
         args, student, teacher, val_loader,
         vis=None, test=True,
     )
-
+    save_result_dicts(save_dir, student_dice, hausdorff_result_dict)
 
 
 if __name__ == '__main__':
