@@ -29,10 +29,13 @@ def main():
     save_dir = f"atlas/{save_dir[9:]}"
     print(f"save to {save_dir}")
     vis_path = f"{save_dir}/vis"
+    vis_sample_path = f"{save_dir}/vis_sample"
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
     if not os.path.exists(vis_path):
         os.mkdir(vis_path)
+    if not os.path.exists(vis_sample_path):
+        os.mkdir(vis_sample_path)
     model = torch.nn.DataParallel(
         Registration(args).cuda()
     )
