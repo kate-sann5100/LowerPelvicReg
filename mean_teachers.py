@@ -563,7 +563,7 @@ def val_worker(args):
     ckpt_path = f"{save_dir}/best_ckpt.pth"
     print(f"loading weight from {ckpt_path}...")
     ckpt = torch.load(ckpt_path)
-    _ = load_weight(student, teacher, ckpt, same_init=False)
+    _ = load_weight(student, teacher, ckpt, same_init=args.labelled_only)
     print("weight loaded")
     student_dice, teacher_dice, hausdorff_result_dict = validation(
         args, student, teacher, val_loader,
