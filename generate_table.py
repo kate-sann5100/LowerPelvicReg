@@ -108,15 +108,19 @@ def add_exp_by_class(args, metric_list, table):
             if exp == "sup only":
                 args.labelled_only = True
             elif exp == "NoAug":
+                args.labelled_only = False
                 args.aug_multiplier = 0.0
                 cut_ratio: [0.0, 0.0]
             elif exp == "warp":
+                args.labelled_only = False
                 args.aug_multiplier = 1.0
                 cut_ratio: [0.0, 0.0]
             elif exp == "RegCut":
+                args.labelled_only = False
                 args.aug_multiplier = 0.0
                 cut_ratio: [0.1, 0.2]
             elif exp == "warp+RegCut":
+                args.labelled_only = False
                 args.aug_multiplier = 1.0
                 cut_ratio: [0.1, 0.2]
             else:
@@ -149,11 +153,10 @@ def get_result(args, metric_list):
         if os.path.exists(path):
             print(f"loading result from {path}")
             d = torch.load(path)  #[cls][name]["N/A"]
-            print(list(d.keys()))
             for i, cls in enumerate(organ_list):
                 v = [v["N/A"] for v in d[i+1].values()]
                 v = np.mean(np.array(v))
-                out[metric][cls] = v
+                out[metric][cls] = v * 100 if metric == "Dice(%)" else v
             out[metric]["mean"] = np.mean(np.array(list(out[metric].values())))
         else:
             print(f"did not found {path}, skipped")
