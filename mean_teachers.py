@@ -255,12 +255,12 @@ def train_worker(args):
         print(f"at epoch={epoch}, step={step_count}, saving ckpt to {save_dir}")
         torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
         print(f"at step_count={step_count}, start validating...")
-        student_dice, teacher_dice, hausdorff_result_dict = validation(
+        student_dice, student_dice_dict, teacher_dice_dict, hausdorff_result_dict = validation(
             args, student, teacher, val_loader,
             writer=writer, step=step_count, vis=None, test=False,
             overfit_moving=l_overfit_moving, overfit_fixed=l_overfit_fixed
         )
-        val_metric = student_dice[0]
+        val_metric = student_dice
         # for k, v in teacher_dice.items():
         #     val_metric = max(val_metric, v[0])
         # val_metric = teacher_dice["total"][0]
@@ -373,11 +373,11 @@ def validation(args, student, teacher, loader,
             if args.overfit:
                 break
 
-        _, student_dice = student_dice_meter.get_average(step)  # (dice, dict)
+        student_dice, student_dice_dict = student_dice_meter.get_average(step)  # (dice, dict)
         if teacher is None:
             teacher_dice = None
         else:
-            teacher_dice = {
+            teacher_dice_dict = {
                 t_id: t_meter.get_average(step)[1]
                 for t_id, t_meter in teacher_dice_meter.items()
             }  # t_id: (dice, dict)
@@ -387,7 +387,7 @@ def validation(args, student, teacher, loader,
         else:
             hausdorff_result_dict = None
 
-        return student_dice, teacher_dice, hausdorff_result_dict
+        return student_dice, student_dice_dict, teacher_dice_dict, hausdorff_result_dict
 
 
 def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
@@ -463,7 +463,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_c
                 # validate current weight
                 print(f"at step_count={step_count}, start validating...")
                 validation_start = time.time()
-                student_dice, teacher_dice, hausdorff_result_dict = validation(
+                student_dice, student_dice_dict, teacher_dice_dict, hausdorff_result_dict = validation(
                     args, student, teacher if train_teacher else None, val_loader,
                     writer=writer, step=step_count, vis=None, test=False,
                     overfit_moving=overfit_moving, overfit_fixed=overfit_fixed
@@ -485,7 +485,7 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_c
                 print(f"at epoch={epoch}, step_count={step_count}, saving ckpt to {save_dir}")
                 torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
                 # update ckpt_old for each model separately based on validation performance
-                if student_dice[0] > s_best_metric:
+                if student_dice > s_best_metric:
                     torch.save(ckpt, f'{save_dir}/best_ckpt.pth')
             if save_period != 0 and step_count % save_period == 1:
                 ckpt = {
@@ -565,11 +565,11 @@ def val_worker(args):
     ckpt = torch.load(ckpt_path)
     _ = load_weight(student, teacher, ckpt, same_init=args.labelled_only)
     print("weight loaded")
-    student_dice, teacher_dice, hausdorff_result_dict = validation(
+    student_dice, student_dice_dict, teacher_dice_dict, hausdorff_result_dict = validation(
         args, student, teacher, val_loader,
         vis=None, test=True,
     )
-    save_result_dicts(save_dir, student_dice, hausdorff_result_dict)
+    save_result_dicts(save_dir, student_dice_dict, hausdorff_result_dict)
 
 
 if __name__ == '__main__':
