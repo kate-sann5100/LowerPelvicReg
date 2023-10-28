@@ -27,7 +27,7 @@ def main():
     ckpt = torch.load(f"{save_dir}/best_ckpt.pth")
     print(f"loading weight from {save_dir}/best_ckpt.pth")
     save_dir = f"atlas/{save_dir[9:]}"
-    print(f"save to {save_dir}")
+    print(f"save toget_parser() {save_dir}")
     vis_path = f"{save_dir}/vis"
     vis_sample_path = f"{save_dir}/vis_sample"
     if not os.path.exists(save_dir):

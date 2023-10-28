@@ -373,12 +373,12 @@ def validation(args, student, teacher, loader,
             if args.overfit:
                 break
 
-        student_dice = student_dice_meter.get_average(step)  # (dice, dict)
+        _, student_dice = student_dice_meter.get_average(step)  # (dice, dict)
         if teacher is None:
             teacher_dice = None
         else:
             teacher_dice = {
-                t_id: t_meter.get_average(step)
+                t_id: t_meter.get_average(step)[1]
                 for t_id, t_meter in teacher_dice_meter.items()
             }  # t_id: (dice, dict)
 

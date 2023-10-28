@@ -106,7 +106,7 @@ def cuda_batch(batch):
 
 def save_result_dicts(save_dir, dice_result_dict, hausdorff_result_dict):
     torch.save(dice_result_dict, f"{save_dir}/dice_result_dict.pth")
-    torch.save(hausdorff_result_dict, f"{save_dir}/hasudorff_result_dict.pth")
+    torch.save(hausdorff_result_dict, f"{save_dir}/hausdorff_result_dict.pth")
 
 
 def overwrite_save_dir(args, save_dir):
