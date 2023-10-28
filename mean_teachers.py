@@ -29,7 +29,6 @@ def main():
     set_seed(args.manual_seed)
 
     if args.test:
-        raise NotImplementedError
         val_worker(args)
     else:
         train_worker(args)
