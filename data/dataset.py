@@ -143,10 +143,17 @@ class SemiDataset(Dataset):
             self.val_pair = []
             # for each query image
             for moving_p, moving_ins in self.img_list:
-                # for each institution
-                for fixed_ins, patient_list in institution_patient_dict.items():
+                if self.mode == "val":
+                    # for each institution
+                    for fixed_ins, patient_list in institution_patient_dict.items():
+                        while True:
+                            fixed_p = patient_list[np.random.randint(0, len(patient_list))]
+                            if fixed_p != moving_p:
+                                break
+                        self.val_pair.append([(moving_p, moving_ins), (fixed_p, fixed_ins)])
+                else:
                     while True:
-                        fixed_p = patient_list[np.random.randint(0, len(patient_list))]
+                        fixed_p, fixed_ins = self.img_list[np.random.randint(0, len(self.img_list))]
                         if fixed_p != moving_p:
                             break
                     self.val_pair.append([(moving_p, moving_ins), (fixed_p, fixed_ins)])

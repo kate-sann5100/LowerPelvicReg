@@ -86,7 +86,7 @@ def get_save_dir(args, warm_up=False):
             if args.semi_supervision:
                 save_dir += f"_semi{args.label_ratio}_{args.semi_co}_{args.keep_rate}"
             else:
-                save_dir += f"_supervised{args.label_ratio}"
+                save_dir += f"_labeledonly{args.label_ratio}"
     if not warm_up:
         save_dir += "_same" if args.same_init else "_diff"
         save_dir += f"_aug{args.aug_multiplier}_cutratio{args.cut_ratio}"

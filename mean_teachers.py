@@ -30,7 +30,7 @@ def main():
 
     if args.test:
         raise NotImplementedError
-        # val_worker(args)
+        val_worker(args)
     else:
         train_worker(args)
 
@@ -39,6 +39,7 @@ def train_worker(args):
     set_seed(args.manual_seed)
     save_dir = get_save_dir(args)
 
+    print(f"----------dataset info start----------")
     # initialise training dataloaders
     l_dataset = SemiDataset(args=args, mode="train", label=True)
     l_loader = DataLoader(
@@ -50,8 +51,6 @@ def train_worker(args):
     )
     print(f"{device_count()} gpus")
     print(f"labelled dataset of size {len(l_loader)}")
-
-    print(f"----------dataset info start----------")
     if args.label_ratio < 1.0:
         ul_dataset = SemiDataset(args=args, mode="train", label=False)
         ul_loader = DataLoader(
@@ -536,6 +535,41 @@ def labelled_only(args, student, teacher, l_loader, val_loader, save_dir, last_c
     torch.save(ckpt, f'{save_dir}/last_ckpt.pth')
 
     return epoch, step_count
+
+
+def val_worker(args):
+    set_seed(args.manual_seed)
+
+    # initialise dataloader
+    print(f"----------dataset info start----------")
+    # initialise validation dataloader
+    val_dataset = SemiDataset(args=args, mode="test", label=True)
+    val_loader = DataLoader(val_dataset, batch_size=1)
+    print(f"test dataset of size {len(val_loader)}")
+    print(f"----------dataset info end----------")
+
+    # initialise models
+    student = torch.nn.DataParallel(
+        Registration(args).cuda()
+    )
+    teacher = {
+        teacher_id: torch.nn.DataParallel(Registration(args).cuda())
+        for teacher_id in range(args.num_teacher)
+    }
+
+    # load weight
+    save_dir = get_save_dir(args, warm_up=args.labelled_only)
+    print(f"save_dir: {save_dir}")
+    ckpt_path = f"{save_dir}/best_ckpt.pth"
+    print(f"loading weight from {ckpt_path}...")
+    ckpt = torch.load(ckpt_path)
+    _ = load_weight(student, teacher, ckpt, same_init=False)
+    print("weight loaded")
+    student_dice, teacher_dice, hausdorff_result_dict = validation(
+        args, student, teacher, val_loader,
+        vis=None, test=True,
+    )
+
 
 
 if __name__ == '__main__':
