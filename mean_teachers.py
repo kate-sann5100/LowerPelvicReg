@@ -393,7 +393,6 @@ def validation(args, student, teacher, loader,
 def warm_up_step(model, moving, fixed, optimiser, l_loss_meter):
     l_loss_dict = model(moving, fixed, semi_supervision=False)
     l_loss = 0
-    print(l_loss_dict)
     for k, v in l_loss_dict.items():
         l_loss_dict[k] = torch.mean(v)
         if k in ["label", "reg"]:
