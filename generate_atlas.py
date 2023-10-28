@@ -26,7 +26,7 @@ def main():
     save_dir = get_save_dir(args, warm_up=args.labelled_only)
     ckpt = torch.load(f"{save_dir}/best_ckpt.pth")
     print(f"loading weight from {save_dir}/best_ckpt.pth")
-    save_dir = f"atlas/{save_dir}"
+    save_dir = f"atlas/{save_dir[9:]}"
     print(f"save to {save_dir}")
     vis_path = f"{save_dir}/vis"
     if not os.path.exists(save_dir):
