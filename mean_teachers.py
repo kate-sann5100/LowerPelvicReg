@@ -375,7 +375,7 @@ def validation(args, student, teacher, loader,
 
         student_dice, student_dice_dict = student_dice_meter.get_average(step)  # (dice, dict)
         if teacher is None:
-            teacher_dice = None
+            teacher_dice_dict = None
         else:
             teacher_dice_dict = {
                 t_id: t_meter.get_average(step)[1]
