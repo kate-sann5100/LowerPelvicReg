@@ -353,7 +353,7 @@ def validation(args, student, teacher, loader,
                 meta_data = {"affine": moving["t2w_meta_dict"]["affine"][0]}
                 resampled = spacingd(
                     {
-                        "pred": t_pred["total"]["seg"][0],
+                        "pred": student_binary["seg"][0],
                         "gt": moving["seg"][0],
                         "pred_meta_dict": meta_data,
                         "gt_meta_dict": meta_data.copy()
