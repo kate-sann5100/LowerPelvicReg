@@ -79,15 +79,16 @@ def get_save_dir(args, warm_up=False):
         save_dir += "_vit"
     if args.reg:
         save_dir += "_reg"
+
     if warm_up:
-        save_dir += f"_warmup{args.label_ratio}"
+        if args.labelled_only:
+            save_dir += f"_labeledonly{args.label_ratio}"
+        else:
+            save_dir += f"_warmup{args.label_ratio}"
     else:
         if args.label_ratio < 1:
             if args.semi_supervision:
                 save_dir += f"_semi{args.label_ratio}_{args.semi_co}_{args.keep_rate}"
-            else:
-                save_dir += f"_labeledonly{args.label_ratio}"
-    if not warm_up:
         save_dir += "_same" if args.same_init else "_diff"
         save_dir += f"_aug{args.aug_multiplier}_cutratio{args.cut_ratio}"
     if args.num_teacher > 1:

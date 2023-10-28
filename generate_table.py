@@ -93,6 +93,12 @@ def add_exp_by_class(exp_list, metric_list, table):
     :return:
     """
     for labelled_ratio in labelled_ratio_list:
+        if labelled_ratio == 1.0:
+            exp_list = []
+        elif labelled_ratio == 0.1:
+            exp_list = ["sup only", "NoAug", "warp", "RegCut", "warp+RegCut"]
+        else:
+            exp_list = ["sup only", "warp+RegCut"]
         for i, exp in enumerate(exp_list):
             exp_result = get_result(exp)
             # exp_result: {labelled_ratio: {metric: {cls: }}}
@@ -112,6 +118,7 @@ def add_exp_by_class(exp_list, metric_list, table):
 
 
 def get_result(exp):
+    
     return {
         labelled_ratio: {
             metric: {cls: 0 for cls in organ_list + ["mean"]}
