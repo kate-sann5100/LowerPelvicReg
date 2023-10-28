@@ -15,7 +15,7 @@ from matplotlib import pyplot as plt
 from data.dataset import AtlasDataset
 from data.dataset_utils import organ_list
 from model.registration_model import Registration
-from utils.train_eval_utils import cuda_batch, get_parser, set_seed
+from utils.train_eval_utils import cuda_batch, get_parser, set_seed, get_save_dir
 
 
 def main():
@@ -23,8 +23,10 @@ def main():
     cudnn.benchmark = False
     cudnn.deterministic = True
     set_seed(args.manual_seed)
-    save_dir = "atlas/upper_bound"
-    vis_path = "atlas/upper_bound/vis"
+    save_dir = get_save_dir(args, warm_up=args.labelled_only)
+    ckpt = torch.load(f"{save_dir}/best_ckpt.pth")
+    save_dir = f"atlas/{save_dir}"
+    vis_path = f"{save_dir}/vis"
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
     if not os.path.exists(vis_path):
@@ -32,7 +34,6 @@ def main():
     model = torch.nn.DataParallel(
         Registration(args).cuda()
     )
-    ckpt = torch.load("new_ckpt/img128*128*24_vit_labeledonly1.0/best_ckpt.pth")
     model.load_state_dict(ckpt["student"], strict=True)
 
     # initialise training dataloaders
