@@ -181,7 +181,7 @@ class Registration(nn.Module):
         :return:
         """
         if self.args.reg:
-            return {"reg": 1e4 * BendingEnergyLoss()(ddf)}
+            return {"reg": 1e2 * BendingEnergyLoss()(ddf)}
         else:
             return {"reg": torch.zeros_like(label_loss["label"])}
 
