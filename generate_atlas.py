@@ -154,7 +154,8 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, save_dir, ar
         for n in ddf_variance_log.keys():
             f.write(f"{n} \n")
             for k, v in ddf_variance_log[n].items():
-                f.write(f"{k}:{v} \n")
+                if k != "ddf":
+                    f.write(f"{k}:{v} \n")
     torch.save(ddf_variance_log, f"{save_dir}/var_log.pth")
 
     var_ddf, avg_ddf = torch.var_mean(ddf, dim=0, keepdim=True)  # (1, 3, W, H, D)
@@ -222,6 +223,8 @@ def log_ddf_variance(ddf, img, binary):
     var, avg = torch.var_mean(ddf, dim=[2, 3, 4])  # (B, 3)
     result = {n: {"all_var": var[i].cpu(), "all_avg": avg[i].cpu()}
               for i, n in enumerate(img["name"])}
+    for i, n in enumerate(img["name"]):
+        result[n][f"ddf"] = ddf[i]  # (3, W, H, D)
     for cls in range(1, 9):
         mask = (img["seg"] == cls)  # (B, 1, W, H, D)
         volume = torch.sum(mask, dim=(1, 2, 3, 4))

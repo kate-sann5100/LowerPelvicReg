@@ -8,6 +8,12 @@ from utils.train_eval_utils import get_save_dir, get_parser
 
 label_ratio_percentage_list = [10, 20, 50, 100]
 label_ratio_list = [0.1, 0.2, 0.5, 1.0]
+exp_list_dict = {
+    0.1: ["sup only", "NoAug", "warp", "RegCut", "warp+RegCut"],
+    0.2: ["sup only", "warp+RegCut"],
+    0.5: ["sup only", "warp+RegCut"],
+    1.0: [],
+}
 
 
 def generate_table_by_label_ratio(exp_list, metric_list):
@@ -17,9 +23,21 @@ def generate_table_by_label_ratio(exp_list, metric_list):
     :return:
     """
     table = table_head_by_label_ratio()
-    add_exp_by_label_ratio(exp_list, metric_list, table)
+    add_exp_by_label_ratio(args, metric_list, table)
     doc = Table(data=table)
-    doc.generate_tex(f"./table/by_label_ratio.tex")
+    doc.generate_tex(f"./table/{metric_list}_by_label_ratio.tex")
+
+
+def generate_table_by_population(args, population_list="all"):
+    """
+    :param args: 
+    :param metric_list: 
+    :return: 
+    """
+    table = table_head_by_population(population_list)
+    add_exp_by_population(args, metric_list, table)
+    doc = Table(data=table)
+    doc.generate_tex(f"./table/location_variance_by_population.tex")
 
 
 def generate_table_by_class(args, metric_list):
@@ -32,6 +50,16 @@ def generate_table_by_class(args, metric_list):
     add_exp_by_class(args, metric_list, table)
     doc = Table(data=table)
     doc.generate_tex(f"./table/{metric_list}_by_class.tex")
+
+
+def table_head_by_population(population_list):
+    col_def = 'c|' + 'c' * len(population_list)
+    row_1 = ["labelled ratio (%)", "method", *population_list]
+    table = Tabular(col_def)
+    table.add_hline()
+    table.add_row(row_1)
+    table.add_hline()
+    return table
 
 
 def table_head_by_label_ratio():
@@ -72,16 +100,15 @@ def table_head_by_class(metric_list):
     return table
 
 
-def add_exp_by_label_ratio(exp_list, metric_list, table):
+def add_exp_by_label_ratio(args, metric_list, table):
     """
-
-    :param label_ratio: int
-    :param exp_list: list of str, indicating experiments to be reported
+    :param args:
     :param metric_list: ["Dice(%)"] or ["95%HD(mm)"] or ["Dice(%)", "95%HD(mm)"]
+    :param table
     :return:
     """
     for i, exp in enumerate(exp_list):
-        exp_result = get_result(exp)
+        exp_result = get_result(args, metric_list)
         # exp_result: {label_ratio: {metric: {cls: }}}
         row = [exp]
         row += [
@@ -97,6 +124,27 @@ def add_exp_by_label_ratio(exp_list, metric_list, table):
             table.add_hline()
 
 
+def add_exp_by_population(args, population_list, table):
+    """
+    :param args:
+    :param population_list:
+    :param table:
+    :return:
+    """
+    for label_ratio in label_ratio_list:
+        args.label_ratio = label_ratio
+        exp_list = exp_list_dict[label_ratio]
+        for i, exp in enumerate(exp_list):
+            args = update_args(args, exp)
+            exp_result = get_location_variance(args, population_list)  # {p:v}
+            row = [MultiRow(len(exp_list), data=label_ratio * 100)] if i == 0 else [""]
+            row += [exp]
+            row += ["{:.2f}".format(exp_result[p]) for p in population_list]
+            table.add_row(row)
+            if i == len(exp_list) - 1:
+                table.add_hline()
+
+
 def add_exp_by_class(args, metric_list, table):
     """
     :param args
@@ -105,33 +153,9 @@ def add_exp_by_class(args, metric_list, table):
     """
     for label_ratio in label_ratio_list:
         args.label_ratio = label_ratio
-        if label_ratio == 1.0:
-            exp_list = []
-        elif label_ratio == 0.1:
-            exp_list = ["sup only", "NoAug", "warp", "RegCut", "warp+RegCut"]
-        else:
-            exp_list = ["sup only", "warp+RegCut"]
+        exp_list = exp_list_dict[label_ratio]
         for i, exp in enumerate(exp_list):
-            if exp == "sup only":
-                args.labelled_only = True
-            elif exp == "NoAug":
-                args.labelled_only = False
-                args.aug_multiplier = 0.0
-                args.cut_ratio = [0.0, 0.0]
-            elif exp == "warp":
-                args.labelled_only = False
-                args.aug_multiplier = 1.0
-                args.cut_ratio = [0.0, 0.0]
-            elif exp == "RegCut":
-                args.labelled_only = False
-                args.aug_multiplier = 0.0
-                args.cut_ratio = [0.1, 0.2]
-            elif exp == "warp+RegCut":
-                args.labelled_only = False
-                args.aug_multiplier = 1.0
-                args.cut_ratio = [0.1, 0.2]
-            else:
-                raise ValueError(f"exp {exp} not recognised")
+            args = update_args(args, exp)
             exp_result = get_result(args, metric_list)
             # exp_result: {label_ratio: {metric: {cls: }}}
             row = [MultiRow(len(exp_list), data=label_ratio * 100)] if i == 0 else [""]
@@ -149,32 +173,58 @@ def add_exp_by_class(args, metric_list, table):
                 table.add_hline()
 
 
+def get_location_variance(args, population_list):
+    result_dict_path = get_save_dir(args, warm_up=args.labelled_only)
+    population_variance_dict_path = f"atlas/{result_dict_path[9:]}/var_log.pth"
+    d = torch.load(population_variance_dict_path,
+                   map_location=torch.device('cpu'))  # [name][term]
+    out = {}  # {p:v}
+    for p in population_list:
+        name_list = get_population_name_list(d, p)
+        ddf_list = [d[n]["ddf"] for n in name_list]  # [(3, W, H, D)]
+        population_variance = torch.stack(ddf_list, dim=0)  # (B, 3, W, H, D)
+        population_variance = torch.mean(population_variance).numpy()
+        out[p] = population_variance
+    return out
+
+
+def get_population_name_list(variance_dict, population):
+    if population == "all":
+        return list(variance_dict.keys())
+
+
 def get_result(args, metric_list):
     result_dict_path = get_save_dir(args, warm_up=args.labelled_only)
     dice_dict_path = f"{result_dict_path}/dice_result_dict.pth"
     hausdorff_dict_path = f"{result_dict_path}/hausdorff_result_dict.pth"
     variance_dict_path = f"atlas/{result_dict_path[9:]}/var_log.pth"
+    population_variance_dict_path = f"atlas/{result_dict_path[9:]}/ckpt.pth"
     out = {m: {} for m in metric_list}
     dict_path = {
         "Dice(%)": dice_dict_path,
         "95%HD(mm)": hausdorff_dict_path,
         "Variance": variance_dict_path,
+        "Population Variance": population_variance_dict_path,
     }
     for metric in metric_list:
         path = dict_path[metric]
         if os.path.exists(path):
             print(f"loading result from {path}")
-            d = torch.load(path, map_location=torch.device('cpu'))  # [cls][name]["N/A"]
-            for i, cls in enumerate(organ_list):
-                if metric == "Variance":
-                    # [name][cls]
-                    v = [v[f"{cls}_var"].numpy() for v in d.values()]
-                else:
-                    # [cls][name]["N/A"]
-                    v = [v["N/A"] for v in d[i+1].values()]
-                v = np.mean(np.array(v))
-                out[metric][cls] = v * 100 if metric == "Dice(%)" else v
-            out[metric]["mean"] = np.mean(np.array(list(out[metric].values())))
+            d = torch.load(path, map_location=torch.device('cpu'))
+            if metric == "Population Variance":
+                # [iter]["var_ddf"]: (1, 3, W, H, D)
+                out[metric]["mean"] = torch.mean(d[0]["var_ddf"])
+            else:
+                for i, cls in enumerate(organ_list):
+                    if metric == "Variance":
+                        # [name][cls]
+                        v = [v[f"{cls}_var"].numpy() for v in d.values()]
+                    else:
+                        # [cls][name]["N/A"]
+                        v = [v["N/A"] for v in d[i+1].values()]
+                    v = np.mean(np.array(v))
+                    out[metric][cls] = v * 100 if metric == "Dice(%)" else v
+                out[metric]["mean"] = np.mean(np.array(list(out[metric].values())))
         else:
             print(f"did not found {path}, skipped")
             out[metric] = {cls: 0 for cls in organ_list + ["mean"]}
@@ -188,12 +238,36 @@ def get_result(args, metric_list):
     # }
 
 
+def update_args(args, exp):
+    if exp == "sup only":
+        args.labelled_only = True
+    elif exp == "NoAug":
+        args.labelled_only = False
+        args.aug_multiplier = 0.0
+        args.cut_ratio = [0.0, 0.0]
+    elif exp == "warp":
+        args.labelled_only = False
+        args.aug_multiplier = 1.0
+        args.cut_ratio = [0.0, 0.0]
+    elif exp == "RegCut":
+        args.labelled_only = False
+        args.aug_multiplier = 0.0
+        args.cut_ratio = [0.1, 0.2]
+    elif exp == "warp+RegCut":
+        args.labelled_only = False
+        args.aug_multiplier = 1.0
+        args.cut_ratio = [0.1, 0.2]
+    else:
+        raise ValueError(f"exp {exp} not recognised")
+    return args
+
+
 if __name__ == '__main__':
     args = get_parser()
     args.transformer = True
     exp_list = ["sup only", "NoAug", "warp", "RegCut", "warp+RegCut"]
     metric_list = ["Dice(%)", "95%HD(mm)"]
-    # generate_table_by_label_ratio(exp_list, metric_list)
+    generate_table_by_label_ratio(exp_list, ["Population Variance"])
     generate_table_by_class(args, metric_list)
     generate_table_by_class(args, metric_list[:1])
     generate_table_by_class(args, metric_list[1:])
