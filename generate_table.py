@@ -28,10 +28,10 @@ def generate_table_by_class(args, metric_list):
     :param metric_list: list of metrics to be reported
     :return:
     """
-    table = table_head_by_class()
+    table = table_head_by_class(metric_list)
     add_exp_by_class(args, metric_list, table)
     doc = Table(data=table)
-    doc.generate_tex(f"./table/by_class.tex")
+    doc.generate_tex(f"./table/{metric_list}_by_class.tex")
 
 
 def table_head_by_label_ratio():
@@ -47,9 +47,16 @@ def table_head_by_label_ratio():
     return table
 
 
-def table_head_by_class():
+def table_head_by_class(metric_list):
+    """
+    :param metric_list: ["Dice(%)"] or ["95%HD(mm)"] or ["Dice(%)", "95%HD(mm)"]
+    :return:
+    """
     col_def = 'c|c|' + 'c' * (len(organ_list) + 1)
-    row_1 = ["labelled", MultiRow(3, data="method"), MultiColumn(9, data="Dice(95% Hausdorff Distance)")]
+    metric_list = [m.split("(")[0] for m in metric_list]
+    metric_str = f"{metric_list[0]}({metric_list[1]})" if len(metric_list) > 1 else metric_list[0]
+    row_1 = ["labelled", MultiRow(3, data="method"),
+             MultiColumn(9, data=metric_str)]
     row_2 = ["ratio", "",
              MultiRow(2, data="Bladder"), MultiRow(2, data="Bone"), "Obturator", "Transition",
               "Central", MultiRow(2, data="Rectum"), "seminal", "neurovascular", MultiRow(2, data="mean")]
@@ -93,7 +100,7 @@ def add_exp_by_label_ratio(exp_list, metric_list, table):
 def add_exp_by_class(args, metric_list, table):
     """
     :param args
-    :param metric_list: ["Dice(%)"] or ["95%HD(mm)"] or ["Dice(%)", "95%HD(mm)"]
+    :param metric_list: ["Dice(%)"] or ["95%HD(mm)"] or ["Dice(%)", "95%HD(mm)"] or ["Variance"]
     :return:
     """
     for label_ratio in label_ratio_list:
@@ -110,19 +117,19 @@ def add_exp_by_class(args, metric_list, table):
             elif exp == "NoAug":
                 args.labelled_only = False
                 args.aug_multiplier = 0.0
-                cut_ratio: [0.0, 0.0]
+                args.cut_ratio = [0.0, 0.0]
             elif exp == "warp":
                 args.labelled_only = False
                 args.aug_multiplier = 1.0
-                cut_ratio: [0.0, 0.0]
+                args.cut_ratio = [0.0, 0.0]
             elif exp == "RegCut":
                 args.labelled_only = False
                 args.aug_multiplier = 0.0
-                cut_ratio: [0.1, 0.2]
+                args.cut_ratio = [0.1, 0.2]
             elif exp == "warp+RegCut":
                 args.labelled_only = False
                 args.aug_multiplier = 1.0
-                cut_ratio: [0.1, 0.2]
+                args.cut_ratio = [0.1, 0.2]
             else:
                 raise ValueError(f"exp {exp} not recognised")
             exp_result = get_result(args, metric_list)
@@ -146,15 +153,25 @@ def get_result(args, metric_list):
     result_dict_path = get_save_dir(args, warm_up=args.labelled_only)
     dice_dict_path = f"{result_dict_path}/dice_result_dict.pth"
     hausdorff_dict_path = f"{result_dict_path}/hausdorff_result_dict.pth"
+    variance_dict_path = f"atlas/{result_dict_path[9:]}/var_log.pth"
     out = {m: {} for m in metric_list}
-    dict_path = {"Dice(%)": dice_dict_path, "95%HD(mm)": hausdorff_dict_path}
+    dict_path = {
+        "Dice(%)": dice_dict_path,
+        "95%HD(mm)": hausdorff_dict_path,
+        "Variance": variance_dict_path,
+    }
     for metric in metric_list:
         path = dict_path[metric]
         if os.path.exists(path):
             print(f"loading result from {path}")
-            d = torch.load(path)  #[cls][name]["N/A"]
+            d = torch.load(path, map_location=torch.device('cpu'))  # [cls][name]["N/A"]
             for i, cls in enumerate(organ_list):
-                v = [v["N/A"] for v in d[i+1].values()]
+                if metric == "Variance":
+                    # [name][cls]
+                    v = [v[f"{cls}_var"].numpy() for v in d.values()]
+                else:
+                    # [cls][name]["N/A"]
+                    v = [v["N/A"] for v in d[i+1].values()]
                 v = np.mean(np.array(v))
                 out[metric][cls] = v * 100 if metric == "Dice(%)" else v
             out[metric]["mean"] = np.mean(np.array(list(out[metric].values())))
@@ -178,3 +195,6 @@ if __name__ == '__main__':
     metric_list = ["Dice(%)", "95%HD(mm)"]
     # generate_table_by_label_ratio(exp_list, metric_list)
     generate_table_by_class(args, metric_list)
+    generate_table_by_class(args, metric_list[:1])
+    generate_table_by_class(args, metric_list[1:])
+    generate_table_by_class(args, ["Variance"])
