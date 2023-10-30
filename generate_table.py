@@ -28,14 +28,20 @@ def generate_table_by_label_ratio(exp_list, metric_list):
     doc.generate_tex(f"./table/{metric_list}_by_label_ratio.tex")
 
 
-def generate_table_by_population(args, population_list="all"):
+def generate_table_by_population(args, structures, percentiles):
     """
-    :param args: 
-    :param metric_list: 
-    :return: 
+    :param args:
+    :param structures: ["CG", "BladderMask"]
+    :param percentiles: [50, 20]
+    :return:
     """
-    table = table_head_by_population(population_list)
-    add_exp_by_population(args, metric_list, table)
+    percentile_list = []
+    for p in percentiles:
+        percentile_list += [f"top {p}%", f"bottom {p}%"]
+    table = table_head_by_population(structures, percentile_list)
+    population_list = [f"{percentile[:-1]} {structure}"
+                       for structure in structures for percentile in percentile_list]
+    add_exp_by_population(args, population_list, table)
     doc = Table(data=table)
     doc.generate_tex(f"./table/location_variance_by_population.tex")
 
@@ -52,12 +58,14 @@ def generate_table_by_class(args, metric_list):
     doc.generate_tex(f"./table/{metric_list}_by_class.tex")
 
 
-def table_head_by_population(population_list):
-    col_def = 'c|' + 'c' * len(population_list)
-    row_1 = ["labelled ratio (%)", "method", *population_list]
+def table_head_by_population(structures, percentile_list):
+    col_def = 'c|c|' + 'cc|' * int(len(structures) * len(percentile_list) / 2)
+    row_1 = ["labelled", "method"] + [MultiColumn(len(percentile_list), data=structure) for structure in structures]
+    row_2 = ["ratio (%)", ""] + percentile_list * len(structures)
     table = Tabular(col_def)
     table.add_hline()
     table.add_row(row_1)
+    table.add_row(row_2)
     table.add_hline()
     return table
 
@@ -174,23 +182,48 @@ def add_exp_by_class(args, metric_list, table):
 
 
 def get_location_variance(args, population_list):
+    """
+    :param args:
+    :param population_list:
+    :return: {population: variance}
+    """
     result_dict_path = get_save_dir(args, warm_up=args.labelled_only)
-    population_variance_dict_path = f"atlas/{result_dict_path[9:]}/var_log.pth"
-    d = torch.load(population_variance_dict_path,
-                   map_location=torch.device('cpu'))  # [name][term]
-    out = {}  # {p:v}
-    for p in population_list:
-        name_list = get_population_name_list(d, p)
-        ddf_list = [d[n]["ddf"] for n in name_list]  # [(3, W, H, D)]
-        population_variance = torch.stack(ddf_list, dim=0)  # (B, 3, W, H, D)
-        population_variance = torch.mean(population_variance).numpy()
-        out[p] = population_variance
-    return out
+    path = f"atlas/{result_dict_path[9:]}/var_log.pth"
+    if not os.path.exists(path):
+        print(f"did not found {path}, skipped")
+        return {p: 0 for p in population_list}
+    else:
+        print(f"loading result from {path}")
+        d = torch.load(path, map_location=torch.device('cpu'))  # [name][term]
+        out = {}  # {p:v}
+        for p in population_list:
+            name_list = get_population_name_list(d, p)
+            if "ddf" not in d[name_list[0]].keys():
+                print(f"ddf not stored in {path}, skipped")
+                return {p: 0 for p in population_list}
+            ddf_list = [d[n]["ddf"] for n in name_list]  # [(3, W, H, D)]
+            population_variance = torch.stack(ddf_list, dim=0)  # (B, 3, W, H, D)
+            population_variance = torch.var(population_variance, dim=0)
+            population_variance = torch.mean(population_variance).numpy()
+            out[p] = population_variance
+        return out
 
 
 def get_population_name_list(variance_dict, population):
     if population == "all":
         return list(variance_dict.keys())
+    else:
+        top, percentile, cls = population.split(" ")
+        top = top == "top"
+        percentile = int(percentile)
+        name_list = list(variance_dict.keys())
+        volume_list = torch.tensor([variance_dict[n][f"{cls}_volume"] for n in name_list])
+        volume_list, indices = torch.sort(volume_list)
+        name_list = [name_list[i] for i in indices]
+        num = int(len(name_list) * percentile / 100)
+        name_list = name_list[-num:] if top else name_list[:num]
+        return name_list
+
 
 
 def get_result(args, metric_list):
@@ -267,7 +300,9 @@ if __name__ == '__main__':
     args.transformer = True
     exp_list = ["sup only", "NoAug", "warp", "RegCut", "warp+RegCut"]
     metric_list = ["Dice(%)", "95%HD(mm)"]
-    generate_table_by_label_ratio(exp_list, ["Population Variance"])
+    # generate_table_by_label_ratio(exp_list, ["Population Variance"])
+    # generate_table_by_population(args, ["all", "top_CG_50", "bottom_CG_50", "top_BladderMask_50", "bottom_BladderMask_50"])
+    generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
     generate_table_by_class(args, metric_list)
     generate_table_by_class(args, metric_list[:1])
     generate_table_by_class(args, metric_list[1:])
