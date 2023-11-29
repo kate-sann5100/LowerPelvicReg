@@ -143,6 +143,7 @@ def add_exp_by_population(args, population_list, table):
         args.label_ratio = label_ratio
         exp_list = exp_list_dict[label_ratio]
         for i, exp in enumerate(exp_list):
+            print(exp)
             args = update_args(args, exp)
             exp_result = get_location_variance(args, population_list)  # {p:v}
             row = [MultiRow(len(exp_list), data=label_ratio * 100)] if i == 0 else [""]
@@ -232,7 +233,6 @@ def get_population_name_list(variance_dict, population):
         num = int(len(name_list) * percentile / 100)
         name_list = name_list[-num:] if top else name_list[:num]
         return name_list
-
 
 
 def get_result(args, metric_list):
