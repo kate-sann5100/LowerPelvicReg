@@ -234,7 +234,7 @@ class AtlasDataset(Dataset):
 
         self.img_list = []
         for ins, patient_list in institution_patient_dict.items():
-            self.img_list.extend([(p, ins) for p in patient_list])
+            self.img_list.extend([(p, ins) for p in patient_list[-len(patient_list)//4+2:]])
 
         self.transform = get_transform(
             augmentation=False,

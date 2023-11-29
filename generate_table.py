@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import torch
-from pylatex import Tabular, MultiRow, MultiColumn, Table
+from pylatex import Tabular, MultiRow, MultiColumn, Table, NoEscape
 
 from data.dataset_utils import organ_list
 from utils.train_eval_utils import get_save_dir, get_parser
@@ -147,7 +147,11 @@ def add_exp_by_population(args, population_list, table):
             exp_result = get_location_variance(args, population_list)  # {p:v}
             row = [MultiRow(len(exp_list), data=label_ratio * 100)] if i == 0 else [""]
             row += [exp]
-            row += ["{:.2f}".format(exp_result[p]) for p in population_list]
+            row += [
+                "{:.2f}({:.2f})".format(exp_result[p], exp_result["top "+p[7:]]/exp_result[p]) if "bottom" in p else "{:.2f}".format(exp_result[p])
+                for p in population_list
+            ]
+
             table.add_row(row)
             if i == len(exp_list) - 1:
                 table.add_hline()
@@ -168,14 +172,19 @@ def add_exp_by_class(args, metric_list, table):
             # exp_result: {label_ratio: {metric: {cls: }}}
             row = [MultiRow(len(exp_list), data=label_ratio * 100)] if i == 0 else [""]
             row += [exp]
-            row += [
-                "{:.2f}({:.2f})".format(
-                    exp_result["Dice(%)"][cls], exp_result["95%HD(mm)"][cls]
-                ) if len(metric_list) > 1 else "{:.2f}".format(
-                    exp_result[metric_list[0]][cls]
-                )
-                for cls in organ_list + ["mean"]
-            ]
+            # row += [
+            #     "{:.2f}({:.2f})".format(
+            #         exp_result["Dice(%)"][cls], exp_result["95%HD(mm)"][cls]
+            #     ) if len(metric_list) > 1 else "{:.2f}".format(
+            #         exp_result[metric_list[0]][cls]
+            #     )
+            #     for cls in organ_list + ["mean"]
+            # ]
+            row += [NoEscape(
+                "{:.1f}$\pm${:.1f}".format(exp_result[metric_list[0]][cls], exp_result[f"{metric_list[0]}_std"][cls])
+                if "mean" not in cls and "Variance" not in metric_list
+                else "{:.1f}".format(exp_result[metric_list[0]][cls])
+            ) for cls in organ_list + ["mean"]]
             table.add_row(row)
             if i == len(exp_list) - 1:
                 table.add_hline()
@@ -203,7 +212,7 @@ def get_location_variance(args, population_list):
                 return {p: 0 for p in population_list}
             ddf_list = [d[n]["ddf"] for n in name_list]  # [(3, W, H, D)]
             population_variance = torch.stack(ddf_list, dim=0)  # (B, 3, W, H, D)
-            population_variance = torch.var(population_variance, dim=0)
+            population_variance = torch.var(population_variance, dim=0)  # (3, W, H, D)
             population_variance = torch.mean(population_variance).numpy()
             out[p] = population_variance
         return out
@@ -233,6 +242,8 @@ def get_result(args, metric_list):
     variance_dict_path = f"atlas/{result_dict_path[9:]}/var_log.pth"
     population_variance_dict_path = f"atlas/{result_dict_path[9:]}/ckpt.pth"
     out = {m: {} for m in metric_list}
+    for m in metric_list:
+        out[f"{m}_std"] = {}
     dict_path = {
         "Dice(%)": dice_dict_path,
         "95%HD(mm)": hausdorff_dict_path,
@@ -255,8 +266,18 @@ def get_result(args, metric_list):
                     else:
                         # [cls][name]["N/A"]
                         v = [v["N/A"] for v in d[i+1].values()]
+                    # if metric != "Variance":
+                    #     std = np.sqrt(np.std(np.array(v)))
+                    #     if "Dice" in metric:
+                    #     out[f"{metric}_std"][cls] = std * 100 if metric == "Dice(%)" else std
+                    v = np.array(v)
+                    if metric == "Dice(%)":
+                        v = v * 100
+                    if metric != "Variance":
+                        std = np.sqrt(np.std(np.array(v)))
+                        out[f"{metric}_std"][cls] = std
                     v = np.mean(np.array(v))
-                    out[metric][cls] = v * 100 if metric == "Dice(%)" else v
+                    out[metric][cls] = v
                 out[metric]["mean"] = np.mean(np.array(list(out[metric].values())))
         else:
             print(f"did not found {path}, skipped")

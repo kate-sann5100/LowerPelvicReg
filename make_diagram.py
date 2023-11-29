@@ -299,13 +299,33 @@ def register(args, moving, fixed, vis):
 
 
 def crop_visulisation():
-    for img in ["moving", "fixed", "warp", "aug_moving", "aug_warp", "affine_aug_fixed", "affine_aug_warp"]:
-        for v in ["t2w", "seg"]:
-            im = Image.open(f"make_diagram/{img}_{v}.png")
+    # for img in ["moving", "fixed", "warp", "aug_moving", "aug_warp", "affine_aug_fixed", "affine_aug_warp"]:
+    #     for v in ["t2w", "seg"]:
+    # for img in ["labelled_fixed", "labelled_moving"]:
+    #     for v in ["t2w"]:
+    #         im = Image.open(f"make_diagram/{img}_{v}.png")
+    #         width, height = im.size
+    #         print(width, height)
+    #         im_cropped = im.crop((300, 250, 1000, 950))
+    #         im_cropped.save(f"make_diagram/cropped/{img}_{v}_cropped.png")
+
+    for f in os.listdir("make_diagram/atlas"):
+        im = Image.open(f"make_diagram/atlas/{f}")
+        width, height = im.size
+        print(width, height)
+        im_cropped = im.crop((385, 440, 725, 740))
+        # im_cropped = im.crop((420, 440, 760, 740))
+        im_cropped.save(f"make_diagram/cropped/cropped_{f}")
+
+
+def crop_ddf():
+    for f in os.listdir("make_diagram"):
+        if "ddf.png" in f:
+            im = Image.open(f"make_diagram/{f}")
             width, height = im.size
             print(width, height)
-            im_cropped = im.crop((200, 250, 900, 950))
-            im_cropped.save(f"make_diagram/cropped/{img}_{v}_cropped.png")
+            im_cropped = im.crop((145, 65, 495, 415))
+            im_cropped.save(f"make_diagram/cropped/{f}")
 
 
 def slicer():
@@ -321,6 +341,7 @@ def slicer():
 
 
 if __name__ == '__main__':
+    # crop_ddf()
     crop_visulisation()
     # main()
     # ddf = fake_ddf()
