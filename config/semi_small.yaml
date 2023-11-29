@@ -20,4 +20,4 @@ MODEL:
   num_teacher: 1
   same_init: True
   aug_multiplier: 0.0
-  cut_ratio: [0.0, 0.0] #[0.2, 0.5]
+  cut_ratio: [0.1, 0.2] #[0.2, 0.5]
