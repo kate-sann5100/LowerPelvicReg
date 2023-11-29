@@ -12,7 +12,7 @@ exp_list_dict = {
     0.1: ["sup only", "NoAug", "warp", "RegCut", "warp+RegCut"],
     0.2: ["sup only", "warp+RegCut"],
     0.5: ["sup only", "warp+RegCut"],
-    1.0: [],
+    1.0: ["sup only"],
 }
 
 
@@ -323,8 +323,8 @@ if __name__ == '__main__':
     metric_list = ["Dice(%)", "95%HD(mm)"]
     # generate_table_by_label_ratio(exp_list, ["Population Variance"])
     # generate_table_by_population(args, ["all", "top_CG_50", "bottom_CG_50", "top_BladderMask_50", "bottom_BladderMask_50"])
-    generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
+    # generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
     generate_table_by_class(args, metric_list)
     generate_table_by_class(args, metric_list[:1])
     generate_table_by_class(args, metric_list[1:])
-    generate_table_by_class(args, ["Variance"])
+    # generate_table_by_class(args, ["Variance"])
