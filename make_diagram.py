@@ -233,8 +233,10 @@ def get_data(args):
 
     for l_moving, l_fixed in l_loader:
         break
-    for ul_moving, ul_fixed, aug_fixed in ul_loader:
+
+    for ul_moving, ul_fixed, aug_moving, aug_fixed in ul_loader:
         break
+        
     cuda_batch(l_moving)
     cuda_batch(l_fixed)
     cuda_batch(ul_moving)
