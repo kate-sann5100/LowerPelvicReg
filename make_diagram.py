@@ -93,24 +93,24 @@ def warp_ddf(moving, fixed, warped, aug_fixed):
         "seg": Warp(mode="nearest")(moving["seg"], aug_ddf)
     }
 
-    # warp = {
-    #     "t2w": Warp(mode="bilinear")(moving["t2w"], ddf),
-    #     "seg": Warp(mode="nearest")(moving["seg"], ddf)
-    # }
+    warp = {
+        "t2w": Warp(mode="bilinear")(moving["t2w"], ddf),
+        "seg": Warp(mode="nearest")(moving["seg"], ddf)
+    }
 
     vis = Visualisation(save_path="make_diagram")
     moving_name = moving["name"]
-    vis.vis(
-        moving=moving,
-        fixed=aug_fixed,
-        pred=aug_warp,
-    )
-    # moving["name"] = moving_name
     # vis.vis(
     #     moving=moving,
-    #     fixed=fixed,
-    #     pred=warp,
+    #     fixed=aug_fixed,
+    #     pred=aug_warp,
     # )
+    moving["name"] = moving_name
+    vis.vis(
+        moving=moving,
+        fixed=fixed,
+        pred=warp,
+    )
 
 
 def regcut(moving, fixed, warped):
@@ -315,11 +315,11 @@ def crop_visulisation():
     #         im_cropped = im.crop((300, 250, 1000, 950))
     #         im_cropped.save(f"make_diagram/cropped/{img}_{v}_cropped.png")
 
-    for f in os.listdir("make_diagram/atlas"):
-        im = Image.open(f"make_diagram/atlas/{f}")
+    for f in os.listdir("make_diagram/t2w_seg"):
+        im = Image.open(f"make_diagram/t2w_seg/{f}")
         width, height = im.size
         print(width, height)
-        im_cropped = im.crop((385, 440, 725, 740))
+        im_cropped = im.crop((250, 310, 900, 910))
         # im_cropped = im.crop((420, 440, 760, 740))
         im_cropped.save(f"make_diagram/cropped/cropped_{f}")
 
@@ -348,7 +348,7 @@ def slicer():
 
 if __name__ == '__main__':
     # crop_ddf()
-    # crop_visulisation()
-    main()
+    crop_visulisation()
+    # main()
     # ddf = fake_ddf()
     # plot_ddf(ddf, "make_diagram/fake_ddf.pdf")
