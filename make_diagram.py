@@ -79,31 +79,31 @@ def warp_ddf(moving, fixed, warped, aug_fixed):
     #     print(k)
     ddf = warped["ddf"]
     augmentation = aug_fixed["affine_ddf"].to(ddf)
-    # aug_ddf = augmentation.to(ddf) + Warp()(ddf, augmentation.to(ddf))
+    aug_ddf = augmentation.to(ddf) + Warp()(ddf, augmentation.to(ddf))
     # plot_ddf(ddf, "make_diagram/ddf.png")
     plot_ddf(augmentation, "make_diagram/augmentation.png")
     # plot_ddf(aug_ddf, "make_diagram/warped_ddf.png")
 
     print(fixed["seg"].shape, augmentation.shape)
-    # aug_fixed["t2w"] = Warp(mode="bilinear")(fixed["t2w"], augmentation)
+    aug_fixed["t2w"] = Warp(mode="bilinear")(fixed["t2w"], augmentation)
     aug_fixed["seg"] = Warp(mode="bilinear")(fixed["seg"], augmentation)
     aug_fixed["name"] = [f"aug_{n}" for n in aug_fixed["name"]]
-    # aug_warp = {
-    #     "t2w": Warp(mode="bilinear")(moving["t2w"], aug_ddf),
-    #     "seg": Warp(mode="nearest")(moving["seg"], aug_ddf)
-    # }
-
-    warp = {
-        "t2w": Warp(mode="bilinear")(moving["t2w"], ddf),
-        "seg": Warp(mode="nearest")(moving["seg"], ddf)
+    aug_warp = {
+        "t2w": Warp(mode="bilinear")(moving["t2w"], aug_ddf),
+        "seg": Warp(mode="nearest")(moving["seg"], aug_ddf)
     }
+
+    # warp = {
+    #     "t2w": Warp(mode="bilinear")(moving["t2w"], ddf),
+    #     "seg": Warp(mode="nearest")(moving["seg"], ddf)
+    # }
 
     vis = Visualisation(save_path="make_diagram")
     moving_name = moving["name"]
     vis.vis(
         moving=moving,
         fixed=aug_fixed,
-        pred=warp,
+        pred=aug_warp,
     )
     # moving["name"] = moving_name
     # vis.vis(
