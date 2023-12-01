@@ -182,9 +182,9 @@ def add_exp_by_class(args, metric_list, table):
             #     for cls in organ_list + ["mean"]
             # ]
             row += [NoEscape(
-                "{:.1f}$\pm${:.1f}".format(exp_result[metric_list[0]][cls], exp_result[f"{metric_list[0]}_std"][cls])
+                "{:.2f}$\pm${:.2f}".format(exp_result[metric_list[0]][cls], exp_result[f"{metric_list[0]}_std"][cls])
                 if "mean" not in cls and "Variance" not in metric_list
-                else "{:.1f}".format(exp_result[metric_list[0]][cls])
+                else "{:.2f}".format(exp_result[metric_list[0]][cls])
             ) for cls in organ_list + ["mean"]]
             table.add_row(row)
             if i == len(exp_list) - 1:
@@ -323,8 +323,8 @@ if __name__ == '__main__':
     metric_list = ["Dice(%)", "95%HD(mm)"]
     # generate_table_by_label_ratio(exp_list, ["Population Variance"])
     # generate_table_by_population(args, ["all", "top_CG_50", "bottom_CG_50", "top_BladderMask_50", "bottom_BladderMask_50"])
-    # generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
+    generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
     generate_table_by_class(args, metric_list)
     generate_table_by_class(args, metric_list[:1])
     generate_table_by_class(args, metric_list[1:])
-    # generate_table_by_class(args, ["Variance"])
+    generate_table_by_class(args, ["Variance"])

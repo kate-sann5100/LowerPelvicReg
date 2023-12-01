@@ -103,12 +103,12 @@ def warp_ddf(moving, fixed, warped, aug_fixed):
         fixed=aug_fixed,
         pred=aug_warp,
     )
-    moving["name"] = moving_name
-    vis.vis(
-        moving=moving,
-        fixed=fixed,
-        pred=warp,
-    )
+    # moving["name"] = moving_name
+    # vis.vis(
+    #     moving=moving,
+    #     fixed=fixed,
+    #     pred=warp,
+    # )
 
 
 def regcut(moving, fixed, warped):
@@ -342,7 +342,7 @@ def slicer():
 
 if __name__ == '__main__':
     # crop_ddf()
-    crop_visulisation()
-    # main()
+    # crop_visulisation()
+    main()
     # ddf = fake_ddf()
     # plot_ddf(ddf, "make_diagram/fake_ddf.pdf")

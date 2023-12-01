@@ -40,3 +40,13 @@ if __name__ == '__main__':
         path_1="new_ckpt/img128*128*24_vit_semi0.1_1e-06_0.997_same_aug0.0_cutratio[0.0, 0.0]",
         path_2="new_ckpt/img128*128*24_vit_semi0.1_1e-06_0.997_same_aug1.0_cutratio[0.1, 0.2]"
     )
+    print("ddf")
+    compute_novel_base_p_value(
+        path_1="new_ckpt/img128*128*24_vit_semi0.1_1e-06_0.997_same_aug0.0_cutratio[0.0, 0.0]",
+        path_2="new_ckpt/img128*128*24_vit_semi0.1_1e-06_0.997_same_aug1.0_cutratio[0.0, 0.0]"
+    )
+    print("regcut")
+    compute_novel_base_p_value(
+        path_1="new_ckpt/img128*128*24_vit_semi0.1_1e-06_0.997_same_aug0.0_cutratio[0.0, 0.0]",
+        path_2="new_ckpt/img128*128*24_vit_semi0.1_1e-06_0.997_same_aug0.0_cutratio[0.1, 0.2]"
+    )
