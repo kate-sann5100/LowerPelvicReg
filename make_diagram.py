@@ -209,6 +209,8 @@ def plot_ddf(ddf, name):
 
 
 def get_data(args):
+    args.size = [256, 256, 40]
+    args.resolution = [ 0.75, 0.75, 2.5 ]
     l_dataset = SemiDataset(args=args, mode="train", label=True)
     l_loader = DataLoader(
         l_dataset,
