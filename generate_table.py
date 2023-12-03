@@ -210,7 +210,10 @@ def get_population_variance(args, population_list, new=False):
         return {p: 0 for p in population_list}
     else:
         print(f"loading result from {path}")
-        d = torch.load(path, map_location=torch.device('cpu'))  # [name][term]
+        d = torch.load(
+            path,
+            # map_location=torch.device('cpu')
+        )  # [name][term]
         out = {}  # {p:v}
         for p in population_list:
             name_list = get_population_name_list(d, p)
