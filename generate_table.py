@@ -340,16 +340,25 @@ def get_variance(all_ddf):
     :return:
     """
     b = all_ddf.shape[0]
-    v1 = all_ddf.unsqueeze(0).repeat(b, 1, 1, 1, 1, 1)  # (B, B, 3, W, H, D)
-    v2 = all_ddf.unsqueeze(1).repeat(1, b, 1, 1, 1, 1)  # (B, B, 3, W, H, D)
-    diff_norm = torch.norm(v1 - v2, dim=2)  # (B, B, W, H, D)
-    upper_half_mask = torch.ones(b, b)
-    upper_half_mask = torch.triu(upper_half_mask, diagonal=1)  # (B, B)
-    diff_norm = diff_norm * upper_half_mask[..., None, None, None].to(diff_norm)  # (B, B, W, H, D)
-    sample_size = torch.sum(upper_half_mask)  # scalar
-    mean = torch.sum(diff_norm, dim=(0, 1)) / sample_size  # (W, H, D)
-    square_mean = torch.sum(diff_norm * diff_norm, dim=(0, 1)) / sample_size  # (W, H, D)
-    variance = square_mean - mean * mean  # ( W, H, D)
+    # v1 = all_ddf.unsqueeze(0).repeat(b, 1, 1, 1, 1, 1)  # (B, B, 3, W, H, D)
+    # v2 = all_ddf.unsqueeze(1).repeat(1, b, 1, 1, 1, 1)  # (B, B, 3, W, H, D)
+    # diff_norm = torch.norm(v1 - v2, dim=2)  # (B, B, W, H, D)
+    # upper_half_mask = torch.ones(b, b)
+    # upper_half_mask = torch.triu(upper_half_mask, diagonal=1)  # (B, B)
+    # diff_norm = diff_norm * upper_half_mask[..., None, None, None].to(diff_norm)  # (B, B, W, H, D)
+    # sample_size = torch.sum(upper_half_mask)  # scalar
+    # mean = torch.sum(diff_norm, dim=(0, 1)) / sample_size  # (W, H, D)
+    # square_mean = torch.sum(diff_norm * diff_norm, dim=(0, 1)) / sample_size  # (W, H, D)
+    # variance = square_mean - mean * mean  # ( W, H, D)
+    norm_list = [
+        torch.norm(all_ddf[i] - all_ddf[j], dim=0)
+        for i in range(b) for j in range(i, b-1)
+    ]
+    variance = torch.var(
+        torch.stack(norm_list, dim=0),   # (B, W, H, D)
+        dim=0
+    )  # (W, H, D)
+
     return variance
 
 
