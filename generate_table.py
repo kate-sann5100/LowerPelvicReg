@@ -279,7 +279,8 @@ def get_result(args, metric_list, niftyreg=False):
                 for i, cls in enumerate(organ_list):
                     if metric == "Variance":
                         # [name][cls]
-                        v = [v[f"{cls}_var"].numpy() for v in d.values()]
+                        # v = [v[f"{cls}_var"].numpy() for v in d.values()]
+                        v = [v[f"{cls}_new_var"].numpy() for v in d.values()]
                     else:
                         # [cls][name]["N/A"]
                         v = [v["N/A"] for v in d[i+1].values()]
