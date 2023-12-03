@@ -11,6 +11,7 @@ from torch.cuda import device_count
 from torch.utils.data import DataLoader
 from torch.nn import functional as F
 from matplotlib import pyplot as plt
+from scipy.spatial.distance import pdist
 
 from data.dataset import AtlasDataset
 from data.dataset_utils import organ_list
@@ -225,6 +226,7 @@ def log_ddf_variance(ddf, img, binary):
               for i, n in enumerate(img["name"])}
     for i, n in enumerate(img["name"]):
         result[n][f"ddf"] = ddf[i]  # (3, W, H, D)
+        result[n][f"seg"] = img["seg"][i]  # (1, W, H, D)
     for cls in range(1, 9):
         mask = (img["seg"] == cls)  # (B, 1, W, H, D)
         volume = torch.sum(mask, dim=(1, 2, 3, 4))
@@ -232,10 +234,18 @@ def log_ddf_variance(ddf, img, binary):
         avg = masked_ddf.sum(dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
         var = masked_ddf - avg.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)  # (B, 3, W, H, D)
         var = torch.sum(var * var * mask, dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
-        for i, n in enumerate(img["name"]):
+        for i, (n, m, d) in enumerate(zip(img["name"], mask, ddf)):
             result[n][f"{organ_list[cls-1]}_var"] = var[i].cpu()
             result[n][f"{organ_list[cls-1]}_avg"] = avg[i].cpu()
             result[n][f"{organ_list[cls-1]}_volume"] = volume[i].cpu()
+            # m (1, W, H, D) d(3, W, H, D)
+            masked_ddf = torch.masked_select(ddf, m[0]).reshape(3, -1)  # (3, num_voxels)
+            paired_distance = masked_ddf.permute(1, 0)  # (num_voxels, 3)
+            paired_distance = paired_distance.cpu().numpy()  # (num_voxels, 3)
+            paired_distance = pdist(paired_distance)  # (num_pairs)
+            new_var = np.var(paired_distance)
+            result[n][f"{organ_list[cls - 1]}_new_var"] = new_var
+
     return result
 
 

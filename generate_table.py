@@ -168,6 +168,8 @@ def add_exp_by_class(args, metric_list, table):
     :return:
     """
     for label_ratio in label_ratio_list:
+        if "Variance" in metric_list and label_ratio == 0:
+            continue
         args.label_ratio = label_ratio
         exp_list = exp_list_dict[label_ratio]
         for i, exp in enumerate(exp_list):
@@ -212,7 +214,7 @@ def get_population_variance(args, population_list, new=False):
         print(f"loading result from {path}")
         d = torch.load(
             path,
-            # map_location=torch.device('cpu')
+            map_location=torch.device('cpu')
         )  # [name][term]
         out = {}  # {p:v}
         for p in population_list:
@@ -369,8 +371,8 @@ if __name__ == '__main__':
     metric_list = ["Dice(%)", "95%HD(mm)"]
     # generate_table_by_label_ratio(exp_list, ["Population Variance"])
     # generate_table_by_population(args, ["all", "top_CG_50", "bottom_CG_50", "top_BladderMask_50", "bottom_BladderMask_50"])
-    generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
+    # generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
     # generate_table_by_class(args, metric_list)
     # generate_table_by_class(args, metric_list[:1])
     # generate_table_by_class(args, metric_list[1:])
-    # generate_table_by_class(args, ["Variance"])
+    generate_table_by_class(args, ["Variance"])
