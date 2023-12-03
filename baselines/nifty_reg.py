@@ -76,7 +76,7 @@ class NiftyReg:
 
         self.args = args
         self.save_dir = save_dir
-        self.vis = args.vis
+        self.vis = True
         self.niftyreg_path = "/Users/yiwenli/Projects/niftyreg/reg-apps"  # path to niftyreg installation
 
     def tensor2nii(self, moving_batch, fixed_batch):
