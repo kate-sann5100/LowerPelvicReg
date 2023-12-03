@@ -113,6 +113,7 @@ class DiceMeter:
                 if name not in self.result_dict[cls].keys():
                     self.result_dict[cls][name] = {}
                 self.result_dict[cls][name][fixed_ins] = mean_dice[cls - 1].item()
+        print(self.result_dict)
 
     def get_average(self, step):
         print(f"-----{self.tag}-----")

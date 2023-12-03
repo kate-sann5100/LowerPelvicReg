@@ -7,8 +7,9 @@ from data.dataset_utils import organ_list
 from utils.train_eval_utils import get_save_dir, get_parser
 
 label_ratio_percentage_list = [10, 20, 50, 100]
-label_ratio_list = [0.1, 0.2, 0.5, 1.0]
+label_ratio_list = [0.0, 0.1, 0.2, 0.5, 1.0]
 exp_list_dict = {
+    0: ["NifityReg"],
     0.1: ["sup only", "NoAug", "warp", "RegCut", "warp+RegCut"],
     0.2: ["sup only", "warp+RegCut"],
     0.5: ["sup only", "warp+RegCut"],
@@ -140,12 +141,14 @@ def add_exp_by_population(args, population_list, table):
     :return:
     """
     for label_ratio in label_ratio_list:
+        if label_ratio == 0:
+            continue
         args.label_ratio = label_ratio
         exp_list = exp_list_dict[label_ratio]
         for i, exp in enumerate(exp_list):
             print(exp)
             args = update_args(args, exp)
-            exp_result = get_location_variance(args, population_list)  # {p:v}
+            exp_result = get_population_variance(args, population_list, new=True)  # {p:v}
             row = [MultiRow(len(exp_list), data=label_ratio * 100)] if i == 0 else [""]
             row += [exp]
             row += [
@@ -168,8 +171,11 @@ def add_exp_by_class(args, metric_list, table):
         args.label_ratio = label_ratio
         exp_list = exp_list_dict[label_ratio]
         for i, exp in enumerate(exp_list):
-            args = update_args(args, exp)
-            exp_result = get_result(args, metric_list)
+            if exp == "NifityReg":
+                exp_result = get_result(args, metric_list, niftyreg=True)
+            else:
+                args = update_args(args, exp)
+                exp_result = get_result(args, metric_list)
             # exp_result: {label_ratio: {metric: {cls: }}}
             row = [MultiRow(len(exp_list), data=label_ratio * 100)] if i == 0 else [""]
             row += [exp]
@@ -191,7 +197,7 @@ def add_exp_by_class(args, metric_list, table):
                 table.add_hline()
 
 
-def get_location_variance(args, population_list):
+def get_population_variance(args, population_list, new=False):
     """
     :param args:
     :param population_list:
@@ -213,7 +219,10 @@ def get_location_variance(args, population_list):
                 return {p: 0 for p in population_list}
             ddf_list = [d[n]["ddf"] for n in name_list]  # [(3, W, H, D)]
             population_variance = torch.stack(ddf_list, dim=0)  # (B, 3, W, H, D)
-            population_variance = torch.var(population_variance, dim=0)  # (3, W, H, D)
+            if new:
+                population_variance = get_variance(population_variance)  # (W, H, D)
+            else:
+                population_variance = torch.var(population_variance, dim=0)  # (3, W, H, D)
             population_variance = torch.mean(population_variance).numpy()
             out[p] = population_variance
         return out
@@ -235,8 +244,11 @@ def get_population_name_list(variance_dict, population):
         return name_list
 
 
-def get_result(args, metric_list):
-    result_dict_path = get_save_dir(args, warm_up=args.labelled_only)
+def get_result(args, metric_list, niftyreg=False):
+    if niftyreg:
+        result_dict_path = "niftyreg_result"
+    else:
+        result_dict_path = get_save_dir(args, warm_up=args.labelled_only)
     dice_dict_path = f"{result_dict_path}/dice_result_dict.pth"
     hausdorff_dict_path = f"{result_dict_path}/hausdorff_result_dict.pth"
     variance_dict_path = f"atlas/{result_dict_path[9:]}/var_log.pth"
@@ -271,6 +283,9 @@ def get_result(args, metric_list):
                     #     if "Dice" in metric:
                     #     out[f"{metric}_std"][cls] = std * 100 if metric == "Dice(%)" else std
                     v = np.array(v)
+                    if niftyreg:
+                        print(d)
+                        print(v)
                     if metric == "Dice(%)":
                         v = v * 100
                     if metric != "Variance":
@@ -316,6 +331,25 @@ def update_args(args, exp):
     return args
 
 
+def get_variance(all_ddf):
+    """
+    :param all_ddf: (B, 3, W, H, D)
+    :return:
+    """
+    b = all_ddf.shape[0]
+    v1 = all_ddf.unsqueeze(0).repeat(b, 1, 1, 1, 1, 1)  # (B, B, 3, W, H, D)
+    v2 = all_ddf.unsqueeze(1).repeat(1, b, 1, 1, 1, 1)  # (B, B, 3, W, H, D)
+    diff_norm = torch.norm(v1 - v2, dim=2)  # (B, B, W, H, D)
+    upper_half_mask = torch.ones(b, b)
+    upper_half_mask = torch.triu(upper_half_mask, diagonal=1)  # (B, B)
+    diff_norm = diff_norm * upper_half_mask[..., None, None, None].to(diff_norm)  # (B, B, W, H, D)
+    sample_size = torch.sum(upper_half_mask)  # scalar
+    mean = torch.sum(diff_norm, dim=(0, 1)) / sample_size  # (W, H, D)
+    square_mean = torch.sum(diff_norm * diff_norm, dim=(0, 1)) / sample_size  # (W, H, D)
+    variance = square_mean - mean * mean  # ( W, H, D)
+    return variance
+
+
 if __name__ == '__main__':
     args = get_parser()
     args.transformer = True
@@ -324,7 +358,7 @@ if __name__ == '__main__':
     # generate_table_by_label_ratio(exp_list, ["Population Variance"])
     # generate_table_by_population(args, ["all", "top_CG_50", "bottom_CG_50", "top_BladderMask_50", "bottom_BladderMask_50"])
     generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
-    generate_table_by_class(args, metric_list)
-    generate_table_by_class(args, metric_list[:1])
-    generate_table_by_class(args, metric_list[1:])
-    generate_table_by_class(args, ["Variance"])
+    # generate_table_by_class(args, metric_list)
+    # generate_table_by_class(args, metric_list[:1])
+    # generate_table_by_class(args, metric_list[1:])
+    # generate_table_by_class(args, ["Variance"])

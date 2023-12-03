@@ -1,0 +1,23 @@
+DATA:
+  data_path: "/Users/yiwenli/data/multiorgan_final"  # path to folder including institution.txt and data
+  fold: 1
+  resolution: [1.5, 1.5, 5.0]  # [ 0.75, 0.75, 2.5 ]
+  size: [ 128, 128, 24 ]  # [256, 256, 40]
+  organ_list: ["BladderMask", "BoneMask", "ObdInternMask", "TZ", "CG", "RectumMask", "SV", "NVB"]
+  semi_supervision: True
+  label_ratio: 1.0
+  batch_size: 8
+
+MODEL:
+  input: "img"
+  transformer: False
+  multi_head: False
+  reg: False
+  keep_rate: 0.997
+  warm_up_epoch: 900
+  lr: 0.00005
+  semi_co: 0.000001
+  num_teacher: 1
+  same_init: True
+  aug_multiplier: 1.0
+  cut_ratio: [0.1, 0.2] #[0.2, 0.5]

@@ -28,9 +28,12 @@ class RegDataset(Dataset):
         if self.mode != "train":
             self.val_pair = []
             # for each query image
+            print(len(self.img_list))
             for moving_p, moving_ins in self.img_list:
                 # for each institution
                 for fixed_ins, patient_list in institution_patient_dict.items():
+                    if fixed_ins != list(institution_patient_dict.keys())[-1]:
+                        continue
                     while True:
                         fixed_p = patient_list[np.random.randint(0, len(patient_list))]
                         if fixed_p != moving_p:

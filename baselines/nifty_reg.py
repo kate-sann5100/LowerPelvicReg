@@ -22,11 +22,14 @@ def main():
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
     nifty_reg = NiftyReg(args, save_dir)
-    val_dataset = RegDataset(args=args, mode="val")
+    val_dataset = RegDataset(args=args, mode="test")
     val_loader = DataLoader(val_dataset, batch_size=1)
+    print(len(val_loader))
     dice_meter = DiceMeter(writer=None, test=True)
     hausdorff_meter = HausdorffMeter(writer=None, test=True)
+    name_list = []
     for step, (moving, fixed) in enumerate(val_loader):
+        name_list.append(moving['name'])
         reg_result = nifty_reg.register(moving, fixed)
         dice_meter.update(
             pred_binary=reg_result["seg"],
@@ -49,7 +52,10 @@ def main():
             resampled["pred"].unsqueeze(0), resampled["gt"].unsqueeze(0),
             name=moving["name"], fixed_ins=fixed["ins"]
         )
-        break
+        # hausdorff_meter.update(
+        #     reg_result["seg"][0].unsqueeze(0), moving["seg"][0].unsqueeze(0),
+        #     name=moving["name"], fixed_ins=fixed["ins"]
+        # )
 
     dice_metric, dice_result_dict = dice_meter.get_average(step=None)
     hausdorff_metric, hausdorff_result_dict = hausdorff_meter.get_average(step=None)
@@ -66,6 +72,7 @@ class NiftyReg:
         self.moving_img_path = f"{self.temp_dir}/moving_img.nii"
         self.fixed_img_path = f"{self.temp_dir}/fixed_img.nii"
         self.moving_seg_path = f"{self.temp_dir}/moving_seg.nii"
+        self.fixed_seg_path = f"{self.temp_dir}/fixed_seg.nii"
         self.warped_img_path = f"{self.temp_dir}/warped_img.nii"
         self.warped_seg_path = f"{self.temp_dir}/warped_seg.nii"
         self.cpp_path = f"{self.temp_dir}/cpp.nii"
@@ -96,7 +103,8 @@ class NiftyReg:
         tensor2nii_dict = {
             self.moving_img_path: moving_batch["t2w"],  # (1, 1, ...)
             self.moving_seg_path: moving_batch["seg"],  # (1, 1, ...)
-            self.fixed_img_path: fixed_batch["t2w"]  # (1, 1, ...)
+            self.fixed_img_path: fixed_batch["t2w"],  # (1, 1, ...)
+            self.fixed_seg_path: fixed_batch["seg"],  # (1, 1, ...)
         }
         for k, v in tensor2nii_dict.items():
             nii = nib.Nifti1Image(
@@ -136,9 +144,13 @@ class NiftyReg:
 
         if self.vis:
             moving_name, fixed_name = moving_batch["name"], fixed_batch["name"]
-            save_warped_img_path = f"{self.save_dir}/{moving_name}_{fixed_name}_img.nii"
-            save_warped_seg_path = f"{self.save_dir}/{moving_name}_{fixed_name}_seg.nii"
+            save_fixed_seg_path = f"{self.save_dir}/{moving_name}_{fixed_name}_fixed_seg.nii"
+            save_moving_seg_path = f"{self.save_dir}/{moving_name}_{fixed_name}_moving_seg.nii"
+            save_warped_img_path = f"{self.save_dir}/{moving_name}_{fixed_name}_warped_img.nii"
+            save_warped_seg_path = f"{self.save_dir}/{moving_name}_{fixed_name}_warped_seg.nii"
             save_ddf_path = f"{self.save_dir}/{moving_name}_{fixed_name}_ddf.nii"
+            copy(self.fixed_seg_path, save_fixed_seg_path)
+            copy(self.moving_seg_path, save_moving_seg_path)
             copy(self.warped_img_path, save_warped_img_path)
             copy(self.warped_seg_path, save_warped_seg_path)
             copy(self.ddf_path, save_ddf_path)
