@@ -21,14 +21,12 @@ def main():
     save_dir = "niftyreg_result"
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
-    val_dataset = RegDataset(args=args, mode="test")
+    nifty_reg = NiftyReg(args, save_dir)
+    val_dataset = RegDataset(args=args, mode="val")
     val_loader = DataLoader(val_dataset, batch_size=1)
     dice_meter = DiceMeter(writer=None, test=True)
     hausdorff_meter = HausdorffMeter(writer=None, test=True)
     for step, (moving, fixed) in enumerate(val_loader):
-        print(step)
-        if step > 10:
-            break
         reg_result = nifty_reg.register(moving, fixed)
         dice_meter.update(
             pred_binary=reg_result["seg"],
