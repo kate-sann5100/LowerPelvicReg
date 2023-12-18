@@ -3,6 +3,7 @@ import os
 import numpy as np
 import torch
 import nibabel as nib
+from monai.losses import BendingEnergyLoss
 from monai.metrics import DiceMetric
 from monai.networks import one_hot
 from monai.networks.blocks import Warp
@@ -221,6 +222,9 @@ def log_ddf_variance(ddf, img, binary):
         - "ddf": (B, 3, W, H, D)
     :return:
     """
+    bending_energy = BendingEnergyLoss(reduction="none")(ddf)
+    print(f"bending energy of shape {bending_energy.shape}")
+    exit()
     var, avg = torch.var_mean(ddf, dim=[2, 3, 4])  # (B, 3)
     result = {n: {"all_var": var[i].cpu(), "all_avg": avg[i].cpu()}
               for i, n in enumerate(img["name"])}
@@ -291,16 +295,6 @@ def visualise_img(img, binary, vis_path):
             affine=affine
         )
         nib.save(nib_img, f"{vis_path}/{n}_registerd_seg.nii")
-
-
-def choose_sample(save_dir):
-    var_log = torch.load(f"{save_dir}/var_log.pth")
-    name_list = list(var_log.keys())
-    bladder_w_avg_list = [torch.mean(v["BladderMask_avg"] * v["BladderMask_avg"]) for v in var_log.values()]
-    bladder_w_var_list = [torch.mean(v["BladderMask_var"]) for v in var_log.values()]
-    bladder_volume_list = [v["BladderMask_volume"] for v in var_log.values()]
-    plt.plot(bladder_volume_list, bladder_w_var_list, "o")
-    plt.savefig(f"{save_dir}/vol_var.png")
 
 
 def plot_ddf(ddf, name):

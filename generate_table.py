@@ -225,7 +225,7 @@ def get_population_variance(args, population_list, new=False):
             ddf_list = [d[n]["ddf"] for n in name_list]  # [(3, W, H, D)]
             population_variance = torch.stack(ddf_list, dim=0)  # (B, 3, W, H, D)
             if new:
-                population_variance = get_variance(population_variance)  # (W, H, D)
+                population_variance = get_paired_variance(population_variance)  # (W, H, D)
             else:
                 population_variance = torch.var(population_variance, dim=0)  # (3, W, H, D)
             population_variance = torch.mean(population_variance).numpy()
@@ -284,14 +284,7 @@ def get_result(args, metric_list, niftyreg=False):
                     else:
                         # [cls][name]["N/A"]
                         v = [v["N/A"] for v in d[i+1].values()]
-                    # if metric != "Variance":
-                    #     std = np.sqrt(np.std(np.array(v)))
-                    #     if "Dice" in metric:
-                    #     out[f"{metric}_std"][cls] = std * 100 if metric == "Dice(%)" else std
                     v = np.array(v)
-                    if niftyreg:
-                        print(d)
-                        print(v)
                     if metric == "Dice(%)":
                         v = v * 100
                     if metric != "Variance":
@@ -304,13 +297,6 @@ def get_result(args, metric_list, niftyreg=False):
             print(f"did not found {path}, skipped")
             out[metric] = {cls: 0 for cls in organ_list + ["mean"]}
     return out
-    # return {
-    #     label_ratio: {
-    #         metric: {cls: 0 for cls in organ_list + ["mean"]}
-    #         for metric in ["Dice(%)", "95%HD(mm)"]
-    #     }
-    #     for label_ratio in label_ratio_percentage_list
-    # }
 
 
 def update_args(args, exp):
@@ -337,22 +323,12 @@ def update_args(args, exp):
     return args
 
 
-def get_variance(all_ddf):
+def get_paired_variance(all_ddf):
     """
     :param all_ddf: (B, 3, W, H, D)
     :return:
     """
     b = all_ddf.shape[0]
-    # v1 = all_ddf.unsqueeze(0).repeat(b, 1, 1, 1, 1, 1)  # (B, B, 3, W, H, D)
-    # v2 = all_ddf.unsqueeze(1).repeat(1, b, 1, 1, 1, 1)  # (B, B, 3, W, H, D)
-    # diff_norm = torch.norm(v1 - v2, dim=2)  # (B, B, W, H, D)
-    # upper_half_mask = torch.ones(b, b)
-    # upper_half_mask = torch.triu(upper_half_mask, diagonal=1)  # (B, B)
-    # diff_norm = diff_norm * upper_half_mask[..., None, None, None].to(diff_norm)  # (B, B, W, H, D)
-    # sample_size = torch.sum(upper_half_mask)  # scalar
-    # mean = torch.sum(diff_norm, dim=(0, 1)) / sample_size  # (W, H, D)
-    # square_mean = torch.sum(diff_norm * diff_norm, dim=(0, 1)) / sample_size  # (W, H, D)
-    # variance = square_mean - mean * mean  # ( W, H, D)
     norm_list = [
         torch.norm(all_ddf[i] - all_ddf[j], dim=0)
         for i in range(b) for j in range(i, b-1)
@@ -370,10 +346,8 @@ if __name__ == '__main__':
     args.transformer = True
     exp_list = ["sup only", "NoAug", "warp", "RegCut", "warp+RegCut"]
     metric_list = ["Dice(%)", "95%HD(mm)"]
-    # generate_table_by_label_ratio(exp_list, ["Population Variance"])
-    # generate_table_by_population(args, ["all", "top_CG_50", "bottom_CG_50", "top_BladderMask_50", "bottom_BladderMask_50"])
-    # generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
-    # generate_table_by_class(args, metric_list)
-    # generate_table_by_class(args, metric_list[:1])
-    # generate_table_by_class(args, metric_list[1:])
-    generate_table_by_class(args, ["Variance"])
+
+    generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
+    generate_table_by_class(args, metric_list[:1])
+    generate_table_by_class(args, metric_list[1:])
+    # generate_table_by_class(args, ["Variance"])
