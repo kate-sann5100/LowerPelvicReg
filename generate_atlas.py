@@ -223,6 +223,7 @@ def log_ddf_variance(ddf, img, binary):
     :return:
     """
     bending_energy = BendingEnergyLoss(reduction="none")(ddf)  # (B, 3, W, H, D)
+    print(bending_energy.shape)
     var, avg = torch.var_mean(ddf, dim=[2, 3, 4])  # (B, 3)
     result = {n: {"all_var": var[i].cpu(), "all_avg": avg[i].cpu()}
               for i, n in enumerate(img["name"])}
@@ -241,7 +242,6 @@ def log_ddf_variance(ddf, img, binary):
             result[n][f"{organ_list[cls-1]}_avg"] = avg[i].cpu()
             result[n][f"{organ_list[cls-1]}_volume"] = volume[i].cpu()
             # m (1, W, H, D) d(3, W, H, D)
-            print(be.shape, m[0].shape)
             masked_ddf = torch.masked_select(be, m[0]).reshape(3, -1)  # (3, num_voxels)
             result[n][f"{organ_list[cls - 1]}_bending_energy"] = np.mean(masked_ddf)
     return result
