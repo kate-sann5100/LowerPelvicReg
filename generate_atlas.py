@@ -222,9 +222,7 @@ def log_ddf_variance(ddf, img, binary):
         - "ddf": (B, 3, W, H, D)
     :return:
     """
-    bending_energy = BendingEnergyLoss(reduction="none")(ddf)
-    print(f"bending energy of shape {bending_energy.shape}")
-    exit()
+    bending_energy = BendingEnergyLoss(reduction="none")(ddf)  # (B, 3, W, H, D)
     var, avg = torch.var_mean(ddf, dim=[2, 3, 4])  # (B, 3)
     result = {n: {"all_var": var[i].cpu(), "all_avg": avg[i].cpu()}
               for i, n in enumerate(img["name"])}
@@ -243,13 +241,8 @@ def log_ddf_variance(ddf, img, binary):
             result[n][f"{organ_list[cls-1]}_avg"] = avg[i].cpu()
             result[n][f"{organ_list[cls-1]}_volume"] = volume[i].cpu()
             # m (1, W, H, D) d(3, W, H, D)
-            masked_ddf = torch.masked_select(ddf, m[0]).reshape(3, -1)  # (3, num_voxels)
-            paired_distance = masked_ddf.permute(1, 0)  # (num_voxels, 3)
-            paired_distance = paired_distance.cpu().numpy()  # (num_voxels, 3)
-            paired_distance = pdist(paired_distance)  # (num_pairs)
-            new_var = np.var(paired_distance)
-            result[n][f"{organ_list[cls - 1]}_new_var"] = new_var
-
+            masked_ddf = torch.masked_select(bending_energy, m[0]).reshape(3, -1)  # (3, num_voxels)
+            result[n][f"{organ_list[cls - 1]}_bending_energy"] = np.mean(masked_ddf)
     return result
 
 
