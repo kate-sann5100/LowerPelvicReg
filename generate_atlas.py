@@ -236,12 +236,12 @@ def log_ddf_variance(ddf, img, binary):
         avg = masked_ddf.sum(dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
         var = masked_ddf - avg.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)  # (B, 3, W, H, D)
         var = torch.sum(var * var * mask, dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
-        for i, (n, m, d) in enumerate(zip(img["name"], mask, ddf)):
+        for i, (n, m, d, be) in enumerate(zip(img["name"], mask, ddf, bending_energy)):
             result[n][f"{organ_list[cls-1]}_var"] = var[i].cpu()
             result[n][f"{organ_list[cls-1]}_avg"] = avg[i].cpu()
             result[n][f"{organ_list[cls-1]}_volume"] = volume[i].cpu()
             # m (1, W, H, D) d(3, W, H, D)
-            masked_ddf = torch.masked_select(bending_energy, m[0]).reshape(3, -1)  # (3, num_voxels)
+            masked_ddf = torch.masked_select(be, m[0]).reshape(3, -1)  # (3, num_voxels)
             result[n][f"{organ_list[cls - 1]}_bending_energy"] = np.mean(masked_ddf)
     return result
 
