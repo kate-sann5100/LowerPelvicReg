@@ -222,9 +222,8 @@ def log_ddf_variance(ddf, img, binary):
         - "ddf": (B, 3, W, H, D)
     :return:
     """
-    print(ddf.shape)
     bending_energy = BendingEnergyLoss(reduction="none")(ddf)  # (B, 3, W, H, D)
-    print(bending_energy.shape)
+    bending_energy = F.interpolate(bending_energy, size=ddf.shape[-3:])
     var, avg = torch.var_mean(ddf, dim=[2, 3, 4])  # (B, 3)
     result = {n: {"all_var": var[i].cpu(), "all_avg": avg[i].cpu()}
               for i, n in enumerate(img["name"])}
