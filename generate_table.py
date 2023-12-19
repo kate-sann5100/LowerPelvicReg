@@ -168,7 +168,7 @@ def add_exp_by_class(args, metric_list, table):
     :return:
     """
     for label_ratio in label_ratio_list:
-        if "Variance" in metric_list and label_ratio == 0:
+        if ("Variance" in metric_list or "BendingEnergy" in metric_list) and label_ratio == 0:
             continue
         args.label_ratio = label_ratio
         exp_list = exp_list_dict[label_ratio]
@@ -191,7 +191,7 @@ def add_exp_by_class(args, metric_list, table):
             # ]
             row += [NoEscape(
                 "{:.2f}$\pm${:.2f}".format(exp_result[metric_list[0]][cls], exp_result[f"{metric_list[0]}_std"][cls])
-                if "mean" not in cls and "Variance" not in metric_list
+                if "mean" not in cls and ("Variance" not in metric_list or "BendingEnergy" not in metric_list)
                 else "{:.2f}".format(exp_result[metric_list[0]][cls])
             ) for cls in organ_list + ["mean"]]
             table.add_row(row)
@@ -281,6 +281,8 @@ def get_result(args, metric_list, niftyreg=False):
                         # [name][cls]
                         # v = [v[f"{cls}_var"].numpy() for v in d.values()]
                         v = [v[f"{cls}_new_var"].numpy() for v in d.values()]
+                    elif metric == "BendingEnergy":
+                        v = [v[f"{cls}_bending_energy"].numpy() for v in d.values()]
                     else:
                         # [cls][name]["N/A"]
                         v = [v["N/A"] for v in d[i+1].values()]
@@ -350,4 +352,5 @@ if __name__ == '__main__':
     generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
     generate_table_by_class(args, metric_list[:1])
     generate_table_by_class(args, metric_list[1:])
+    generate_table_by_class(args, ["BendingEnergy"])
     # generate_table_by_class(args, ["Variance"])
