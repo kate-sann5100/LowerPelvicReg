@@ -148,7 +148,7 @@ def update_atlas(atlas, dataloader, model, batch_size, num_samples, save_dir, ar
             binary = model(moving_batch=img, fixed_batch=batch_atlas, semi_supervision=False)
             all_t2w[step*batch_size: step*batch_size+len(img["t2w"])] = binary["t2w"]  # (B, 1, W, H, D)
             all_seg[step*batch_size: step*batch_size+len(img["t2w"])] = binary["seg"]  # (B, 9, W, H, D)
-
+            print('start logging...')
             ddf_variance_log.update(log_ddf_variance(ddf, img, binary))
             visualise_img(img, binary, vis_path=f"{save_dir}/vis_sample")
 
@@ -302,7 +302,6 @@ def plot_ddf(ddf, name):
         np.arange(0, shape[0], 1), np.arange(0, shape[1], 1), np.arange(0, shape[2], 1)
     )
     ddf = F.interpolate(ddf.unsqueeze(0), mode="trilinear", size=shape).squeeze(0)
-    print(ddf.shape)
     ddf = np.asarray(ddf.cpu())
     u, v, w = np.asarray(ddf)[0], np.asarray(ddf)[1], np.asarray(ddf)[2]
     u, v, w = u / shape[0], v / shape[1], w / shape[2]
