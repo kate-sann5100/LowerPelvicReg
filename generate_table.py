@@ -29,11 +29,12 @@ def generate_table_by_label_ratio(exp_list, metric_list):
     doc.generate_tex(f"./table/{metric_list}_by_label_ratio.tex")
 
 
-def generate_table_by_population(args, structures, percentiles):
+def generate_table_by_population(args, structures, percentiles, paired=False):
     """
     :param args:
     :param structures: ["CG", "BladderMask"]
     :param percentiles: [50, 20]
+    :param paired:
     :return:
     """
     percentile_list = []
@@ -42,9 +43,12 @@ def generate_table_by_population(args, structures, percentiles):
     table = table_head_by_population(structures, percentile_list)
     population_list = [f"{percentile[:-1]} {structure}"
                        for structure in structures for percentile in percentile_list]
-    add_exp_by_population(args, population_list, table)
+    add_exp_by_population(args, population_list, table, paired)
     doc = Table(data=table)
-    doc.generate_tex(f"./table/location_variance_by_population.tex")
+    doc.generate_tex(
+        f"./table/paired_location_variance_by_population.tex" if paired else
+        f"./table/location_variance_by_population.tex"
+    )
 
 
 def generate_table_by_class(args, metric_list):
@@ -133,11 +137,12 @@ def add_exp_by_label_ratio(args, metric_list, table):
             table.add_hline()
 
 
-def add_exp_by_population(args, population_list, table):
+def add_exp_by_population(args, population_list, table, paired=False):
     """
     :param args:
     :param population_list:
     :param table:
+    :param paired:
     :return:
     """
     for label_ratio in label_ratio_list:
@@ -148,7 +153,7 @@ def add_exp_by_population(args, population_list, table):
         for i, exp in enumerate(exp_list):
             print(exp)
             args = update_args(args, exp)
-            exp_result = get_population_variance(args, population_list, new=True)  # {p:v}
+            exp_result = get_population_variance(args, population_list, paired=paired)  # {p:v}
             row = [MultiRow(len(exp_list), data=label_ratio * 100)] if i == 0 else [""]
             row += [exp]
             row += [
@@ -199,10 +204,11 @@ def add_exp_by_class(args, metric_list, table):
                 table.add_hline()
 
 
-def get_population_variance(args, population_list, new=False):
+def get_population_variance(args, population_list, paired=False):
     """
     :param args:
     :param population_list:
+    :param paired
     :return: {population: variance}
     """
     result_dict_path = get_save_dir(args, warm_up=args.labelled_only)
@@ -224,7 +230,7 @@ def get_population_variance(args, population_list, new=False):
                 return {p: 0 for p in population_list}
             ddf_list = [d[n]["ddf"] for n in name_list]  # [(3, W, H, D)]
             population_variance = torch.stack(ddf_list, dim=0)  # (B, 3, W, H, D)
-            if new:
+            if paired:
                 population_variance = get_paired_variance(population_variance)  # (W, H, D)
             else:
                 population_variance = torch.var(population_variance, dim=0)  # (3, W, H, D)
@@ -350,8 +356,9 @@ if __name__ == '__main__':
     exp_list = ["sup only", "NoAug", "warp", "RegCut", "warp+RegCut"]
     metric_list = ["Dice(%)", "95%HD(mm)"]
 
-    # generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
-    # generate_table_by_class(args, metric_list[:1])
-    # generate_table_by_class(args, metric_list[1:])
+    generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
+    generate_table_by_population(args, ["CG", "BladderMask"], [50, 20], paired=True)
+    generate_table_by_class(args, metric_list[:1])
+    generate_table_by_class(args, metric_list[1:])
     generate_table_by_class(args, ["BendingEnergy"])
-    # generate_table_by_class(args, ["Variance"])
+    generate_table_by_class(args, ["Variance"])
