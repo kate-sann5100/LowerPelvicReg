@@ -224,7 +224,7 @@ def log_ddf_variance(ddf, img, binary):
     """
     bending_energy = BendingEnergyLoss(reduction="none")(ddf)  # (B, 3, W, H, D)
     bending_energy = F.interpolate(bending_energy, size=ddf.shape[-3:])
-    result = {}
+    result = {n: {} for n in img["name"]}
     for i, n in enumerate(img["name"]):
         result[n][f"ddf"] = ddf[i]  # (3, W, H, D)
         result[n][f"seg"] = img["seg"][i]  # (1, W, H, D)
