@@ -96,10 +96,10 @@ def table_head_by_class(metric_list):
              MultiColumn(9, data=metric_str)]
     row_2 = ["ratio", "",
              MultiRow(2, data="Bladder"), MultiRow(2, data="Bone"), "Obturator", "Transition",
-              "Central", MultiRow(2, data="Rectum"), "seminal", "neurovascular", MultiRow(2, data="mean")]
+              "Central", MultiRow(2, data="Rectum"), "Seminal", "Neurovascular", MultiRow(2, data="Mean")]
     row_3 = ["(%)", "",
-             "", "", "internus", "zone",
-              "gland", "", "vesicle", "bundle", ""]
+             "", "", "Internus", "Zone",
+              "Gland", "", "Vesicle", "Bundle", ""]
     table = Tabular(col_def)
     table.add_hline()
     table.add_row(row_1)
@@ -266,6 +266,7 @@ def get_result(args, metric_list, niftyreg=False):
         "95%HD(mm)": hausdorff_dict_path,
         "Variance": variance_dict_path,
         "Population Variance": population_variance_dict_path,
+        "BendingEnergy": variance_dict_path
     }
     for metric in metric_list:
         path = dict_path[metric]
@@ -282,7 +283,7 @@ def get_result(args, metric_list, niftyreg=False):
                         # v = [v[f"{cls}_var"].numpy() for v in d.values()]
                         v = [v[f"{cls}_new_var"].numpy() for v in d.values()]
                     elif metric == "BendingEnergy":
-                        v = [v[f"{cls}_bending_energy"].numpy() for v in d.values()]
+                        v = [v[f"{cls}_bending_energy"] for v in d.values()]
                     else:
                         # [cls][name]["N/A"]
                         v = [v["N/A"] for v in d[i+1].values()]
@@ -349,8 +350,8 @@ if __name__ == '__main__':
     exp_list = ["sup only", "NoAug", "warp", "RegCut", "warp+RegCut"]
     metric_list = ["Dice(%)", "95%HD(mm)"]
 
-    generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
-    generate_table_by_class(args, metric_list[:1])
-    generate_table_by_class(args, metric_list[1:])
+    # generate_table_by_population(args, ["CG", "BladderMask"], [50, 20])
+    # generate_table_by_class(args, metric_list[:1])
+    # generate_table_by_class(args, metric_list[1:])
     generate_table_by_class(args, ["BendingEnergy"])
     # generate_table_by_class(args, ["Variance"])

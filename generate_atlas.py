@@ -224,26 +224,24 @@ def log_ddf_variance(ddf, img, binary):
     """
     bending_energy = BendingEnergyLoss(reduction="none")(ddf)  # (B, 3, W, H, D)
     bending_energy = F.interpolate(bending_energy, size=ddf.shape[-3:])
-    var, avg = torch.var_mean(ddf, dim=[2, 3, 4])  # (B, 3)
-    result = {n: {"all_var": var[i].cpu(), "all_avg": avg[i].cpu()}
-              for i, n in enumerate(img["name"])}
+    result = {}
     for i, n in enumerate(img["name"]):
         result[n][f"ddf"] = ddf[i]  # (3, W, H, D)
         result[n][f"seg"] = img["seg"][i]  # (1, W, H, D)
     for cls in range(1, 9):
         mask = (img["seg"] == cls)  # (B, 1, W, H, D)
-        volume = torch.sum(mask, dim=(1, 2, 3, 4))
+        volume = torch.sum(mask, dim=(1, 2, 3, 4))  # (B)
         masked_ddf = ddf * mask  # (B, 3, W, H, D)
         avg = masked_ddf.sum(dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
         var = masked_ddf - avg.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)  # (B, 3, W, H, D)
         var = torch.sum(var * var * mask, dim=(2, 3, 4)) / mask.sum(dim=(2, 3, 4))  # (B, 3)
         for i, (n, m, d, be) in enumerate(zip(img["name"], mask, ddf, bending_energy)):
             result[n][f"{organ_list[cls-1]}_var"] = var[i].cpu()
-            result[n][f"{organ_list[cls-1]}_avg"] = avg[i].cpu()
             result[n][f"{organ_list[cls-1]}_volume"] = volume[i].cpu()
             # m (1, W, H, D) d(3, W, H, D)
-            masked_ddf = torch.masked_select(be, m[0]).reshape(3, -1)  # (3, num_voxels)
-            result[n][f"{organ_list[cls - 1]}_bending_energy"] = np.mean(masked_ddf.cpu().numpy())
+            print(be.shape, m.shape)
+            masked_be = torch.masked_select(be, m[0]).reshape(3, -1)  # (3, num_voxels)
+            result[n][f"{organ_list[cls - 1]}_bending_energy"] = np.mean(masked_be.cpu().numpy())
     return result
 
 
